@@ -1,0 +1,91 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Environment files
+.env
+.env.local
+.env.*.local
+.env.production
+.env.test
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+*.tsbuildinfo
+
+# Testing
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+cypress/screenshots/
+cypress/videos/
+
+# IDE
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Docker
+docker-compose.override.yml
+.docker/
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+data/
+
+# Security
+*.pem
+*.key
+*.crt
+*.p12
+.secrets/
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+.cache/
+
+# OS Files
+Thumbs.db
+Desktop.ini
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Monitoring
+grafana-storage/
+prometheus-data/
