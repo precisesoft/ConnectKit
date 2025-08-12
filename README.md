@@ -140,14 +140,18 @@ npm test -- --coverage
 
 ## 📚 Documentation
 
-- [Product Requirements Document](./PRD-CONNECTKIT.md)
-- [Best Practices Guide](./BEST-PRACTICES-GUIDE.md)
-- [TDD Implementation Guide](./TDD-IMPLEMENTATION-GUIDE.md)
-- [Security Recommendations](./SECURITY-RECOMMENDATIONS.md)
-- [DevOps Automation Guide](./DEVOPS-AUTOMATION-RECOMMENDATIONS.md)
-- [Phase 1 Foundation](./PHASE-1-FOUNDATION.md)
-- [Code Review Checklist](./CODE-REVIEW-CHECKLIST.md)
-- [Execution Todo List](./EXECUTION-TODO.md)
+Comprehensive documentation is available in the [docs/](./docs/) directory. Key documents include:
+
+- [Product Requirements Document](./docs/planning/PRD-CONNECTKIT.md)
+- [Best Practices Guide](./docs/guides/BEST-PRACTICES-GUIDE.md)
+- [TDD Implementation Guide](./docs/testing/TDD-IMPLEMENTATION-GUIDE.md)
+- [Security Recommendations](./docs/security/SECURITY-RECOMMENDATIONS.md)
+- [DevOps Automation Guide](./docs/devops/DEVOPS-AUTOMATION-RECOMMENDATIONS.md)
+- [Phase 1 Foundation](./docs/planning/PHASE-1-FOUNDATION.md)
+- [Code Review Checklist](./docs/guides/CODE-REVIEW-CHECKLIST.md)
+- [Execution Todo List](./docs/planning/EXECUTION-TODO.md)
+
+For a complete overview of all documentation, see the [Documentation Index](./docs/README.md).
 
 ## 🔒 Security
 
@@ -181,7 +185,7 @@ See [.env.example](./.env.example) for all configuration options.
 6. Push to the branch (`git push origin feature/amazing-feature`)
 7. Open a Pull Request
 
-Please read our [Code Review Checklist](./CODE-REVIEW-CHECKLIST.md) before submitting PRs.
+Please read our [Code Review Checklist](./docs/guides/CODE-REVIEW-CHECKLIST.md) before submitting PRs.
 
 ## 📝 License
 
