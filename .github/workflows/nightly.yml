@@ -50,7 +50,7 @@ jobs:
           # Add production-like settings
           echo "NODE_ENV=production" >> .env
           echo "LOG_LEVEL=warn" >> .env
-          docker-compose up -d
+          docker compose up -d
           sleep 60
 
       - name: Wait for services to be ready
@@ -402,7 +402,7 @@ jobs:
 
       - name: Stop services
         if: always()
-        run: docker-compose down -v
+        run: docker compose down -v
 
   # Chaos engineering tests
   chaos-testing:
@@ -417,7 +417,7 @@ jobs:
       - name: Start services
         run: |
           cp .env.example .env
-          docker-compose up -d
+          docker compose up -d
           sleep 30
 
       - name: Wait for services
@@ -582,7 +582,7 @@ jobs:
 
       - name: Stop services
         if: always()
-        run: docker-compose down -v
+        run: docker compose down -v
 
   # Data integrity testing
   data-integrity:
@@ -948,7 +948,7 @@ jobs:
       - name: Start services
         run: |
           cp .env.example .env
-          docker-compose up -d
+          docker compose up -d
           sleep 30
 
       - name: Wait for services and seed data
@@ -1025,17 +1025,17 @@ jobs:
       - name: Test backup restoration
         run: |
           # Stop services
-          docker-compose down -v
+          docker compose down -v
 
           # Start fresh database
-          docker-compose up -d db
+          docker compose up -d db
           sleep 30
 
           # Restore from backup
           docker exec -i connectkit-db psql -U admin connectkit < backup-test.sql
 
           # Start other services
-          docker-compose up -d
+          docker compose up -d
           sleep 30
 
           # Verify restoration
@@ -1177,7 +1177,7 @@ jobs:
 
       - name: Stop services
         if: always()
-        run: docker-compose down -v
+        run: docker compose down -v
 
   # Nightly report consolidation
   nightly-report:

@@ -51,7 +51,7 @@ jobs:
         run: |
           cp .env.example .env
           echo "VITE_API_URL=http://localhost:3001/api" >> .env
-          docker-compose up -d
+          docker compose up -d
           sleep 30
 
       - name: Wait for services to be ready
@@ -90,7 +90,7 @@ jobs:
 
       - name: Stop services
         if: always()
-        run: docker-compose down -v
+        run: docker compose down -v
 
   # Backend Load Testing with k6
   k6-load-test:
@@ -108,7 +108,7 @@ jobs:
       - name: Start services with Docker Compose
         run: |
           cp .env.example .env
-          docker-compose up -d
+          docker compose up -d
           sleep 30
 
       - name: Wait for services to be ready
@@ -176,7 +176,7 @@ jobs:
 
       - name: Stop services
         if: always()
-        run: docker-compose down -v
+        run: docker compose down -v
 
   # Database Performance Testing
   database-performance:
@@ -312,7 +312,7 @@ jobs:
         run: |
           cp .env.example .env
           echo "NODE_OPTIONS=--inspect=0.0.0.0:9229 --max-old-space-size=512" >> .env
-          docker-compose up -d
+          docker compose up -d
           sleep 30
 
       - name: Run memory profiling
@@ -337,7 +337,7 @@ jobs:
 
       - name: Stop services
         if: always()
-        run: docker-compose down -v
+        run: docker compose down -v
 
   # Performance Regression Detection
   performance-comparison:

@@ -188,7 +188,7 @@ jobs:
       - name: Start services with Docker Compose
         run: |
           cp .env.example .env
-          docker-compose up -d
+          docker compose up -d
           sleep 30
 
       - name: Check service health
@@ -215,4 +215,4 @@ jobs:
 
       - name: Stop services
         if: always()
-        run: docker-compose down -v
+        run: docker compose down -v
