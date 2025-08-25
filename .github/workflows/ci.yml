@@ -68,8 +68,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
-          cache-dependency-path: "package-lock.json"
 
       - name: Install backend dependencies
         working-directory: ./backend
@@ -117,8 +115,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
-          cache-dependency-path: "package-lock.json"
 
       - name: Install frontend dependencies
         working-directory: ./frontend
@@ -188,8 +184,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
-          cache-dependency-path: "package-lock.json"
 
       - name: Start services with Docker Compose
         run: |
