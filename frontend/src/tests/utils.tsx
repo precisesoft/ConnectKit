@@ -118,6 +118,7 @@ export const createMockUser = (overrides = {}) => ({
   lastName: 'User',
   role: 'user',
   isVerified: true,
+  emailVerified: true,
   ...overrides,
 });
 

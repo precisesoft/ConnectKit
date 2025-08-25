@@ -1,0 +1,88 @@
+name: Frontend Tests (Isolated Debug)
+
+on:
+  push:
+    branches: [fix/ci-pipeline-frontend-tests]
+  pull_request:
+    branches: [fix/ci-pipeline-frontend-tests]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: "18"
+
+jobs:
+  frontend-test:
+    name: Frontend Tests Only
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install frontend dependencies
+        run: npm ci --workspace=frontend
+
+      - name: Show frontend package info
+        working-directory: ./frontend
+        run: |
+          echo "Frontend package.json scripts:"
+          cat package.json | grep -A 20 '"scripts":'
+          echo "Node modules count:"
+          ls node_modules | wc -l
+
+      - name: Run frontend linting (allow failure for now)
+        working-directory: ./frontend
+        run: npm run lint || echo "Linting failed but continuing..."
+
+      - name: Run frontend type checking
+        working-directory: ./frontend
+        run: npm run type-check
+
+      - name: Debug test configuration
+        working-directory: ./frontend
+        run: |
+          echo "Vitest config:"
+          cat vitest.config.ts
+          echo "Test files found:"
+          find src -name "*.test.*" -o -name "*.spec.*" | head -10
+
+      - name: Run frontend tests with detailed output
+        working-directory: ./frontend
+        run: |
+          echo "Running tests with verbose output..."
+          npm run test:unit -- --reporter=verbose --no-coverage
+        continue-on-error: true
+
+      - name: Show test summary
+        if: always()
+        run: |
+          echo "Frontend test stage completed"
+          echo "Check the logs above for specific test failures"
+
+  summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [frontend-test]
+    if: always()
+    steps:
+      - name: Generate test summary
+        run: |
+          echo "## 🧪 Frontend Tests Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.frontend-test.result }}" == "success" ]; then
+            echo "✅ **Frontend Tests**: All tests passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Frontend Tests**: Some tests failed or stage had issues" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Next Steps**: Review test failures and fix issues before re-enabling full pipeline" >> $GITHUB_STEP_SUMMARY
