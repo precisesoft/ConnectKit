@@ -35,7 +35,8 @@ describe('AuthService', () => {
     jest.clearAllMocks();
 
     // Create mock instances
-    mockUserRepository = createMockUserRepository() as unknown as jest.Mocked<UserRepository>;
+    mockUserRepository =
+      createMockUserRepository() as unknown as jest.Mocked<UserRepository>;
     mockRedis = createMockRedis();
 
     // Mock the constructor dependencies

@@ -456,7 +456,7 @@ describe('Auth Integration Tests', () => {
       const rateLimitedResponses = responses.filter(
         res => res.status === StatusCodes.TOO_MANY_REQUESTS
       );
-      
+
       // Check that rate limiting is working
       expect(rateLimitedResponses.length).toBeGreaterThan(0);
 
