@@ -1,12 +1,12 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ContactService } from '@services/contact.service';
+import { ContactStats } from '../types/contact.types';
 import {
   Contact,
   CreateContactRequest,
   UpdateContactRequest,
   ContactFilters,
-  ContactStats,
   PaginatedResponse,
   SearchRequest,
   SearchResult,
@@ -40,7 +40,7 @@ export const useContacts = (initialFilters?: ContactFilters) => {
   } = useQuery({
     queryKey: [CONTACTS_QUERY_KEY, filters],
     queryFn: () => ContactService.getContacts(filters),
-    keepPreviousData: true,
+    placeholderData: (previousData) => previousData,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -80,8 +80,8 @@ export const useContacts = (initialFilters?: ContactFilters) => {
     mutationFn: ContactService.createContact,
     onSuccess: (newContact) => {
       // Invalidate and refetch contacts
-      queryClient.invalidateQueries([CONTACTS_QUERY_KEY]);
-      queryClient.invalidateQueries([CONTACT_STATS_QUERY_KEY]);
+      queryClient.invalidateQueries({ queryKey: [CONTACTS_QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: [CONTACT_STATS_QUERY_KEY] });
       
       showSuccessNotification(
         `Contact "${newContact.firstName} ${newContact.lastName}" created successfully!`
@@ -115,7 +115,7 @@ export const useContacts = (initialFilters?: ContactFilters) => {
       );
       
       // Invalidate stats
-      queryClient.invalidateQueries([CONTACT_STATS_QUERY_KEY]);
+      queryClient.invalidateQueries({ queryKey: [CONTACT_STATS_QUERY_KEY] });
       
       showSuccessNotification(
         `Contact "${updatedContact.firstName} ${updatedContact.lastName}" updated successfully!`
@@ -150,8 +150,8 @@ export const useContacts = (initialFilters?: ContactFilters) => {
       );
       
       // Invalidate queries
-      queryClient.invalidateQueries([CONTACTS_QUERY_KEY]);
-      queryClient.invalidateQueries([CONTACT_STATS_QUERY_KEY]);
+      queryClient.invalidateQueries({ queryKey: [CONTACTS_QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: [CONTACT_STATS_QUERY_KEY] });
       
       showSuccessNotification('Contact deleted successfully!');
     },
@@ -168,8 +168,8 @@ export const useContacts = (initialFilters?: ContactFilters) => {
     mutationFn: ContactService.deleteContacts,
     onSuccess: (result) => {
       // Invalidate queries
-      queryClient.invalidateQueries([CONTACTS_QUERY_KEY]);
-      queryClient.invalidateQueries([CONTACT_STATS_QUERY_KEY]);
+      queryClient.invalidateQueries({ queryKey: [CONTACTS_QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: [CONTACT_STATS_QUERY_KEY] });
       
       showSuccessNotification(
         `${result.deleted} contact${result.deleted !== 1 ? 's' : ''} deleted successfully!`
@@ -209,7 +209,7 @@ export const useContacts = (initialFilters?: ContactFilters) => {
       );
       
       // Invalidate stats
-      queryClient.invalidateQueries([CONTACT_STATS_QUERY_KEY]);
+      queryClient.invalidateQueries({ queryKey: [CONTACT_STATS_QUERY_KEY] });
       
       const action = updatedContact.isFavorite ? 'added to' : 'removed from';
       showSuccessNotification(
@@ -266,10 +266,10 @@ export const useContacts = (initialFilters?: ContactFilters) => {
       const result = await ContactService.importContacts(importRequest, onProgress);
       
       // Invalidate queries to refresh data
-      queryClient.invalidateQueries([CONTACTS_QUERY_KEY]);
-      queryClient.invalidateQueries([CONTACT_STATS_QUERY_KEY]);
-      queryClient.invalidateQueries([CONTACT_TAGS_QUERY_KEY]);
-      queryClient.invalidateQueries([CONTACT_COMPANIES_QUERY_KEY]);
+      queryClient.invalidateQueries({ queryKey: [CONTACTS_QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: [CONTACT_STATS_QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: [CONTACT_TAGS_QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: [CONTACT_COMPANIES_QUERY_KEY] });
       
       showSuccessNotification(
         `Import completed! ${result.success} contacts imported successfully.`

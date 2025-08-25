@@ -8,7 +8,7 @@ export interface User {
   firstName: string;
   lastName: string;
   avatar?: string;
-  role: 'user' | 'admin' | 'moderator';
+  role: 'user' | 'admin' | 'manager';
   emailVerified: boolean;
   phone?: string;
   bio?: string;
@@ -19,12 +19,12 @@ export interface User {
   timezone?: string;
   language?: string;
   
-  // Notification preferences
-  emailNotifications: boolean;
-  marketingEmails: boolean;
+  // Notification preferences - optional with defaults
+  emailNotifications?: boolean;
+  marketingEmails?: boolean;
   
-  // Security
-  twoFactorEnabled: boolean;
+  // Security - optional with defaults
+  twoFactorEnabled?: boolean;
   lastLogin?: string;
   
   // Timestamps

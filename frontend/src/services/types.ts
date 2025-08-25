@@ -78,10 +78,14 @@ export interface AuthResponse {
     firstName: string;
     lastName: string;
     avatar?: string;
-    role: string;
+    role: 'user' | 'admin' | 'manager';
     emailVerified: boolean;
     createdAt: string;
     updatedAt: string;
+    // Optional fields that may be added later
+    emailNotifications?: boolean;
+    marketingEmails?: boolean;
+    twoFactorEnabled?: boolean;
   };
   token: string;
   refreshToken: string;
@@ -226,18 +230,6 @@ export interface ImportResult {
   failed: number;
   duplicates: number;
   errors: string[];
-}
-
-// Analytics types
-export interface ContactStats {
-  total: number;
-  favorites: number;
-  recentlyAdded: number;
-  companies: number;
-  tags: Array<{
-    name: string;
-    count: number;
-  }>;
 }
 
 // Search types

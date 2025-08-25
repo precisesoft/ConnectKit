@@ -1,4 +1,5 @@
 import { ApiClient } from './api.client';
+import { User } from '../types/user.types';
 import {
   LoginRequest,
   RegisterRequest,
@@ -166,7 +167,7 @@ export class AuthService {
   /**
    * Get current user profile from token
    */
-  static async getCurrentUser(): Promise<AuthResponse['user']> {
+  static async getCurrentUser(): Promise<User> {
     try {
       const response = await ApiClient.get<AuthResponse['user']>('/auth/me');
       
@@ -174,7 +175,14 @@ export class AuthService {
         throw new Error(response.message || 'Failed to get user profile');
       }
 
-      return response.data;
+      // Transform the response to match User interface with defaults
+      const userData = response.data;
+      return {
+        ...userData,
+        emailNotifications: userData.emailNotifications ?? true,
+        marketingEmails: userData.marketingEmails ?? false,
+        twoFactorEnabled: userData.twoFactorEnabled ?? false,
+      };
     } catch (error) {
       console.error('Get current user error:', error);
       throw error;

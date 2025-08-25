@@ -222,7 +222,6 @@ describe('useAuth', () => {
     it('should register successfully', async () => {
       const mockUser = createMockUser();
       const registrationData = {
-        username: 'testuser',
         email: 'test@example.com',
         password: 'TestPass123!',
         confirmPassword: 'TestPass123!',
@@ -260,7 +259,6 @@ describe('useAuth', () => {
       await act(async () => {
         try {
           await result.current.register({
-            username: 'testuser',
             email: 'existing@example.com',
             password: 'TestPass123!',
             confirmPassword: 'TestPass123!',
@@ -361,7 +359,7 @@ describe('useAuth', () => {
 
       const resetData = {
         token: 'reset-token',
-        newPassword: 'NewPass123!',
+        password: 'NewPass123!',
         confirmPassword: 'NewPass123!',
       };
 

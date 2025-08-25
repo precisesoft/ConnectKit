@@ -1,11 +1,11 @@
 import { ApiClient } from './api.client';
+import { ContactStats } from '../types/contact.types';
 import {
   Contact,
   CreateContactRequest,
   UpdateContactRequest,
   ContactFilters,
   PaginatedResponse,
-  ContactStats,
   SearchRequest,
   SearchResult,
   ExportContactsRequest,

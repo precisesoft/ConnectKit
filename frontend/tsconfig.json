@@ -30,6 +30,7 @@
     "paths": {
       "@/*": ["src/*"],
       "@components/*": ["src/components/*"],
+      "@pages/*": ["src/pages/*"],
       "@hooks/*": ["src/hooks/*"],
       "@services/*": ["src/services/*"],
       "@utils/*": ["src/utils/*"],
@@ -39,7 +40,7 @@
       "@store/*": ["src/store/*"],
       "@routes/*": ["src/routes/*"]
     },
-    "types": ["vite/client", "node", "@testing-library/jest-dom"]
+    "types": ["vite/client", "vitest/globals", "node", "@testing-library/jest-dom", "jest-axe"]
   },
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]
