@@ -18,7 +18,10 @@ import { Email, Send, ArrowBack, CheckCircle } from '@mui/icons-material';
 
 import { AuthService } from '@services/auth.service';
 import { ForgotPasswordRequest } from '@services/types';
-import { showErrorNotification, showSuccessNotification } from '@store/uiStore';
+import {
+  showErrorNotification,
+  showSuccessNotification,
+} from '../../store/uiStore';
 
 // Validation schema
 const forgotPasswordSchema = yup.object().shape({

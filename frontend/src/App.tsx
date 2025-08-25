@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 // Removed unused imports - Routes and Route not used in this component
 import { Box } from '@mui/material';
 
-import { useAuthStore } from '@store/authStore';
 import { useAuth } from '@hooks/useAuth';
 import LoadingSpinner from '@components/common/LoadingSpinner';
 import AppRoutes from '@routes/index';
