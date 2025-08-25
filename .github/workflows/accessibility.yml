@@ -431,7 +431,7 @@ jobs:
 
       - name: Install color contrast testing tools
         run: |
-          npm install -g puppeteer color-contrast-analyzer-cli
+          npm install -g puppeteer
 
       - name: Create color contrast test script
         run: |
