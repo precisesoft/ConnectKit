@@ -47,12 +47,12 @@ export abstract class BaseRepository<T> {
       const result = await executor.query(query, params);
       
       const duration = Date.now() - startTime;
-      logger.logDatabase(query, duration);
+      logger.debug('Database query completed', { query: query.substring(0, 200), duration });
       
       return result;
     } catch (error) {
       const duration = Date.now() - startTime;
-      logger.logDatabase(query, duration, error as Error);
+      logger.error('Database query failed', { query: query.substring(0, 200), duration, error: (error as Error).message });
       throw new DatabaseError('Database query failed', { 
         query: query.substring(0, 200),
         error: (error as Error).message 
@@ -279,7 +279,7 @@ export abstract class BaseRepository<T> {
    */
   async update(id: string, updates: Partial<T>): Promise<T> {
     const row = this.mapEntityToRow(updates as T);
-    const entries = Object.entries(row).filter(([key, value]) => value !== undefined);
+    const entries = Object.entries(row).filter(([_key, value]) => value !== undefined);
     
     if (entries.length === 0) {
       throw new Error('No fields to update');
@@ -414,7 +414,7 @@ export abstract class BaseRepository<T> {
       
       for (const { id, data } of updates) {
         const row = this.mapEntityToRow(data as T);
-        const entries = Object.entries(row).filter(([key, value]) => value !== undefined);
+        const entries = Object.entries(row).filter(([_key, value]) => value !== undefined);
         
         if (entries.length > 0) {
           const setClause = entries

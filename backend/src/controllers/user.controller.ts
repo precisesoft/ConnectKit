@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
+import '../types/express'; // Import extended types
 import { StatusCodes } from 'http-status-codes';
 import { UserService, UserListRequest, UserUpdateRequest } from '../services/user.service';
 import { UserRole } from '../models/user.model';
 import { ValidationError } from '../utils/errors';
-import { logger } from '../utils/logger';
+// import { logger } from '../utils/logger';  // Remove unused import
 import { asyncHandler } from '../middleware/error.middleware';
 import { SUCCESS_MESSAGES } from '../utils/constants';
 
@@ -44,7 +45,10 @@ export class UserController {
    * Get current user's profile
    */
   getMyProfile = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
     const user = await this.userService.getUserById(currentUser.id);
     
     res.status(StatusCodes.OK).json({
@@ -57,7 +61,10 @@ export class UserController {
    * List users with pagination and filters
    */
   listUsers = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
     const request: UserListRequest = {
       page: parseInt(req.query.page as string) || 1,
       limit: parseInt(req.query.limit as string) || 10,
@@ -84,7 +91,10 @@ export class UserController {
    */
   updateUser = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
     const updates: UserUpdateRequest = req.body;
 
     const updatedUser = await this.userService.updateUser(id, updates, currentUser);
@@ -100,7 +110,10 @@ export class UserController {
    * Update current user's profile
    */
   updateMyProfile = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
     const updates: UserUpdateRequest = req.body;
     
     // Users can only update certain fields on their own profile
@@ -124,7 +137,10 @@ export class UserController {
    */
   deactivateUser = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
 
     await this.userService.deactivateUser(id, currentUser);
     
@@ -139,7 +155,10 @@ export class UserController {
    */
   activateUser = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
 
     await this.userService.activateUser(id, currentUser);
     
@@ -154,7 +173,10 @@ export class UserController {
    */
   deleteUser = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
 
     await this.userService.deleteUser(id, currentUser);
     
@@ -169,7 +191,10 @@ export class UserController {
    */
   restoreUser = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
 
     const restoredUser = await this.userService.restoreUser(id, currentUser);
     
@@ -186,7 +211,10 @@ export class UserController {
   changeUserRole = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
     const { role } = req.body;
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
 
     if (!role || !Object.values(UserRole).includes(role)) {
       throw new ValidationError('Valid role is required');
@@ -205,7 +233,10 @@ export class UserController {
    * Get user statistics
    */
   getUserStats = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
     const stats = await this.userService.getUserStats(currentUser);
     
     res.status(StatusCodes.OK).json({
@@ -218,7 +249,10 @@ export class UserController {
    * Search users
    */
   searchUsers = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
     const { search } = req.query;
     
     if (!search) {
@@ -242,7 +276,10 @@ export class UserController {
    * Get users by role
    */
   getUsersByRole = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
     const { role } = req.params;
 
     if (!Object.values(UserRole).includes(role as UserRole)) {
@@ -267,7 +304,10 @@ export class UserController {
    */
   unlockUser = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
 
     await this.userService.unlockUser(id, currentUser);
     
@@ -282,7 +322,10 @@ export class UserController {
    */
   verifyUserEmail = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
 
     await this.userService.verifyUserEmail(id, currentUser);
     
@@ -296,7 +339,10 @@ export class UserController {
    * Bulk update users
    */
   bulkUpdateUsers = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
     const { updates } = req.body;
 
     if (!Array.isArray(updates) || updates.length === 0) {
@@ -316,7 +362,10 @@ export class UserController {
    * Export users
    */
   exportUsers = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
     const filters = {
       role: req.query.role as UserRole,
       isActive: req.query.isActive === 'true' ? true : req.query.isActive === 'false' ? false : undefined,

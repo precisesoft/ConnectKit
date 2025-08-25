@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import '../types/express'; // Import extended types
 import { StatusCodes } from 'http-status-codes';
 import { 
   ContactService,
@@ -8,7 +9,7 @@ import {
 } from '../services/contact.service';
 import { CreateContactDTO, UpdateContactDTO, ContactStatus } from '../models/contact.model';
 import { ValidationError } from '../utils/errors';
-import { logger } from '../utils/logger';
+// import { logger } from '../utils/logger';  // Remove unused import
 import { asyncHandler } from '../middleware/error.middleware';
 import { SUCCESS_MESSAGES } from '../utils/constants';
 
@@ -23,7 +24,10 @@ export class ContactController {
    * Create a new contact
    */
   createContact = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
     const contactData: CreateContactDTO = req.body;
 
     const contact = await this.contactService.createContact(currentUser.id, contactData);
@@ -39,8 +43,12 @@ export class ContactController {
    * Get contact by ID
    */
   getContactById = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
     const { id } = req.params;
+
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
 
     const contact = await this.contactService.getContactById(id, currentUser.id);
     
@@ -54,7 +62,10 @@ export class ContactController {
    * List contacts for current user
    */
   listContacts = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
     const request: ContactListRequest = {
       page: parseInt(req.query.page as string) || 1,
       limit: parseInt(req.query.limit as string) || 10,
@@ -86,7 +97,10 @@ export class ContactController {
    * Update contact
    */
   updateContact = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
     const { id } = req.params;
     const updates: UpdateContactDTO = req.body;
 
@@ -103,7 +117,10 @@ export class ContactController {
    * Delete contact
    */
   deleteContact = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
     const { id } = req.params;
 
     await this.contactService.deleteContact(id, currentUser.id);
@@ -118,7 +135,10 @@ export class ContactController {
    * Archive contact
    */
   archiveContact = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
     const { id } = req.params;
 
     const contact = await this.contactService.archiveContact(id, currentUser.id);
@@ -134,7 +154,10 @@ export class ContactController {
    * Restore archived contact
    */
   restoreContact = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
     const { id } = req.params;
 
     const contact = await this.contactService.restoreContact(id, currentUser.id);
@@ -150,7 +173,10 @@ export class ContactController {
    * Toggle favorite status
    */
   toggleFavorite = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
     const { id } = req.params;
 
     const contact = await this.contactService.toggleFavorite(id, currentUser.id);
@@ -166,7 +192,10 @@ export class ContactController {
    * Add tag to contact
    */
   addTag = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
     const { id } = req.params;
     const { tag } = req.body;
 
@@ -187,7 +216,10 @@ export class ContactController {
    * Remove tag from contact
    */
   removeTag = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
     const { id } = req.params;
     const { tag } = req.body;
 
@@ -208,7 +240,10 @@ export class ContactController {
    * Get favorite contacts
    */
   getFavorites = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
     const options = {
       limit: parseInt(req.query.limit as string) || 10,
       offset: ((parseInt(req.query.page as string) || 1) - 1) * (parseInt(req.query.limit as string) || 10),
@@ -226,7 +261,10 @@ export class ContactController {
    * Get contacts by status
    */
   getContactsByStatus = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
     const { status } = req.params;
 
     if (!Object.values(ContactStatus).includes(status as ContactStatus)) {
@@ -254,7 +292,10 @@ export class ContactController {
    * Search contacts
    */
   searchContacts = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
     const { search } = req.query;
 
     if (!search) {
@@ -278,7 +319,10 @@ export class ContactController {
    * Get contact statistics
    */
   getContactStats = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
     const stats = await this.contactService.getContactStats(currentUser.id);
     
     res.status(StatusCodes.OK).json({
@@ -291,7 +335,10 @@ export class ContactController {
    * Get unique companies
    */
   getCompanies = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
     const companies = await this.contactService.getCompanies(currentUser.id);
     
     res.status(StatusCodes.OK).json({
@@ -304,7 +351,10 @@ export class ContactController {
    * Get unique tags
    */
   getTags = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
     const tags = await this.contactService.getTags(currentUser.id);
     
     res.status(StatusCodes.OK).json({
@@ -317,7 +367,10 @@ export class ContactController {
    * Bulk update contacts
    */
   bulkUpdateContacts = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
     const request: ContactBulkUpdateRequest = req.body;
 
     if (!request.contactIds || !Array.isArray(request.contactIds) || request.contactIds.length === 0) {
@@ -341,7 +394,10 @@ export class ContactController {
    * Export contacts
    */
   exportContacts = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
     const request: ContactExportRequest = {
       format: req.query.format as 'json' | 'csv' | 'excel' || 'json',
       fields: req.query.fields ? (req.query.fields as string).split(',') : undefined,
@@ -365,7 +421,10 @@ export class ContactController {
    * Find duplicate contacts
    */
   findDuplicates = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
     const duplicates = await this.contactService.findDuplicates(currentUser.id);
     
     res.status(StatusCodes.OK).json({
@@ -378,7 +437,10 @@ export class ContactController {
    * Merge duplicate contacts
    */
   mergeDuplicates = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
     const { primaryContactId, duplicateContactIds } = req.body;
 
     if (!primaryContactId) {
@@ -406,7 +468,10 @@ export class ContactController {
    * Import contacts
    */
   importContacts = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+    if (!currentUser?.id) {
+      throw new ValidationError('User authentication required');
+    }
     const { contacts } = req.body;
 
     if (!contacts || !Array.isArray(contacts) || contacts.length === 0) {

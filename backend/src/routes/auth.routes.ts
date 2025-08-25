@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { createAuthController } from '../controllers/auth.controller';
 
 // Lazy controller getter
@@ -34,7 +34,7 @@ router.post(
   authRateLimit,
   validate(authValidators.register),
   auditLogger('user_registration'),
-  (req, res, next) => getAuthController().register(req, res, next)
+  (req: Request, res: Response, next: NextFunction) => getAuthController().register(req, res, next)
 );
 
 /**
@@ -47,7 +47,7 @@ router.post(
   authRateLimit,
   validate(authValidators.login),
   auditLogger('user_login'),
-  (req, res, next) => getAuthController().login(req, res, next)
+  (req: Request, res: Response, next: NextFunction) => getAuthController().login(req, res, next)
 );
 
 /**
@@ -58,7 +58,7 @@ router.post(
 router.post(
   '/refresh',
   validate(authValidators.refreshToken),
-  (req, res, next) => getAuthController().refreshToken(req, res, next)
+  (req: Request, res: Response, next: NextFunction) => getAuthController().refreshToken(req, res, next)
 );
 
 /**
@@ -71,7 +71,7 @@ router.post(
   authenticate,
   validate(authValidators.logout),
   auditLogger('user_logout'),
-  (req, res, next) => getAuthController().logout(req, res, next)
+  (req: Request, res: Response, next: NextFunction) => getAuthController().logout(req, res, next)
 );
 
 /**
@@ -83,7 +83,7 @@ router.post(
   '/logout-all',
   authenticate,
   auditLogger('user_logout_all'),
-  (req, res, next) => getAuthController().logoutAll(req, res, next)
+  (req: Request, res: Response, next: NextFunction) => getAuthController().logoutAll(req, res, next)
 );
 
 /**
@@ -96,7 +96,7 @@ router.post(
   passwordResetRateLimit,
   validate(authValidators.forgotPassword),
   auditLogger('password_reset_request'),
-  (req, res, next) => getAuthController().forgotPassword(req, res, next)
+  (req: Request, res: Response, next: NextFunction) => getAuthController().forgotPassword(req, res, next)
 );
 
 /**
@@ -108,7 +108,7 @@ router.post(
   '/reset-password',
   validate(authValidators.resetPassword),
   auditLogger('password_reset'),
-  (req, res, next) => getAuthController().resetPassword(req, res, next)
+  (req: Request, res: Response, next: NextFunction) => getAuthController().resetPassword(req, res, next)
 );
 
 /**
@@ -121,7 +121,7 @@ router.post(
   authenticate,
   validate(authValidators.changePassword),
   auditLogger('password_change'),
-  (req, res, next) => getAuthController().changePassword(req, res, next)
+  (req: Request, res: Response, next: NextFunction) => getAuthController().changePassword(req, res, next)
 );
 
 /**
@@ -133,7 +133,7 @@ router.post(
   '/verify-email',
   validate(authValidators.verifyEmail),
   auditLogger('email_verification'),
-  (req, res, next) => getAuthController().verifyEmail(req, res, next)
+  (req: Request, res: Response, next: NextFunction) => getAuthController().verifyEmail(req, res, next)
 );
 
 /**
@@ -145,7 +145,7 @@ router.post(
   '/resend-verification',
   emailVerificationRateLimit,
   validate(authValidators.resendEmailVerification),
-  (req, res, next) => getAuthController().resendEmailVerification(req, res, next)
+  (req: Request, res: Response, next: NextFunction) => getAuthController().resendEmailVerification(req, res, next)
 );
 
 /**
@@ -156,7 +156,7 @@ router.post(
 router.get(
   '/profile',
   authenticate,
-  (req, res, next) => getAuthController().profile(req, res, next)
+  (req: Request, res: Response, next: NextFunction) => getAuthController().profile(req, res, next)
 );
 
 /**
@@ -167,7 +167,7 @@ router.get(
 router.post(
   '/validate',
   validate(authValidators.validateToken),
-  (req, res, next) => getAuthController().validateToken(req, res, next)
+  (req: Request, res: Response, next: NextFunction) => getAuthController().validateToken(req, res, next)
 );
 
 /**
@@ -178,7 +178,7 @@ router.post(
 router.get(
   '/status',
   optionalAuthenticate,
-  (req, res, next) => getAuthController().status(req, res, next)
+  (req: Request, res: Response, next: NextFunction) => getAuthController().status(req, res, next)
 );
 
 /**
@@ -189,7 +189,7 @@ router.get(
 router.get(
   '/check-email/:email',
   validate(authValidators.checkEmail),
-  (req, res, next) => getAuthController().checkEmail(req, res, next)
+  (req: Request, res: Response, next: NextFunction) => getAuthController().checkEmail(req, res, next)
 );
 
 /**
@@ -200,7 +200,7 @@ router.get(
 router.get(
   '/check-username/:username',
   validate(authValidators.checkUsername),
-  (req, res, next) => getAuthController().checkUsername(req, res, next)
+  (req: Request, res: Response, next: NextFunction) => getAuthController().checkUsername(req, res, next)
 );
 
 /**
@@ -210,7 +210,7 @@ router.get(
  */
 router.get(
   '/password-requirements',
-  (req, res, next) => getAuthController().passwordRequirements(req, res, next)
+  (req: Request, res: Response, next: NextFunction) => getAuthController().passwordRequirements(req, res, next)
 );
 
 /**
@@ -221,7 +221,7 @@ router.get(
 router.get(
   '/sessions',
   authenticate,
-  (req, res, next) => getAuthController().sessions(req, res, next)
+  (req: Request, res: Response, next: NextFunction) => getAuthController().sessions(req, res, next)
 );
 
 /**
@@ -234,7 +234,7 @@ router.delete(
   authenticate,
   validate(authValidators.revokeSession),
   auditLogger('session_revocation'),
-  (req, res, next) => getAuthController().revokeSession(req, res, next)
+  (req: Request, res: Response, next: NextFunction) => getAuthController().revokeSession(req, res, next)
 );
 
 export default router;

@@ -201,12 +201,12 @@ export class User {
 
   toJSON(): any {
     const obj = { ...this };
-    delete obj.passwordHash;
-    delete obj.password;
-    delete obj.verificationToken;
-    delete obj.resetPasswordToken;
-    delete obj.resetPasswordExpires;
-    delete obj.mfaSecret;
+    delete (obj as any).passwordHash;
+    delete (obj as any).password;
+    delete (obj as any).verificationToken;
+    delete (obj as any).resetPasswordToken;
+    delete (obj as any).resetPasswordExpires;
+    delete (obj as any).mfaSecret;
     return obj;
   }
 }

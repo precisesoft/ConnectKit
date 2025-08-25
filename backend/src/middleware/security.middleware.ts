@@ -38,11 +38,11 @@ export const securityHeaders = helmet({
   // DNS Prefetch Control
   dnsPrefetchControl: { allow: false },
 
-  // Expect-CT (deprecated but still useful)
-  expectCt: {
-    enforce: true,
-    maxAge: 86400, // 24 hours
-  },
+  // Expect-CT has been removed from helmet v7
+  // expectCt: {
+  //   enforce: true,
+  //   maxAge: 86400, // 24 hours
+  // },
 
   // Feature Policy / Permissions Policy
   permittedCrossDomainPolicies: false,
@@ -75,8 +75,7 @@ export const securityHeaders = helmet({
   // X-XSS-Protection (legacy but still useful)
   xssFilter: true,
 
-  // Additional security headers
-  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  // Additional security headers (crossOriginResourcePolicy already defined above)
 
   // Permissions Policy
   permissionsPolicy: {
@@ -121,7 +120,7 @@ export const noSQLInjectionProtection = mongoSanitize({
  */
 export const xssProtection = (
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ): void => {
   // Sanitize request body

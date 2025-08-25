@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import '../types/express'; // Import extended types
+import jwt, { Algorithm } from 'jsonwebtoken';
 import {
   UnauthorizedError,
   ForbiddenError,
@@ -148,7 +149,7 @@ export async function blacklistToken(
  * Main authentication middleware
  */
 export const authenticate = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     const token = extractToken(req);
 
     if (!token) {
@@ -174,6 +175,8 @@ export const authenticate = asyncHandler(
       id: payload.sub,
       email: payload.email,
       username: payload.username,
+      firstName: payload.firstName,
+      lastName: payload.lastName,
       role: payload.role,
       isActive: payload.isActive,
       isVerified: payload.isVerified,
@@ -195,7 +198,7 @@ export const authenticate = asyncHandler(
  * Optional authentication middleware (doesn't throw if no token)
  */
 export const optionalAuthenticate = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     const token = extractToken(req);
 
     if (!token) {
@@ -345,7 +348,7 @@ export function generateAccessToken(user: {
 
   return jwt.sign(payload, jwtConfig.secret, {
     expiresIn: jwtConfig.expiresIn,
-    algorithm: jwtConfig.algorithm,
+    algorithm: jwtConfig.algorithm as Algorithm,
     jwtid: generateJTI(), // JWT ID for blacklisting
   });
 }
@@ -365,7 +368,7 @@ export function generateRefreshToken(userId: string): string {
 
   return jwt.sign(payload, jwtConfig.secret, {
     expiresIn: jwtConfig.refreshTokenExpiresIn,
-    algorithm: jwtConfig.algorithm,
+    algorithm: jwtConfig.algorithm as Algorithm,
     jwtid: generateJTI(),
   });
 }
@@ -382,7 +385,7 @@ export async function verifyRefreshToken(
     const payload = jwt.verify(token, jwtConfig.secret, {
       issuer: jwtConfig.issuer,
       audience: jwtConfig.audience,
-      algorithms: [jwtConfig.algorithm],
+      algorithms: [jwtConfig.algorithm as Algorithm],
     }) as any;
 
     if (payload.type !== 'refresh') {

@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { body, param, query, ValidationChain, validationResult } from 'express-validator';
 import { 
-  ValidationError, 
-  BadRequestError 
+  ValidationError
+  // BadRequestError  // Remove unused import
 } from '../utils/errors';
 import { 
   VALIDATION_PATTERNS,
@@ -17,17 +17,17 @@ import { logger } from '../utils/logger';
  */
 export const handleValidationErrors = (
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ): void => {
   const errors = validationResult(req);
   
   if (!errors.isEmpty()) {
     const formattedErrors = errors.array().map(error => ({
-      field: error.param,
+      field: 'path' in error ? error.path : 'unknown',
       message: error.msg,
-      value: error.value,
-      location: error.location,
+      value: 'value' in error ? error.value : undefined,
+      location: 'location' in error ? error.location : 'unknown',
     }));
     
     logger.warn('Validation failed', {
@@ -400,7 +400,7 @@ export const validate = (validations: ValidationChain[]) => {
 /**
  * Sanitization middleware
  */
-export const sanitize = (req: Request, res: Response, next: NextFunction): void => {
+export const sanitize = (req: Request, _res: Response, next: NextFunction): void => {
   // Remove null prototype objects and functions
   const sanitizeObject = (obj: any): any => {
     if (obj === null || typeof obj !== 'object') {

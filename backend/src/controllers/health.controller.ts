@@ -14,12 +14,12 @@ export interface HealthCheckResponse {
   environment: string;
   services: {
     database: {
-      status: 'healthy' | 'unhealthy';
+      status: 'healthy' | 'unhealthy' | 'degraded';
       responseTime?: number;
       error?: string;
     };
     redis: {
-      status: 'healthy' | 'unhealthy';
+      status: 'healthy' | 'unhealthy' | 'degraded';
       responseTime?: number;
       error?: string;
     };
@@ -40,7 +40,7 @@ export class HealthController {
   /**
    * Basic health check endpoint
    */
-  health = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  health = asyncHandler(async (_req: Request, res: Response): Promise<void> => {
     const healthCheck: HealthCheckResponse = {
       status: 'healthy',
       timestamp: new Date().toISOString(),
@@ -77,7 +77,7 @@ export class HealthController {
   /**
    * Liveness probe (simple check to see if the app is running)
    */
-  liveness = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  liveness = asyncHandler(async (_req: Request, res: Response): Promise<void> => {
     res.status(StatusCodes.OK).json({
       success: true,
       message: 'Service is alive',
@@ -88,7 +88,7 @@ export class HealthController {
   /**
    * Readiness probe (check if the app is ready to serve traffic)
    */
-  readiness = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  readiness = asyncHandler(async (_req: Request, res: Response): Promise<void> => {
     const checks = await Promise.allSettled([
       this.checkDatabase(),
       this.checkRedis(),
@@ -121,7 +121,7 @@ export class HealthController {
   /**
    * Detailed system information
    */
-  info = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  info = asyncHandler(async (_req: Request, res: Response): Promise<void> => {
     const systemInfo = {
       application: {
         name: 'ConnectKit API',

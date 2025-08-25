@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import '../types/express'; // Import extended types
 import morgan from 'morgan';
 import { logger, morganStream } from '../utils/logger';
 import appConfig from '../config/app.config';
@@ -140,7 +141,7 @@ export const detailedRequestLogger = (req: Request, res: Response, next: NextFun
   
   // Override res.end to log response
   const originalEnd = res.end;
-  res.end = function(chunk?: any, encoding?: any) {
+  res.end = function(chunk?: any, encoding?: any): Response {
     const responseTime = Date.now() - startTime;
     
     // Log response details
@@ -168,7 +169,7 @@ export const detailedRequestLogger = (req: Request, res: Response, next: NextFun
       });
     }
     
-    originalEnd.call(this, chunk, encoding);
+    return originalEnd.call(this, chunk, encoding);
   };
   
   next();
@@ -177,7 +178,7 @@ export const detailedRequestLogger = (req: Request, res: Response, next: NextFun
 /**
  * Error logging middleware
  */
-export const errorLogger = (error: Error, req: Request, res: Response, next: NextFunction): void => {
+export const errorLogger = (error: Error, req: Request, _res: Response, next: NextFunction): void => {
   logger.error('Request error', {
     requestId: (req as any).id,
     method: req.method,
@@ -207,7 +208,7 @@ export const auditLogger = (action: string) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     const originalEnd = res.end;
     
-    res.end = function(chunk?: any, encoding?: any) {
+    res.end = function(chunk?: any, encoding?: any): Response {
       // Only log successful operations
       if (res.statusCode >= 200 && res.statusCode < 300) {
         logger.info('Audit log', {
@@ -243,7 +244,7 @@ export const auditLogger = (action: string) => {
  * Security event logger
  */
 export const securityLogger = (eventType: string, details?: any) => {
-  return (req: Request, res: Response, next: NextFunction): void => {
+  return (req: Request, _res: Response, next: NextFunction): void => {
     logger.warn('Security event', {
       eventType,
       requestId: (req as any).id,
@@ -267,7 +268,7 @@ export const securityLogger = (eventType: string, details?: any) => {
  * Database operation logger
  */
 export const dbLogger = (operation: string) => {
-  return (req: Request, res: Response, next: NextFunction): void => {
+  return (req: Request, _res: Response, next: NextFunction): void => {
     (req as any).dbOperation = operation;
     (req as any).dbStartTime = Date.now();
     
@@ -283,7 +284,7 @@ export const performanceLogger = (req: Request, res: Response, next: NextFunctio
   const startUsage = process.cpuUsage();
   
   const originalEnd = res.end;
-  res.end = function(chunk?: any, encoding?: any) {
+  res.end = function(chunk?: any, encoding?: any): Response {
     const diff = process.hrtime(startTime);
     const cpuUsage = process.cpuUsage(startUsage);
     const responseTime = (diff[0] * 1000) + (diff[1] / 1000000); // Convert to milliseconds
@@ -313,7 +314,7 @@ export const performanceLogger = (req: Request, res: Response, next: NextFunctio
       });
     }
     
-    originalEnd.call(this, chunk, encoding);
+    return originalEnd.call(this, chunk, encoding);
   };
   
   next();

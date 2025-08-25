@@ -378,7 +378,8 @@ export class AuthController {
 
       // This is a simplified check - in production you might want to be more cautious
       // about revealing whether an email exists for security reasons
-      const result = await this.authService.validateToken('dummy');
+      // Remove unused result variable
+      // const result = await this.authService.validateToken('dummy');
 
       res.status(StatusCodes.OK).json({
         success: true,
@@ -416,7 +417,7 @@ export class AuthController {
    * Get password strength requirements
    */
   passwordRequirements = asyncHandler(
-    async (req: Request, res: Response): Promise<void> => {
+    async (_req: Request, res: Response): Promise<void> => {
       res.status(StatusCodes.OK).json({
         success: true,
         data: {
@@ -466,7 +467,7 @@ export class AuthController {
    */
   sessions = asyncHandler(
     async (req: Request, res: Response): Promise<void> => {
-      const user = (req as any).user;
+      // const user = (req as any).user;  // Remove unused variable
 
       // This would typically fetch active sessions from your token store
       const sessions = [

@@ -7,7 +7,8 @@ import {
   createErrorResponse,
   ValidationError,
   InternalServerError,
-  UnauthorizedError
+  UnauthorizedError,
+  NotFoundError
 } from '../utils/errors';
 import { logger } from '../utils/logger';
 import appConfig from '../config/app.config';
@@ -33,7 +34,7 @@ export const errorHandler = (
   error: Error | AppError,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ): void => {
   // Generate request ID for tracking
   const requestId = req.headers['x-request-id'] as string || generateRequestId();
@@ -109,8 +110,13 @@ function createErrorResponseObject(error: AppError, requestId: string): ErrorRes
   const response: ErrorResponse = {
     success: false,
     error: {
-      ...errorData,
+      type: errorData.type,
+      message: errorData.message,
+      statusCode: errorData.statusCode,
+      timestamp: errorData.timestamp,
       requestId,
+      context: errorData.context,
+      stack: errorData.stack,
     },
   };
   
@@ -200,17 +206,12 @@ export const asyncHandler = (
   };
 };
 
-class NotFoundError extends AppError {
-  constructor(message: string) {
-    super(message, StatusCodes.NOT_FOUND, true);
-    this.name = 'NotFoundError';
-  }
-}
+// NotFoundError is imported from utils/errors
 
 /**
  * 404 Not Found handler
  */
-export const notFoundHandler = (req: Request, res: Response, next: NextFunction): void => {
+export const notFoundHandler = (req: Request, _res: Response, next: NextFunction): void => {
   const error = new NotFoundError(`Route ${req.method} ${req.originalUrl} not found`);
   next(error);
 };

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { Options, ClientRateLimitInfo } from 'express-rate-limit';
 import { redisConnection } from '../config/redis.config';
 import { RateLimitExceededError } from '../utils/errors';
 import { RATE_LIMIT_CONSTANTS } from '../utils/constants';
@@ -16,7 +16,7 @@ class RedisRateLimitStore implements rateLimit.Store {
 
   async increment(
     key: string
-  ): Promise<{ totalHits: number; timeToExpire: number | undefined }> {
+  ): Promise<ClientRateLimitInfo> {
     try {
       const redis = redisConnection.getClient();
       const fullKey = `${this.prefix}${key}`;
@@ -42,14 +42,21 @@ class RedisRateLimitStore implements rateLimit.Store {
         );
       }
 
+      const resetTime = ttl > 0 ? new Date(Date.now() + ttl * 1000) : undefined;
+      
       return {
         totalHits,
         timeToExpire: ttl > 0 ? ttl * 1000 : undefined,
+        resetTime,
       };
     } catch (error) {
       logger.error('Redis rate limit store error:', error);
       // Fallback to allowing the request if Redis fails
-      return { totalHits: 0, timeToExpire: undefined };
+      return { 
+        totalHits: 0, 
+        timeToExpire: undefined, 
+        resetTime: undefined 
+      };
     }
   }
 
