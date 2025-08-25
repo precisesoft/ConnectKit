@@ -1,13 +1,7 @@
-name: Performance Testing
+name: Performance Testing (Disabled)
 
+# Temporarily disabled - using minimal CI first
 on:
-  pull_request:
-    branches: [main, develop]
-  push:
-    branches: [main]
-  schedule:
-    # Run performance tests daily at 2 AM UTC
-    - cron: "0 2 * * *"
   workflow_dispatch:
     inputs:
       test_duration:
@@ -18,6 +12,13 @@ on:
         description: "Maximum concurrent users (default: 100)"
         default: "100"
         type: string
+  # pull_request:
+  #   branches: [main, develop]
+  # push:
+  #   branches: [main]
+  schedule:
+    # Run performance tests daily at 2 AM UTC
+    - cron: "0 2 * * *"
 
 env:
   NODE_VERSION: "18"
