@@ -17,7 +17,11 @@ services:
     networks:
       - connectkit-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-admin} -d ${DB_NAME:-connectkit}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DB_USER:-admin} -d ${DB_NAME:-connectkit}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -26,7 +30,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1'
+          cpus: "1"
           memory: 1G
 
   # Redis Cache
@@ -51,7 +55,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 512M
 
   # Backend API
@@ -80,7 +84,7 @@ services:
       - ./backend:/app
       - /app/node_modules
     ports:
-      - "${BACKEND_PORT:-3001}:3001"
+      - "${BACKEND_PORT:-3001}:${BACKEND_PORT:-3001}"
     networks:
       - connectkit-network
     depends_on:
@@ -89,7 +93,8 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      test:
+        ["CMD", "curl", "-f", "http://localhost:${BACKEND_PORT:-3001}/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -99,7 +104,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1'
+          cpus: "1"
           memory: 1G
 
   # Frontend Application
@@ -112,19 +117,19 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: ${NODE_ENV:-development}
-      VITE_API_URL: ${VITE_API_URL:-http://localhost:3001/api}
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:${BACKEND_PORT:-3001}/api}
       VITE_APP_NAME: ${VITE_APP_NAME:-ConnectKit}
     volumes:
       - ./frontend:/app
       - /app/node_modules
     ports:
-      - "${FRONTEND_PORT:-3000}:3000"
+      - "${FRONTEND_PORT:-3000}:${FRONTEND_PORT:-3000}"
     networks:
       - connectkit-network
     depends_on:
       - backend
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      test: ["CMD", "curl", "-f", "http://localhost:${FRONTEND_PORT:-3000}"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -134,7 +139,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1'
+          cpus: "1"
           memory: 1G
 
 networks:
