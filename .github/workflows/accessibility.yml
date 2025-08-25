@@ -28,8 +28,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm ci
-          npm ci --workspace=frontend
+          npm install
+          npm install --workspace=frontend
 
       - name: Build frontend
         working-directory: ./frontend
@@ -128,8 +128,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm ci
-          npm ci --workspace=frontend
+          npm install
+          npm install --workspace=frontend
 
       - name: Install Playwright and axe-playwright
         working-directory: ./frontend
@@ -402,8 +402,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm ci
-          npm ci --workspace=frontend
+          npm install
+          npm install --workspace=frontend
 
       - name: Start services
         run: |
@@ -550,8 +550,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm ci
-          npm ci --workspace=frontend
+          npm install
+          npm install --workspace=frontend
 
       - name: Install test dependencies
         working-directory: ./frontend
