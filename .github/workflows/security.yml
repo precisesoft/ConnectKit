@@ -376,8 +376,10 @@ jobs:
           EOF
 
           # Set unique port overrides to prevent conflicts with other security jobs
-          export POSTGRES_PORT=5433
+          export DB_PORT=5433
           export REDIS_PORT=6380
+          export BACKEND_PORT=3001
+          export FRONTEND_PORT=3000
 
           # Check port availability before starting
           if lsof -i:3000 -i:3001 -i:5433 -i:6380 >/dev/null 2>&1; then
@@ -462,8 +464,10 @@ jobs:
           EOF
 
           # Set unique port overrides to prevent conflicts with other security jobs
-          export POSTGRES_PORT=5434
+          export DB_PORT=5434
           export REDIS_PORT=6381
+          export BACKEND_PORT=3101
+          export FRONTEND_PORT=3100
 
           # Check port availability before starting
           if lsof -i:3100 -i:3101 -i:5434 -i:6381 >/dev/null 2>&1; then
