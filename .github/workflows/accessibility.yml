@@ -218,7 +218,7 @@ jobs:
       - name: Run Axe accessibility tests
         working-directory: ./frontend
         run: |
-          npx playwright test tests/accessibility/axe.spec.ts --reporter=html --output-dir=accessibility-results
+          npx playwright test tests/accessibility/axe.spec.ts --reporter=html --output=accessibility-results
         continue-on-error: true
 
       - name: Upload Axe test results
@@ -266,8 +266,8 @@ jobs:
 
       - name: Install WAVE CLI (alternative implementation)
         run: |
-          # Install puppeteer for web scraping WAVE results
-          npm install -g puppeteer
+          # Install puppeteer locally for web scraping WAVE results
+          npm install puppeteer
 
           # Create WAVE testing script
           cat > wave-test.js << 'EOF'
@@ -431,7 +431,7 @@ jobs:
 
       - name: Install color contrast testing tools
         run: |
-          npm install -g puppeteer color-contrast-checker
+          npm install puppeteer color-contrast-checker
 
       - name: Create color contrast test script
         run: |
@@ -788,7 +788,7 @@ jobs:
       - name: Run keyboard navigation tests
         working-directory: ./frontend
         run: |
-          npx playwright test tests/accessibility/keyboard-navigation.spec.ts --reporter=html --output-dir=keyboard-test-results
+          npx playwright test tests/accessibility/keyboard-navigation.spec.ts --reporter=html --output=keyboard-test-results
         continue-on-error: true
 
       - name: Upload keyboard navigation results
