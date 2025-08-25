@@ -1,0 +1,67 @@
+name: "Setup Node.js and Dependencies"
+description: "Common setup for Node.js and npm dependencies with caching"
+inputs:
+  node-version:
+    description: "Node.js version to use"
+    required: false
+    default: "18"
+  install-root:
+    description: "Install root dependencies"
+    required: false
+    default: "true"
+  install-backend:
+    description: "Install backend dependencies"
+    required: false
+    default: "false"
+  install-frontend:
+    description: "Install frontend dependencies"
+    required: false
+    default: "false"
+  cache-key-suffix:
+    description: "Additional suffix for cache key"
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: "npm"
+        cache-dependency-path: |
+          package-lock.json
+          ${{ inputs.install-backend == 'true' && 'backend/package-lock.json' || '' }}
+          ${{ inputs.install-frontend == 'true' && 'frontend/package-lock.json' || '' }}
+
+    - name: Install root dependencies
+      if: inputs.install-root == 'true'
+      shell: bash
+      run: npm ci
+
+    - name: Install backend dependencies
+      if: inputs.install-backend == 'true'
+      shell: bash
+      working-directory: ./backend
+      run: npm ci
+
+    - name: Install frontend dependencies
+      if: inputs.install-frontend == 'true'
+      shell: bash
+      working-directory: ./frontend
+      run: npm ci
+
+    - name: Cache additional dependencies
+      if: inputs.cache-key-suffix != ''
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.npm
+          node_modules
+          backend/node_modules
+          frontend/node_modules
+        key: node-deps-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-${{ inputs.cache-key-suffix }}
+        restore-keys: |
+          node-deps-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-
+          node-deps-${{ runner.os }}-
