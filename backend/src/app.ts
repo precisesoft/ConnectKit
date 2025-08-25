@@ -85,7 +85,7 @@ export function createApp(): express.Application {
   // Body parsing middleware
   app.use(express.json({ 
     limit: appConfig.get('bodyLimit'),
-    strict: true,
+    strict: false,
   }));
   
   app.use(express.urlencoded({ 

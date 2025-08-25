@@ -1,5 +1,14 @@
 import { Router } from 'express';
-import { userController } from '../controllers/user.controller';
+import { createUserController } from '../controllers/user.controller';
+
+// Lazy controller getter
+let userController: any = null;
+const getUserController = () => {
+  if (!userController) {
+    userController = createUserController();
+  }
+  return userController;
+};
 import { userValidators } from '../validators/user.validator';
 import { validate } from '../middleware/validation.middleware';
 import { 
@@ -23,7 +32,7 @@ router.use(authenticate);
  */
 router.get(
   '/me',
-  userController.getMyProfile
+  (req, res, next) => getUserController().getMyProfile(req, res, next)
 );
 
 /**
@@ -35,7 +44,7 @@ router.put(
   '/me',
   validate(userValidators.updateProfile),
   auditLogger('profile_update'),
-  userController.updateMyProfile
+  (req, res, next) => getUserController().updateMyProfile(req, res, next)
 );
 
 /**
@@ -47,7 +56,7 @@ router.get(
   '/',
   managerOrAdmin,
   validate(userValidators.listUsers),
-  userController.listUsers
+  (req, res, next) => getUserController().listUsers(req, res, next)
 );
 
 /**
@@ -59,7 +68,7 @@ router.get(
   '/search',
   managerOrAdmin,
   validate(userValidators.searchUsers),
-  userController.searchUsers
+  (req, res, next) => getUserController().searchUsers(req, res, next)
 );
 
 /**
@@ -70,7 +79,7 @@ router.get(
 router.get(
   '/stats',
   managerOrAdmin,
-  userController.getUserStats
+  (req, res, next) => getUserController().getUserStats(req, res, next)
 );
 
 /**
@@ -83,7 +92,7 @@ router.get(
   adminOnly,
   validate(userValidators.exportUsers),
   auditLogger('user_export'),
-  userController.exportUsers
+  (req, res, next) => getUserController().exportUsers(req, res, next)
 );
 
 /**
@@ -95,7 +104,7 @@ router.get(
   '/role/:role',
   managerOrAdmin,
   validate(userValidators.getUsersByRole),
-  userController.getUsersByRole
+  (req, res, next) => getUserController().getUsersByRole(req, res, next)
 );
 
 /**
@@ -107,7 +116,7 @@ router.get(
   '/:id',
   managerOrAdmin,
   validate(userValidators.userId),
-  userController.getUserById
+  (req, res, next) => getUserController().getUserById(req, res, next)
 );
 
 /**
@@ -119,7 +128,7 @@ router.get(
   '/:id/profile',
   managerOrAdmin,
   validate(userValidators.userId),
-  userController.getUserProfile
+  (req, res, next) => getUserController().getUserProfile(req, res, next)
 );
 
 /**
@@ -132,7 +141,7 @@ router.put(
   // Dynamic permission check handled in controller
   validate([...userValidators.userId, ...userValidators.updateUser]),
   auditLogger('user_update'),
-  userController.updateUser
+  (req, res, next) => getUserController().updateUser(req, res, next)
 );
 
 /**
@@ -144,7 +153,7 @@ router.post(
   '/:id/deactivate',
   validate(userValidators.userId),
   auditLogger('user_deactivation'),
-  userController.deactivateUser
+  (req, res, next) => getUserController().deactivateUser(req, res, next)
 );
 
 /**
@@ -157,7 +166,7 @@ router.post(
   adminOnly,
   validate(userValidators.userId),
   auditLogger('user_activation'),
-  userController.activateUser
+  (req, res, next) => getUserController().activateUser(req, res, next)
 );
 
 /**
@@ -169,7 +178,7 @@ router.delete(
   '/:id',
   validate(userValidators.userId),
   auditLogger('user_deletion'),
-  userController.deleteUser
+  (req, res, next) => getUserController().deleteUser(req, res, next)
 );
 
 /**
@@ -182,7 +191,7 @@ router.post(
   adminOnly,
   validate(userValidators.userId),
   auditLogger('user_restoration'),
-  userController.restoreUser
+  (req, res, next) => getUserController().restoreUser(req, res, next)
 );
 
 /**
@@ -195,7 +204,7 @@ router.patch(
   adminOnly,
   validate([...userValidators.userId, ...userValidators.changeRole]),
   auditLogger('user_role_change'),
-  userController.changeUserRole
+  (req, res, next) => getUserController().changeUserRole(req, res, next)
 );
 
 /**
@@ -208,7 +217,7 @@ router.post(
   adminOnly,
   validate(userValidators.userId),
   auditLogger('user_unlock'),
-  userController.unlockUser
+  (req, res, next) => getUserController().unlockUser(req, res, next)
 );
 
 /**
@@ -221,7 +230,7 @@ router.post(
   adminOnly,
   validate(userValidators.userId),
   auditLogger('admin_email_verification'),
-  userController.verifyUserEmail
+  (req, res, next) => getUserController().verifyUserEmail(req, res, next)
 );
 
 /**
@@ -234,7 +243,7 @@ router.patch(
   adminOnly,
   validate(userValidators.bulkUpdateUsers),
   auditLogger('bulk_user_update'),
-  userController.bulkUpdateUsers
+  (req, res, next) => getUserController().bulkUpdateUsers(req, res, next)
 );
 
 export default router;

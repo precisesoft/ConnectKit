@@ -478,5 +478,7 @@ export class AuthController {
   });
 }
 
-// Export controller instance
-export const authController = new AuthController();
+// Factory function for lazy instantiation
+export const createAuthController = (): AuthController => {
+  return new AuthController();
+};

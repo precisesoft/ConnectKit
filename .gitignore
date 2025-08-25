@@ -89,3 +89,7 @@ env/
 # Monitoring
 grafana-storage/
 prometheus-data/
+
+# Claude documentation files (internal reference only)
+**/claude.md
+claude.md

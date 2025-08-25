@@ -47,7 +47,7 @@ export class UserRepository extends BaseRepository<User> {
       role: row.role as UserRole,
     };
 
-    const user = new User(userData);
+    const user = new User(userData, true); // Skip validation when mapping from DB
     
     // Override properties with database values
     user.id = row.id;

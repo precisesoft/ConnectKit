@@ -50,9 +50,11 @@ export class User {
 
   private password?: string;
 
-  constructor(data: CreateUserDTO) {
+  constructor(data: CreateUserDTO, skipValidation: boolean = false) {
     this.validateEmail(data.email);
-    this.validatePassword(data.password);
+    if (!skipValidation) {
+      this.validatePassword(data.password);
+    }
 
     this.id = uuidv4();
     this.email = data.email.toLowerCase();

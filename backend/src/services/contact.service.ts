@@ -162,7 +162,7 @@ export class ContactService {
       const {
         page = 1,
         limit = 10,
-        sort = 'createdAt',
+        sort = 'created_at',
         order = 'desc',
         search,
         filters = {}

@@ -1,5 +1,14 @@
 import { Router } from 'express';
-import { healthController } from '../controllers/health.controller';
+import { createHealthController } from '../controllers/health.controller';
+
+// Lazy controller getter
+let healthController: any = null;
+const getHealthController = () => {
+  if (!healthController) {
+    healthController = createHealthController();
+  }
+  return healthController;
+};
 import authRoutes from './auth.routes';
 import userRoutes from './user.routes';
 import contactRoutes from './contact.routes';
@@ -8,10 +17,10 @@ import appConfig from '../config/app.config';
 const router = Router();
 
 // Health check routes (no prefix)
-router.get('/health', healthController.health);
-router.get('/health/liveness', healthController.liveness);
-router.get('/health/readiness', healthController.readiness);
-router.get('/health/info', healthController.info);
+router.get('/health', (req, res, next) => getHealthController().health(req, res, next));
+router.get('/health/liveness', (req, res, next) => getHealthController().liveness(req, res, next));
+router.get('/health/readiness', (req, res, next) => getHealthController().readiness(req, res, next));
+router.get('/health/info', (req, res, next) => getHealthController().info(req, res, next));
 
 // API routes with version prefix
 const apiRouter = Router();

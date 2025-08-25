@@ -332,4 +332,7 @@ export class UserController {
   });
 }
 
-export const userController = new UserController();
+// Factory function for lazy instantiation
+export const createUserController = (): UserController => {
+  return new UserController();
+};

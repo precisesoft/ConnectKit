@@ -1,5 +1,14 @@
 import { Router } from 'express';
-import { contactController } from '../controllers/contact.controller';
+import { createContactController } from '../controllers/contact.controller';
+
+// Lazy controller getter
+let contactController: any = null;
+const getContactController = () => {
+  if (!contactController) {
+    contactController = createContactController();
+  }
+  return contactController;
+};
 import { contactValidators } from '../validators/contact.validator';
 import { validate } from '../middleware/validation.middleware';
 import { authenticate } from '../middleware/auth.middleware';
@@ -19,7 +28,7 @@ router.post(
   '/',
   validate(contactValidators.createContact),
   auditLogger('contact_creation'),
-  contactController.createContact
+  (req, res, next) => getContactController().createContact(req, res, next)
 );
 
 /**
@@ -30,7 +39,7 @@ router.post(
 router.get(
   '/',
   validate(contactValidators.listContacts),
-  contactController.listContacts
+  (req, res, next) => getContactController().listContacts(req, res, next)
 );
 
 /**
@@ -41,7 +50,7 @@ router.get(
 router.get(
   '/search',
   validate(contactValidators.searchContacts),
-  contactController.searchContacts
+  (req, res, next) => getContactController().searchContacts(req, res, next)
 );
 
 /**
@@ -51,7 +60,7 @@ router.get(
  */
 router.get(
   '/favorites',
-  contactController.getFavorites
+  (req, res, next) => getContactController().getFavorites(req, res, next)
 );
 
 /**
@@ -61,7 +70,7 @@ router.get(
  */
 router.get(
   '/stats',
-  contactController.getContactStats
+  (req, res, next) => getContactController().getContactStats(req, res, next)
 );
 
 /**
@@ -71,7 +80,7 @@ router.get(
  */
 router.get(
   '/companies',
-  contactController.getCompanies
+  (req, res, next) => getContactController().getCompanies(req, res, next)
 );
 
 /**
@@ -81,7 +90,7 @@ router.get(
  */
 router.get(
   '/tags',
-  contactController.getTags
+  (req, res, next) => getContactController().getTags(req, res, next)
 );
 
 /**
@@ -93,7 +102,7 @@ router.get(
   '/export',
   validate(contactValidators.exportContacts),
   auditLogger('contact_export'),
-  contactController.exportContacts
+  (req, res, next) => getContactController().exportContacts(req, res, next)
 );
 
 /**
@@ -103,7 +112,7 @@ router.get(
  */
 router.get(
   '/duplicates',
-  contactController.findDuplicates
+  (req, res, next) => getContactController().findDuplicates(req, res, next)
 );
 
 /**
@@ -114,7 +123,7 @@ router.get(
 router.get(
   '/status/:status',
   validate(contactValidators.getContactsByStatus),
-  contactController.getContactsByStatus
+  (req, res, next) => getContactController().getContactsByStatus(req, res, next)
 );
 
 /**
@@ -125,7 +134,7 @@ router.get(
 router.get(
   '/:id',
   validate(contactValidators.contactId),
-  contactController.getContactById
+  (req, res, next) => getContactController().getContactById(req, res, next)
 );
 
 /**
@@ -137,7 +146,7 @@ router.put(
   '/:id',
   validate([...contactValidators.contactId, ...contactValidators.updateContact]),
   auditLogger('contact_update'),
-  contactController.updateContact
+  (req, res, next) => getContactController().updateContact(req, res, next)
 );
 
 /**
@@ -149,7 +158,7 @@ router.delete(
   '/:id',
   validate(contactValidators.contactId),
   auditLogger('contact_deletion'),
-  contactController.deleteContact
+  (req, res, next) => getContactController().deleteContact(req, res, next)
 );
 
 /**
@@ -161,7 +170,7 @@ router.post(
   '/:id/archive',
   validate(contactValidators.contactId),
   auditLogger('contact_archive'),
-  contactController.archiveContact
+  (req, res, next) => getContactController().archiveContact(req, res, next)
 );
 
 /**
@@ -173,7 +182,7 @@ router.post(
   '/:id/restore',
   validate(contactValidators.contactId),
   auditLogger('contact_restore'),
-  contactController.restoreContact
+  (req, res, next) => getContactController().restoreContact(req, res, next)
 );
 
 /**
@@ -185,7 +194,7 @@ router.post(
   '/:id/favorite',
   validate(contactValidators.contactId),
   auditLogger('contact_favorite_toggle'),
-  contactController.toggleFavorite
+  (req, res, next) => getContactController().toggleFavorite(req, res, next)
 );
 
 /**
@@ -197,7 +206,7 @@ router.post(
   '/:id/tags',
   validate([...contactValidators.contactId, ...contactValidators.tagOperation]),
   auditLogger('contact_tag_add'),
-  contactController.addTag
+  (req, res, next) => getContactController().addTag(req, res, next)
 );
 
 /**
@@ -209,7 +218,7 @@ router.delete(
   '/:id/tags',
   validate([...contactValidators.contactId, ...contactValidators.tagOperation]),
   auditLogger('contact_tag_remove'),
-  contactController.removeTag
+  (req, res, next) => getContactController().removeTag(req, res, next)
 );
 
 /**
@@ -221,7 +230,7 @@ router.patch(
   '/bulk-update',
   validate(contactValidators.bulkUpdateContacts),
   auditLogger('bulk_contact_update'),
-  contactController.bulkUpdateContacts
+  (req, res, next) => getContactController().bulkUpdateContacts(req, res, next)
 );
 
 /**
@@ -233,7 +242,7 @@ router.post(
   '/merge',
   validate(contactValidators.mergeDuplicates),
   auditLogger('contact_merge'),
-  contactController.mergeDuplicates
+  (req, res, next) => getContactController().mergeDuplicates(req, res, next)
 );
 
 /**
@@ -245,7 +254,7 @@ router.post(
   '/import',
   validate(contactValidators.importContacts),
   auditLogger('contact_import'),
-  contactController.importContacts
+  (req, res, next) => getContactController().importContacts(req, res, next)
 );
 
 export default router;

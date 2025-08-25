@@ -1,0 +1,26 @@
+{
+  "recommendations": [
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "ms-vscode.vscode-typescript-next",
+    "bradlc.vscode-tailwindcss",
+    "ms-vscode.vscode-json",
+    "redhat.vscode-yaml",
+    "ms-vscode.sublime-keybindings",
+    "christian-kohler.path-intellisense",
+    "formulahendry.auto-rename-tag",
+    "ms-vscode.vscode-node-azure-pack",
+    "github.vscode-pull-request-github",
+    "ms-vsliveshare.vsliveshare",
+    "gruntfuggly.todo-tree",
+    "johnpapa.vscode-peacock",
+    "ms-vscode.powershell",
+    "humao.rest-client",
+    "ms-playwright.playwright",
+    "orta.vscode-jest",
+    "ms-vscode.test-adapter-converter"
+  ],
+  "unwantedRecommendations": [
+    "ms-vscode.vscode-typescript"
+  ]
+}

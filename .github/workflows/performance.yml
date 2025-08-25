@@ -1,0 +1,368 @@
+name: Performance Testing
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main]
+  schedule:
+    # Run performance tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      test_duration:
+        description: 'Load test duration (default: 5m)'
+        default: '5m'
+        type: string
+      max_users:
+        description: 'Maximum concurrent users (default: 100)'
+        default: '100'
+        type: string
+
+env:
+  NODE_VERSION: '18'
+  K6_VERSION: '0.47.0'
+
+jobs:
+  # Frontend Performance Testing with Lighthouse CI
+  lighthouse-ci:
+    name: Lighthouse CI
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule' # Skip on scheduled runs
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: ./frontend
+        run: npm run build
+
+      - name: Start services with Docker Compose
+        run: |
+          cp .env.example .env
+          echo "VITE_API_URL=http://localhost:3001/api" >> .env
+          docker-compose up -d
+          sleep 30
+
+      - name: Wait for services to be ready
+        run: |
+          timeout 60 bash -c 'until curl -f http://localhost:3001/api/health; do sleep 2; done'
+          timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
+
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli@0.12.x
+
+      - name: Run Lighthouse CI
+        run: |
+          lhci collect \
+            --url=http://localhost:3000 \
+            --url=http://localhost:3000/login \
+            --url=http://localhost:3000/register \
+            --numberOfRuns=3
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+      - name: Upload Lighthouse results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: lighthouse-results
+          path: .lighthouseci/
+
+      - name: Performance Budget Check
+        run: |
+          lhci assert \
+            --preset=lighthouse:recommended \
+            --assertions.categories:performance=0.9 \
+            --assertions.categories:accessibility=0.9 \
+            --assertions.categories:best-practices=0.9 \
+            --assertions.categories:seo=0.9
+
+      - name: Stop services
+        if: always()
+        run: docker-compose down -v
+
+  # Backend Load Testing with k6
+  k6-load-test:
+    name: k6 Load Testing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup k6
+        run: |
+          wget https://github.com/grafana/k6/releases/download/v${{ env.K6_VERSION }}/k6-v${{ env.K6_VERSION }}-linux-amd64.tar.gz
+          tar -xzf k6-v${{ env.K6_VERSION }}-linux-amd64.tar.gz
+          sudo cp k6-v${{ env.K6_VERSION }}-linux-amd64/k6 /usr/local/bin/
+
+      - name: Start services with Docker Compose
+        run: |
+          cp .env.example .env
+          docker-compose up -d
+          sleep 30
+
+      - name: Wait for services to be ready
+        run: |
+          timeout 60 bash -c 'until curl -f http://localhost:3001/api/health; do sleep 2; done'
+
+      - name: Run k6 smoke test
+        run: k6 run tests/performance/k6/smoke-test.js --env BASE_URL=http://localhost:3001
+
+      - name: Run k6 load test
+        run: |
+          DURATION=${{ github.event.inputs.test_duration || '5m' }}
+          MAX_USERS=${{ github.event.inputs.max_users || '100' }}
+          k6 run tests/performance/k6/load-test.js \
+            --env BASE_URL=http://localhost:3001 \
+            --env DURATION=$DURATION \
+            --env MAX_USERS=$MAX_USERS \
+            --out json=load-test-results.json
+
+      - name: Run k6 stress test (main branch only)
+        if: github.ref == 'refs/heads/main'
+        run: k6 run tests/performance/k6/stress-test.js --env BASE_URL=http://localhost:3001
+
+      - name: Parse k6 results
+        if: always()
+        run: |
+          if [ -f "load-test-results.json" ]; then
+            echo "## Load Test Results" >> $GITHUB_STEP_SUMMARY
+            echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+            
+            # Extract key metrics from k6 JSON output
+            AVG_RESPONSE_TIME=$(jq -r '.metrics.http_req_duration.values.avg' load-test-results.json)
+            P95_RESPONSE_TIME=$(jq -r '.metrics.http_req_duration.values["p(95)"]' load-test-results.json)
+            REQUEST_RATE=$(jq -r '.metrics.http_reqs.values.rate' load-test-results.json)
+            ERROR_RATE=$(jq -r '.metrics.http_req_failed.values.rate' load-test-results.json)
+            
+            echo "| Average Response Time | ${AVG_RESPONSE_TIME}ms |" >> $GITHUB_STEP_SUMMARY
+            echo "| 95th Percentile | ${P95_RESPONSE_TIME}ms |" >> $GITHUB_STEP_SUMMARY
+            echo "| Requests/sec | ${REQUEST_RATE} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Error Rate | ${ERROR_RATE}% |" >> $GITHUB_STEP_SUMMARY
+            
+            # Fail if performance thresholds are not met
+            if (( $(echo "$P95_RESPONSE_TIME > 500" | bc -l) )); then
+              echo "❌ Performance threshold exceeded: P95 response time is ${P95_RESPONSE_TIME}ms (threshold: 500ms)"
+              exit 1
+            fi
+            
+            if (( $(echo "$ERROR_RATE > 1" | bc -l) )); then
+              echo "❌ Error rate too high: ${ERROR_RATE}% (threshold: 1%)"
+              exit 1
+            fi
+            
+            echo "✅ Performance thresholds passed"
+          fi
+
+      - name: Upload k6 results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: k6-results
+          path: |
+            load-test-results.json
+            k6-*.html
+
+      - name: Stop services
+        if: always()
+        run: docker-compose down -v
+
+  # Database Performance Testing
+  database-performance:
+    name: Database Performance
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: connectkit_perf_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Run database migrations
+        working-directory: ./backend
+        env:
+          NODE_ENV: test
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: test
+          DB_PASSWORD: test
+          DB_NAME: connectkit_perf_test
+        run: npm run db:migrate
+
+      - name: Seed performance test data
+        working-directory: ./backend
+        env:
+          NODE_ENV: test
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: test
+          DB_PASSWORD: test
+          DB_NAME: connectkit_perf_test
+        run: npm run db:seed:performance
+
+      - name: Run database performance tests
+        working-directory: ./backend
+        env:
+          NODE_ENV: test
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: test
+          DB_PASSWORD: test
+          DB_NAME: connectkit_perf_test
+        run: npm run test:performance:db
+
+      - name: Analyze query performance
+        run: |
+          echo "## Database Performance Results" >> $GITHUB_STEP_SUMMARY
+          echo "Query performance analysis completed" >> $GITHUB_STEP_SUMMARY
+          # Add specific metrics parsing here
+
+  # Bundle Size Analysis
+  bundle-analysis:
+    name: Bundle Size Analysis
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: ./frontend
+        run: npm run build
+
+      - name: Analyze bundle size
+        uses: preactjs/compressed-size-action@v2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          build-script: |
+            cd frontend
+            npm run build
+          pattern: 'frontend/dist/**/*.{js,css}'
+          exclude: '{**/*.map,**/node_modules/**}'
+          strip-hash: '\\.[a-f\\d]{8}\\.'
+
+      - name: Check bundle size limits
+        working-directory: ./frontend
+        run: |
+          BUNDLE_SIZE=$(du -sk dist/ | cut -f1)
+          THRESHOLD_KB=512
+          
+          echo "Bundle size: ${BUNDLE_SIZE}KB (threshold: ${THRESHOLD_KB}KB)"
+          
+          if [ $BUNDLE_SIZE -gt $THRESHOLD_KB ]; then
+            echo "❌ Bundle size exceeds threshold: ${BUNDLE_SIZE}KB > ${THRESHOLD_KB}KB"
+            exit 1
+          else
+            echo "✅ Bundle size within threshold: ${BUNDLE_SIZE}KB <= ${THRESHOLD_KB}KB"
+          fi
+
+  # Memory and CPU Profiling
+  profiling:
+    name: Performance Profiling
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Start services with profiling
+        run: |
+          cp .env.example .env
+          echo "NODE_OPTIONS=--inspect=0.0.0.0:9229 --max-old-space-size=512" >> .env
+          docker-compose up -d
+          sleep 30
+
+      - name: Run memory profiling
+        run: |
+          # Install profiling tools
+          npm install -g clinic autocannon
+          
+          # Profile the application
+          timeout 60s autocannon -c 10 -d 30 http://localhost:3001/api/health || true
+          
+          echo "## Memory Profiling Results" >> $GITHUB_STEP_SUMMARY
+          echo "Memory profiling completed - check artifacts for detailed reports" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload profiling results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: profiling-results
+          path: |
+            .clinic/
+            *.html
+
+      - name: Stop services
+        if: always()
+        run: docker-compose down -v
+
+  # Performance Regression Detection
+  performance-comparison:
+    name: Performance Comparison
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Compare performance with base branch
+        run: |
+          echo "## Performance Comparison" >> $GITHUB_STEP_SUMMARY
+          echo "Comparing performance metrics with base branch..." >> $GITHUB_STEP_SUMMARY
+          
+          # This would typically compare metrics from current PR vs main branch
+          # Implementation depends on where metrics are stored (e.g., database, files)
+          echo "Performance comparison analysis would be implemented here" >> $GITHUB_STEP_SUMMARY

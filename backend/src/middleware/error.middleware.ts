@@ -6,7 +6,8 @@ import {
   isOperationalError,
   createErrorResponse,
   ValidationError,
-  InternalServerError 
+  InternalServerError,
+  UnauthorizedError
 } from '../utils/errors';
 import { logger } from '../utils/logger';
 import appConfig from '../config/app.config';
@@ -73,49 +74,23 @@ function convertToAppError(error: Error): AppError {
   
   // Handle JWT errors
   if (error.name === 'JsonWebTokenError') {
-    return new AppError('Invalid token') {
-      readonly statusCode = StatusCodes.UNAUTHORIZED;
-      readonly isOperational = true;
-      toJSON() {
-        return {
-          type: 'InvalidTokenError',
-          message: this.message,
-          statusCode: this.statusCode,
-          timestamp: this.timestamp,
-        };
-      }
-    };
+    return new UnauthorizedError('Invalid token');
   }
   
   if (error.name === 'TokenExpiredError') {
-    return new AppError('Token has expired') {
-      readonly statusCode = StatusCodes.UNAUTHORIZED;
-      readonly isOperational = true;
-      toJSON() {
-        return {
-          type: 'ExpiredTokenError',
-          message: this.message,
-          statusCode: this.statusCode,
-          timestamp: this.timestamp,
-        };
-      }
-    };
+    return new UnauthorizedError('Token has expired');
   }
   
   // Handle syntax errors in JSON
   if (error instanceof SyntaxError && (error as any).type === 'entity.parse.failed') {
-    return new AppError('Invalid JSON format') {
-      readonly statusCode = StatusCodes.BAD_REQUEST;
-      readonly isOperational = true;
-      toJSON() {
-        return {
-          type: 'SyntaxError',
-          message: this.message,
-          statusCode: this.statusCode,
-          timestamp: this.timestamp,
-        };
-      }
-    };
+    console.log('JSON Parse Error Details:', {
+      message: error.message,
+      stack: error.stack,
+      type: (error as any).type,
+      body: (error as any).body,
+      statusCode: (error as any).statusCode
+    });
+    return new ValidationError(`Invalid JSON format: ${error.message}`);
   }
   
   // Default to internal server error
@@ -225,23 +200,18 @@ export const asyncHandler = (
   };
 };
 
+class NotFoundError extends AppError {
+  constructor(message: string) {
+    super(message, StatusCodes.NOT_FOUND, true);
+    this.name = 'NotFoundError';
+  }
+}
+
 /**
  * 404 Not Found handler
  */
 export const notFoundHandler = (req: Request, res: Response, next: NextFunction): void => {
-  const error = new AppError(`Route ${req.method} ${req.originalUrl} not found`) {
-    readonly statusCode = StatusCodes.NOT_FOUND;
-    readonly isOperational = true;
-    toJSON() {
-      return {
-        type: 'NotFoundError',
-        message: this.message,
-        statusCode: this.statusCode,
-        timestamp: this.timestamp,
-      };
-    }
-  };
-  
+  const error = new NotFoundError(`Route ${req.method} ${req.originalUrl} not found`);
   next(error);
 };
 

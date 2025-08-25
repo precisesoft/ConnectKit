@@ -431,4 +431,7 @@ export class ContactController {
   });
 }
 
-export const contactController = new ContactController();
+// Factory function for lazy instantiation
+export const createContactController = (): ContactController => {
+  return new ContactController();
+};

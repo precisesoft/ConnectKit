@@ -1,0 +1,72 @@
+Loaded cached credentials.
+The `ContactRepository` class in `backend/src/repositories/contact.repository.ts` is a key component for managing contact data in the ConnectKit application. Here's a thorough analysis:
+
+**Key Components, Functions, and Classes:**
+
+*   **`ContactRepository` Class**: This is the main class being analyzed. It extends `BaseRepository<Contact>`.
+*   **`Contact` Model**: Imported from `../models/contact.model`, representing the contact entity.
+*   **`CreateContactDTO`**: Data Transfer Object for creating new contacts.
+*   **`ContactStatus`**: Enum for contact statuses (active, inactive, archived).
+*   **`ConflictError`, `NotFoundError`, `ForbiddenError`**: Custom error classes imported from `../utils/errors` for specific error scenarios.
+*   **`logger`**: Imported from `../utils/logger` for logging operations and errors.
+*   **`BaseRepository`**: The parent class providing common CRUD operations and utility methods for database interaction.
+
+**1. What methods are fully implemented vs stubs:**
+
+*   **`constructor()`**: **Fully Implemented**. Calls the super constructor with 'contacts' and 'id'.
+*   **`getAllowedSortFields()`**: **Fully Implemented**. Returns a list of valid sortable fields for contacts.
+*   **`mapRowToEntity(row: any): Contact`**: **Fully Implemented**. Maps a database row object to a `Contact` entity instance. It correctly handles `deleted_at` and `metadata` fields.
+*   **`mapEntityToRow(entity: Contact | Partial<Contact>): any`**: **Fully Implemented**. Maps a `Contact` entity (or partial entity) to a database row object, converting `tags` and `metadata` to JSON strings.
+*   **`createContact(contactData: CreateContactDTO): Promise<Contact>`**: **Fully Implemented**. Handles creation, including a check for duplicate emails for the same user and logging. It calls the `this.create()` method from `BaseRepository`.
+*   **`findByUserId(userId: string, options: ContactSearchOptions = {}): Promise<PaginationResult<Contact>>`**: **Fully Implemented**. Uses `this.findAll()` from `BaseRepository` to retrieve contacts filtered by `userId`.
+*   **`findByUserAndId(userId: string, contactId: string): Promise<Contact | null>`**: **Fully Implemented**. Uses `this.findOne()` from `BaseRepository` to find a specific contact by user and contact ID.
+*   **`findByUserAndEmail(userId: string, email: string): Promise<Contact | null>`**: **Fully Implemented**. Uses `this.findOne()` from `BaseRepository` to find a contact by user ID and email.
+*   **`findByUserAndPhone(userId: string, phone: string): Promise<Contact | null>`**: **Fully Implemented**. Uses `this.findOne()` from `BaseRepository` to find a contact by user ID and phone.
+*   **`verifyOwnership(contactId: string, userId: string): Promise<Contact>`**: **Fully Implemented**. Fetches a contact by ID and throws `NotFoundError` or `ForbiddenError` if the contact doesn't exist or doesn't belong to the user.
+*   **`updateByUser(contactId: string, userId: string, updates: Partial<Contact>): Promise<Contact>`**: **Fully Implemented**. Verifies ownership, checks for duplicate emails if the email is being updated, and then calls `this.update()` from `BaseRepository`.
+*   **`deleteByUser(contactId: string, userId: string): Promise<void>`**: **Fully Implemented**. Verifies ownership and then calls `this.softDelete()` from `BaseRepository`.
+*   **`findFavoritesByUser(userId: string, options: QueryOptions = {}): Promise<PaginationResult<Contact>>`**: **Fully Implemented**. Uses `this.findAll()` from `BaseRepository` to find favorite contacts for a user.
+*   **`findByUserAndStatus(userId: string, status: ContactStatus, options: QueryOptions = {}): Promise<PaginationResult<Contact>>`**: **Fully Implemented**. Uses `this.findAll()` from `BaseRepository` to find contacts by status for a user.
+*   **`findByUserAndCompany(userId: string, company: string, options: QueryOptions = {}): Promise<PaginationResult<Contact>>`**: **Fully Implemented**. Uses `this.findAll()` from `BaseRepository` to find contacts by company for a user.
+*   **`findByUserAndTags(userId: string, tags: string[], options: QueryOptions = {}): Promise<PaginationResult<Contact>>`**: **Fully Implemented**. Constructs a custom SQL query to search for contacts by tags, handling pagination and sorting. It uses `this.executeQuery()` for database interaction.
+*   **`searchByUser(userId: string, searchTerm: string, options: ContactSearchOptions = {}): Promise<PaginationResult<Contact>>`**: **Fully Implemented**. Uses `this.search()` from `BaseRepository` to perform a text search on contact fields for a specific user.
+*   **`getCompaniesByUser(userId: string): Promise<string[]>`**: **Fully Implemented**. Executes a custom query to get distinct company names for a user.
+*   **`getTagsByUser(userId: string): Promise<string[]>`**: **Fully **Fully Implemented**. Executes a custom query to get distinct tags for a user.
+*   **`getContactStatsByUser(userId: string): Promise<{...}>`**: **Fully Implemented**. Executes multiple custom queries in parallel to gather various contact statistics for a user.
+*   **`bulkUpdateByUser(userId: string, updates: Array<{ id: string; data: Partial<Contact> }>): Promise<Contact[]>`**: **Fully Implemented**. Verifies ownership of all contacts in the bulk update and then calls `this.bulkUpdate()` from `BaseRepository`.
+*   **`exportByUser(userId: string, options: ContactSearchOptions = {}): Promise<Contact[]>`**: **Fully Implemented**. Uses `this.findByUserId()` to fetch all contacts for export (by removing pagination limits).
+*   **`findPotentialDuplicates(userId: string): Promise<Array<{ contacts: Contact[]; reason: string }>>`**: **Fully Implemented**. Executes custom queries to find duplicates based on email and phone numbers.
+
+**2. Whether it properly extends BaseRepository:**
+
+Yes, `ContactRepository` properly extends `BaseRepository<Contact>`.
+*   It calls `super('contacts', 'id')` in its constructor, correctly initializing the base class with the table name and primary key.
+*   It overrides the abstract methods `getAllowedSortFields()`, `mapRowToEntity()`, and `mapEntityToRow()`, which are required by `BaseRepository`.
+*   It effectively leverages inherited methods like `create()`, `update()`, `softDelete()`, `findAll()`, `findOne()`, `findById()`, `search()`, `bulkUpdate()`, and `executeQuery()`, demonstrating proper extension and reuse of the base repository's functionality.
+
+**3. Which contact operations are production-ready:**
+
+Most contact operations appear to be production-ready in terms of core functionality, error handling, and database interaction.
+
+*   **CRUD Operations (`createContact`, `updateByUser`, `deleteByUser`)**: These are well-implemented with ownership checks, duplicate checks (for email), and proper error handling (`ConflictError`, `NotFoundError`, `ForbiddenError`). Logging is also integrated.
+*   **Search and Filtering (`findByUserId`, `searchByUser`, `findByUserAndTags`, etc.)**: These leverage the base repository's robust filtering, sorting, and pagination capabilities, including custom queries for specific needs like tags.
+*   **Utility Operations (`verifyOwnership`, `getCompaniesByUser`, `getTagsByUser`, `getContactStatsByUser`)**: These provide valuable data and checks, essential for a production application.
+*   **Bulk Operations (`bulkUpdateByUser`, `exportByUser`)**: These are implemented with ownership verification, which is crucial for multi-tenant environments.
+*   **Duplicate Detection (`findPotentialDuplicates`)**: This is a good start for identifying duplicates.
+
+**Areas for consideration/improvement for full production readiness:**
+
+*   **Email/Phone Encryption**: The `mapEntityToRow` and `mapRowToEntity` methods handle `email` and `phone` fields directly as strings or arrays of strings (`row.email`, `row.phone`, `entity.email`, `entity.phone`). However, the database schema (`001_init.sql`) defines `email_encrypted BYTEA[]` and `phone_encrypted BYTEA[]`. The `mapEntityToRow` method also uses `JSON.stringify(entity.tags)` and `JSON.stringify(entity.metadata)`, which aligns with the schema, but for `email` and `phone` it uses `row.email` and `row.phone` directly. This indicates a potential mismatch or a missing encryption/decryption layer at the repository level for these sensitive fields. The `mapEntityToRow` method also directly assigns `entity.email` and `entity.phone` to `row.email` and `row.phone` respectively, which would store them unencrypted if not handled by the `Contact` model itself. The `Contact` model's constructor and `update` method do not explicitly perform encryption/decryption, implying this might be handled at a higher service layer or is currently missing. **This is a critical security concern for PII.**
+*   **Error Handling Granularity**: While custom errors are used, ensuring all possible database errors (e.g., connection issues, constraint violations beyond duplicates) are caught and re-thrown as appropriate `DatabaseError` types from `BaseRepository` is important. The `BaseRepository`'s `executeQuery` already handles this, so it's more about ensuring specific `ConflictError`s are thrown where business logic dictates (which `createContact` and `updateByUser` do).
+*   **Performance of `findByUserAndTags`**: While implemented, the `findByUserAndTags` method constructs a dynamic SQL query with `ARRAY[${placeholders}]`. For a very large number of tags, this could become inefficient or hit query length limits. PostgreSQL's `unnest` and `&&` operators are efficient, but the number of placeholders can grow.
+*   **`mapEntityToRow` for `tags` and `metadata`**: It uses `JSON.stringify` for `tags` and `metadata`. While this works, PostgreSQL has native `TEXT[]` and `JSONB` types. The `tags` column is `TEXT[]` in the schema, so `JSON.stringify` might not be the most idiomatic way to store it if it's meant to be a native array. It should be `entity.tags` directly if `tags` is `string[]` in the entity and `TEXT[]` in DB. The `metadata` is `JSONB`, so `JSON.stringify` is correct.
+
+**4. Any missing critical functionality:**
+
+*   **PII Encryption/Decryption Logic**: As noted above, the repository directly maps `email` and `phone` fields without explicit encryption/decryption. Given the database schema uses `BYTEA[]` for `email_encrypted` and `phone_encrypted`, there's a critical missing layer for handling the encryption and decryption of these sensitive fields. This should either be done within the `Contact` model (less ideal for a pure domain model) or, more appropriately, by an `EncryptionService` integrated into the `ContactService` (which then passes encrypted data to the repository). The current implementation would store unencrypted data in `BYTEA[]` columns or fail if the database expects encrypted `BYTEA` and receives plain text.
+*   **Full-Text Search Integration**: While `searchByUser` uses `this.search()` from `BaseRepository` which can search `first_name`, `last_name`, `email`, `phone`, `company`, `job_title`, `notes`, the database schema also defines a `search_vector tsvector` and an `idx_contacts_search` index. The current `searchByUser` does not leverage this dedicated full-text search index, which would be more efficient for complex text searches.
+*   **Handling of `address_encrypted`**: Similar to email/phone, the `address` field in the `Contact` model is an object, but the database schema has `address_encrypted JSONB`. The `mapEntityToRow` and `mapRowToEntity` methods do not explicitly handle encryption/decryption for this field.
+*   **Comprehensive Duplicate Resolution**: `findPotentialDuplicates` identifies duplicates, but there's no corresponding repository method for merging or resolving these duplicates at the database level (e.g., transferring related records, deleting merged contacts). This logic would likely reside in the service layer, but the repository would need methods to support it.
+*   **Audit Trail Integration (Directly from Repository)**: While the database has `audit_log` and triggers, the repository methods themselves don't explicitly interact with an audit service or log directly. This is fine if the audit triggers handle it, but if application-level audit logging is desired for more context, it's missing here.
+
+TASK COMPLETED

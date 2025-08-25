@@ -248,5 +248,7 @@ export class HealthController {
   }
 }
 
-// Export controller instance
-export const healthController = new HealthController();
+// Factory function for lazy instantiation
+export const createHealthController = (): HealthController => {
+  return new HealthController();
+};

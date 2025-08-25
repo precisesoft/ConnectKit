@@ -9,7 +9,7 @@ import { useAuthStore } from '@store/authStore';
 import { ApiResponse, ApiException } from './types';
 
 // API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
 const REQUEST_TIMEOUT = 30000; // 30 seconds
 
 // Create axios instance with default configuration

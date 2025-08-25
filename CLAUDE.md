@@ -1,115 +1,60 @@
-# CLAUDE.md
+# ConnectKit - Internal Documentation Reference
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## Purpose
+Enterprise-ready contact management platform built with modern web technologies and comprehensive testing frameworks. This file provides internal AI documentation reference (excluded from git).
 
-## Project Overview
+## Architecture Overview
+3-tier containerized application:
+- **Frontend**: React 18 + TypeScript + Material-UI (port 3000)
+- **Backend**: Node.js 18 + Express + TypeScript (port 3001) 
+- **Database**: PostgreSQL 15 + Redis cache
+- **Infrastructure**: Docker Compose orchestration
 
-ConnectKit is a full-stack contact management web application built with React, Node.js/Express, and PostgreSQL. The entire application is containerized using Docker for consistent development and deployment.
+## Key Directories Summary
 
-## Architecture
+### `/backend/` - API Server
+Layered Node.js/Express architecture with Controllers → Services → Repositories → Models pattern.
+Contains authentication, contact management, middleware, and comprehensive testing suite.
 
-The application follows a three-tier architecture:
-- **Frontend**: React application serving the user interface (port 3000)
-- **Backend**: Express.js REST API server (port 3001)  
-- **Database**: PostgreSQL for data persistence (port 5432)
+### `/frontend/` - React Application  
+Modern React SPA with component-based architecture, state management, and Material-UI design system.
+Includes pages, components, hooks, and E2E testing.
 
-All services are orchestrated via Docker Compose, enabling single-command deployment of the entire stack.
+### `/database/` - Data Layer
+PostgreSQL schema definitions, migrations, and database initialization scripts.
+Supports contact management with audit trails and user authentication.
 
-## Development Commands
+### `/docker/` - Containerization
+Multi-stage Dockerfiles and container configurations for development and production environments.
 
-### Full Stack Operations
-```bash
-# Start all services
-docker-compose up --build
+### `/docs/` - Documentation Hub
+Comprehensive project documentation including architecture specs, API docs, testing guides, and security checklists.
 
-# Stop all services
-docker-compose down
+### `/scripts/` - Development Utilities
+Cross-platform scripts for startup, database operations, testing automation, and API testing.
 
-# View logs
-docker-compose logs -f [service_name]
+## Technology Stack
+- **Backend**: Node.js 18, Express, TypeScript, PostgreSQL, Redis, JWT
+- **Frontend**: React 18, TypeScript, Material-UI, Zustand, React Query, Vite
+- **Testing**: Jest, Vitest, Playwright
+- **DevOps**: Docker, GitHub Actions, ESLint, Prettier
 
-# Clean rebuild
-docker-compose down -v && docker-compose up --build
-```
+## Key Features
+- Enterprise authentication with JWT and refresh tokens
+- Comprehensive contact management with CRUD operations
+- Advanced search, filtering, and bulk operations
+- Import/export functionality (CSV, JSON, Excel, vCard)
+- Duplicate detection and contact merging
+- Role-based access control and audit logging
+- Real-time statistics and analytics
 
-### Frontend Development
-```bash
-cd frontend
-npm install        # Install dependencies
-npm start         # Start development server (port 3000)
-npm test          # Run tests
-npm run build     # Build for production
-```
+## Security Implementation
+- Field-level encryption for PII data
+- JWT authentication with refresh token rotation
+- Rate limiting and middleware security stack
+- SQL injection prevention with parameterized queries
+- XSS protection and security headers
+- Comprehensive audit trails
 
-### Backend Development
-```bash
-cd backend
-npm install       # Install dependencies
-npm start         # Start server (port 3001)
-npm test          # Run tests (when configured)
-```
-
-### Database Operations
-```bash
-# Access PostgreSQL CLI
-docker exec -it connectkit-db psql -U admin -d contactdb
-
-# Run migrations (from backend directory)
-npm run migrate
-```
-
-## API Endpoints
-
-- `GET /api/health` - Service health check
-- `GET /api/contacts` - Retrieve all contacts
-- `POST /api/contacts` - Create new contact (body: {name, email, message})
-- `DELETE /api/contacts/:id` - Delete specific contact
-
-## Environment Configuration
-
-Backend environment variables (`.env`):
-```
-DB_HOST=db
-DB_PORT=5432
-DB_USER=admin
-DB_PASSWORD=admin123
-DB_NAME=contactdb
-PORT=3001
-```
-
-## Project Structure
-
-```
-frontend/
-  src/
-    App.js         # Main React component with contact management UI
-    index.js       # React entry point
-backend/
-  server.js        # Express server with API routes and database connection
-database/
-  init.sql         # Database schema and seed data
-docker-compose.yml # Service orchestration configuration
-```
-
-## Key Implementation Patterns
-
-1. **Database Connection**: Use connection pooling with pg.Pool for PostgreSQL connections
-2. **Error Handling**: Implement try-catch blocks in all API routes with appropriate HTTP status codes
-3. **CORS**: Configure CORS middleware to allow frontend-backend communication
-4. **Environment Variables**: Use dotenv for configuration management
-5. **Container Networking**: Services communicate via Docker network using service names as hostnames
-
-## Testing Approach
-
-- Frontend: Test component rendering and API interactions
-- Backend: Test API endpoints and database operations
-- Integration: Test full stack flow using Docker Compose environment
-
-## Common Development Tasks
-
-When implementing new features:
-1. Define database schema changes in `database/init.sql`
-2. Create backend API endpoint in `server.js`
-3. Implement frontend UI components and API calls in React
-4. Test locally with Docker Compose
-5. Ensure proper error handling and loading states
+## Development Status
+Phase 1 (Foundation) completed with robust testing framework, security measures, and containerized infrastructure ready for active development.

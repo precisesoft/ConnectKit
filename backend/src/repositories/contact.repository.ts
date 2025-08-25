@@ -94,7 +94,7 @@ export class ContactRepository extends BaseRepository<Contact> {
     if (entity.postalCode !== undefined) row.postal_code = entity.postalCode;
     if (entity.country !== undefined) row.country = entity.country;
     if (entity.notes !== undefined) row.notes = entity.notes;
-    if (entity.tags !== undefined) row.tags = JSON.stringify(entity.tags);
+    if (entity.tags !== undefined) row.tags = entity.tags;
     if (entity.status !== undefined) row.status = entity.status;
     if (entity.isFavorite !== undefined) row.is_favorite = entity.isFavorite;
     if (entity.metadata !== undefined) row.metadata = JSON.stringify(entity.metadata);
