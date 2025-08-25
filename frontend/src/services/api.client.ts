@@ -9,7 +9,8 @@ import { useAuthStore } from '@store/authStore';
 import { ApiResponse, ApiException } from './types';
 
 // API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
 const REQUEST_TIMEOUT = 30000; // 30 seconds
 
 // Create axios instance with default configuration
@@ -19,7 +20,7 @@ const createApiClient = (): AxiosInstance => {
     timeout: REQUEST_TIMEOUT,
     headers: {
       'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      Accept: 'application/json',
     },
     withCredentials: false, // Set to true if using cookies for auth
   });
@@ -60,8 +61,11 @@ apiClient.interceptors.response.use(
     // Log response time in development
     if (__DEV__ && response.config.metadata) {
       const endTime = new Date();
-      const duration = endTime.getTime() - response.config.metadata.startTime.getTime();
-      console.log(`API Request: ${response.config.method?.toUpperCase()} ${response.config.url} - ${duration}ms`);
+      const duration =
+        endTime.getTime() - response.config.metadata.startTime.getTime();
+      console.log(
+        `API Request: ${response.config.method?.toUpperCase()} ${response.config.url} - ${duration}ms`
+      );
     }
 
     // Transform response to our standard format
@@ -79,7 +83,9 @@ apiClient.interceptors.response.use(
     };
   },
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    const originalRequest = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean;
+    };
 
     // Handle network errors
     if (!error.response) {
@@ -321,9 +327,13 @@ export const retryRequest = async <T>(
       return await requestFn();
     } catch (error) {
       lastError = error as Error;
-      
+
       // Don't retry on client errors (4xx)
-      if (error instanceof ApiException && error.status >= 400 && error.status < 500) {
+      if (
+        error instanceof ApiException &&
+        error.status >= 400 &&
+        error.status < 500
+      ) {
         throw error;
       }
 

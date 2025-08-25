@@ -1,13 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { 
-  AppError, 
-  isAppError, 
+import {
+  AppError,
+  isAppError,
   isOperationalError,
   createErrorResponse,
   ValidationError,
   InternalServerError,
-  UnauthorizedError
+  UnauthorizedError,
 } from '../utils/errors';
 import { logger } from '../utils/logger';
 import appConfig from '../config/app.config';
@@ -36,24 +36,25 @@ export const errorHandler = (
   next: NextFunction
 ): void => {
   // Generate request ID for tracking
-  const requestId = req.headers['x-request-id'] as string || generateRequestId();
-  
+  const requestId =
+    (req.headers['x-request-id'] as string) || generateRequestId();
+
   // Log the error
   logError(error, req, requestId);
-  
+
   // Handle different types of errors
   let appError: AppError;
-  
+
   if (isAppError(error)) {
     appError = error;
   } else {
     // Convert unknown errors to AppError
     appError = convertToAppError(error);
   }
-  
+
   // Create error response
   const errorResponse = createErrorResponseObject(appError, requestId);
-  
+
   // Send response
   res.status(appError.statusCode).json(errorResponse);
 };
@@ -64,35 +65,44 @@ export const errorHandler = (
 function convertToAppError(error: Error): AppError {
   // Handle validation errors from express-validator or joi
   if (error.name === 'ValidationError') {
-    return new ValidationError('Validation failed', (error as any).details || []);
+    return new ValidationError(
+      'Validation failed',
+      (error as any).details || []
+    );
   }
-  
+
   // Handle database errors
-  if (error.message.includes('database') || error.message.includes('connection')) {
+  if (
+    error.message.includes('database') ||
+    error.message.includes('connection')
+  ) {
     return new InternalServerError('Database error occurred');
   }
-  
+
   // Handle JWT errors
   if (error.name === 'JsonWebTokenError') {
     return new UnauthorizedError('Invalid token');
   }
-  
+
   if (error.name === 'TokenExpiredError') {
     return new UnauthorizedError('Token has expired');
   }
-  
+
   // Handle syntax errors in JSON
-  if (error instanceof SyntaxError && (error as any).type === 'entity.parse.failed') {
+  if (
+    error instanceof SyntaxError &&
+    (error as any).type === 'entity.parse.failed'
+  ) {
     console.log('JSON Parse Error Details:', {
       message: error.message,
       stack: error.stack,
       type: (error as any).type,
       body: (error as any).body,
-      statusCode: (error as any).statusCode
+      statusCode: (error as any).statusCode,
     });
     return new ValidationError(`Invalid JSON format: ${error.message}`);
   }
-  
+
   // Default to internal server error
   return new InternalServerError(
     appConfig.isProduction() ? 'Internal server error' : error.message,
@@ -103,9 +113,12 @@ function convertToAppError(error: Error): AppError {
 /**
  * Create standardized error response
  */
-function createErrorResponseObject(error: AppError, requestId: string): ErrorResponse {
+function createErrorResponseObject(
+  error: AppError,
+  requestId: string
+): ErrorResponse {
   const errorData = createErrorResponse(error);
-  
+
   const response: ErrorResponse = {
     success: false,
     error: {
@@ -113,19 +126,23 @@ function createErrorResponseObject(error: AppError, requestId: string): ErrorRes
       requestId,
     },
   };
-  
+
   // Include stack trace in development
   if (!appConfig.isProduction() && error.stack) {
     response.error.stack = error.stack;
   }
-  
+
   return response;
 }
 
 /**
  * Log error with context
  */
-function logError(error: Error | AppError, req: Request, requestId: string): void {
+function logError(
+  error: Error | AppError,
+  req: Request,
+  requestId: string
+): void {
   const errorContext = {
     requestId,
     method: req.method,
@@ -137,7 +154,7 @@ function logError(error: Error | AppError, req: Request, requestId: string): voi
     query: req.query,
     params: req.params,
   };
-  
+
   if (isAppError(error)) {
     const level = error.statusCode >= 500 ? 'error' : 'warn';
     logger.log(level, `${error.constructor.name}: ${error.message}`, {
@@ -169,16 +186,22 @@ function maskSensitiveFields(body: any): any {
   if (!body || typeof body !== 'object') {
     return body;
   }
-  
-  const sensitiveFields = ['password', 'token', 'secret', 'key', 'authorization'];
+
+  const sensitiveFields = [
+    'password',
+    'token',
+    'secret',
+    'key',
+    'authorization',
+  ];
   const masked = { ...body };
-  
+
   for (const key in masked) {
     if (sensitiveFields.some(field => key.toLowerCase().includes(field))) {
       masked[key] = '***MASKED***';
     }
   }
-  
+
   return masked;
 }
 
@@ -210,18 +233,28 @@ class NotFoundError extends AppError {
 /**
  * 404 Not Found handler
  */
-export const notFoundHandler = (req: Request, res: Response, next: NextFunction): void => {
-  const error = new NotFoundError(`Route ${req.method} ${req.originalUrl} not found`);
+export const notFoundHandler = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  const error = new NotFoundError(
+    `Route ${req.method} ${req.originalUrl} not found`
+  );
   next(error);
 };
 
 /**
  * Validation error handler for express-validator
  */
-export const handleValidationErrors = (req: Request, res: Response, next: NextFunction): void => {
+export const handleValidationErrors = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
   const { validationResult } = require('express-validator');
   const errors = validationResult(req);
-  
+
   if (!errors.isEmpty()) {
     const validationError = new ValidationError(
       'Request validation failed',
@@ -232,11 +265,11 @@ export const handleValidationErrors = (req: Request, res: Response, next: NextFu
         location: error.location,
       }))
     );
-    
+
     next(validationError);
     return;
   }
-  
+
   next();
 };
 
@@ -246,19 +279,19 @@ export const handleValidationErrors = (req: Request, res: Response, next: NextFu
 export const gracefulShutdownHandler = (server: any) => {
   return (signal: string) => {
     logger.info(`Received ${signal}. Starting graceful shutdown...`);
-    
+
     const timeout = appConfig.get('gracefulShutdown').timeout;
     const killTimeout = appConfig.get('gracefulShutdown').killTimeout;
-    
+
     // Set a timeout to force shutdown if graceful shutdown takes too long
     const forceShutdown = setTimeout(() => {
       logger.error('Graceful shutdown timeout. Forcing shutdown...');
       process.exit(1);
     }, killTimeout);
-    
+
     server.close((error: Error) => {
       clearTimeout(forceShutdown);
-      
+
       if (error) {
         logger.error('Error during server shutdown:', error);
         process.exit(1);
@@ -282,24 +315,24 @@ export const setupProcessErrorHandlers = (): void => {
         stack: error.stack,
       },
     });
-    
+
     if (!isOperationalError(error)) {
       process.exit(1);
     }
   });
-  
+
   process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
     logger.error('Unhandled Rejection:', {
       reason: reason instanceof Error ? reason.message : reason,
       stack: reason instanceof Error ? reason.stack : undefined,
       promise: promise.toString(),
     });
-    
+
     if (reason instanceof Error && !isOperationalError(reason)) {
       process.exit(1);
     }
   });
-  
+
   // Graceful shutdown handlers
   ['SIGTERM', 'SIGINT'].forEach(signal => {
     process.on(signal, () => {

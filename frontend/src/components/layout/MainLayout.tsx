@@ -1,10 +1,5 @@
 import React, { useEffect } from 'react';
-import {
-  Box,
-  useTheme,
-  useMediaQuery,
-  Backdrop,
-} from '@mui/material';
+import { Box, useTheme, useMediaQuery, Backdrop } from '@mui/material';
 
 import Header from './Header';
 import Sidebar from './Sidebar';
@@ -18,7 +13,7 @@ interface MainLayoutProps {
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  
+
   const { open, width, setOpen, setMobile } = useSidebar();
   const { setMobile: setUIStoreMobile } = useUIStore();
 
@@ -64,7 +59,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
       {/* Main content area */}
       <Box
-        component="main"
+        component='main'
         sx={{
           flexGrow: 1,
           display: 'flex',
@@ -86,12 +81,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       >
         {/* Skip to main content link for accessibility */}
         <a
-          href="#main-content"
-          className="skip-to-main"
-          onFocus={(e) => {
+          href='#main-content'
+          className='skip-to-main'
+          onFocus={e => {
             e.target.style.top = '6px';
           }}
-          onBlur={(e) => {
+          onBlur={e => {
             e.target.style.top = '-40px';
           }}
         >
@@ -100,7 +95,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
         {/* Content area with proper spacing from header */}
         <Box
-          id="main-content"
+          id='main-content'
           sx={{
             flexGrow: 1,
             mt: 0, // Header is sticky, so no top margin needed

@@ -20,6 +20,7 @@ Enterprise-ready contact management platform built with modern web technologies 
 ## 🛠️ Tech Stack
 
 ### Backend
+
 - **Node.js 18** with **Express.js** and **TypeScript**
 - **PostgreSQL 15** with encryption and RLS
 - **Redis** for caching and session management
@@ -27,6 +28,7 @@ Enterprise-ready contact management platform built with modern web technologies 
 - **Joi** and **Zod** for validation
 
 ### Frontend
+
 - **React 18** with **TypeScript**
 - **Material-UI** for components
 - **React Query** for data fetching
@@ -34,6 +36,7 @@ Enterprise-ready contact management platform built with modern web technologies 
 - **Vite** for build tooling
 
 ### DevOps
+
 - **Docker** and **Docker Compose**
 - **GitHub Actions** for CI/CD
 - **Jest** and **Vitest** for testing
@@ -50,22 +53,26 @@ Enterprise-ready contact management platform built with modern web technologies 
 ### Installation
 
 1. **Clone the repository**
+
 ```bash
 git clone https://github.com/precisesoft/ConnectKit.git
 cd ConnectKit
 ```
 
 2. **Copy environment configuration**
+
 ```bash
 cp .env.example .env
 ```
 
 3. **Start with Docker Compose**
+
 ```bash
 docker-compose up --build
 ```
 
 The application will be available at:
+
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:3001/api
 - API Documentation: http://localhost:3001/api-docs
@@ -73,11 +80,13 @@ The application will be available at:
 ### Development Setup
 
 1. **Install dependencies**
+
 ```bash
 npm install
 ```
 
 2. **Start development servers**
+
 ```bash
 # Terminal 1: Backend
 npm run dev:backend
@@ -117,11 +126,13 @@ ConnectKit/
 ## 🧪 Testing
 
 ### Run all tests
+
 ```bash
 npm test
 ```
 
 ### Run specific test suites
+
 ```bash
 # Unit tests
 npm run test:unit
@@ -134,6 +145,7 @@ npm run test:e2e
 ```
 
 ### Test coverage
+
 ```bash
 npm test -- --coverage
 ```
@@ -167,6 +179,7 @@ For a complete overview of all documentation, see the [Documentation Index](./do
 ## 🚢 Deployment
 
 ### Docker Deployment
+
 ```bash
 docker-compose -f docker-compose.prod.yml up -d
 ```

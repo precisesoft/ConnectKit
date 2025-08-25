@@ -30,8 +30,14 @@ class DatabaseConnection {
       password: process.env.DB_PASSWORD || 'password',
       ssl: process.env.DB_SSL === 'true',
       maxConnections: parseInt(process.env.DB_MAX_CONNECTIONS || '20', 10),
-      idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT_MS || '10000', 10),
-      connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT_MS || '2000', 10),
+      idleTimeoutMillis: parseInt(
+        process.env.DB_IDLE_TIMEOUT_MS || '10000',
+        10
+      ),
+      connectionTimeoutMillis: parseInt(
+        process.env.DB_CONNECTION_TIMEOUT_MS || '2000',
+        10
+      ),
     };
   }
 
@@ -79,7 +85,7 @@ class DatabaseConnection {
       });
 
       // Handle pool errors
-      this.pool.on('error', (err) => {
+      this.pool.on('error', err => {
         logger.error('Database pool error:', err);
       });
 
@@ -121,18 +127,18 @@ class DatabaseConnection {
   async query(text: string, params?: any[]): Promise<any> {
     const pool = this.getPool();
     const start = Date.now();
-    
+
     try {
       const result = await pool.query(text, params);
       const duration = Date.now() - start;
-      
+
       logger.debug('Database query executed', {
         query: text,
         params: params?.length || 0,
         rows: result.rowCount,
         duration,
       });
-      
+
       return result;
     } catch (error) {
       logger.error('Database query failed', {
@@ -147,7 +153,7 @@ class DatabaseConnection {
   async transaction<T>(callback: (client: any) => Promise<T>): Promise<T> {
     const pool = this.getPool();
     const client = await pool.connect();
-    
+
     try {
       await client.query('BEGIN');
       const result = await callback(client);

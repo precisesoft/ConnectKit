@@ -6,11 +6,14 @@ export abstract class AppError extends Error {
   public abstract readonly isOperational: boolean;
   public readonly timestamp: string;
 
-  constructor(message: string, public readonly context?: any) {
+  constructor(
+    message: string,
+    public readonly context?: any
+  ) {
     super(message);
     this.name = this.constructor.name;
     this.timestamp = new Date().toISOString();
-    
+
     // Maintains proper stack trace for where our error was thrown
     Error.captureStackTrace(this, this.constructor);
   }
@@ -192,7 +195,10 @@ export class ServiceUnavailableError extends AppError {
 
 // Business logic errors
 export class ValidationError extends BadRequestError {
-  constructor(message: string = 'Validation failed', public readonly errors?: any[]) {
+  constructor(
+    message: string = 'Validation failed',
+    public readonly errors?: any[]
+  ) {
     super(message, { errors });
   }
 
@@ -298,7 +304,10 @@ export class InvalidCredentialsError extends AuthenticationError {
 
 export class AccountLockedError extends UnauthorizedError {
   constructor(lockedUntil: Date) {
-    super('Account is temporarily locked due to too many failed login attempts', { lockedUntil });
+    super(
+      'Account is temporarily locked due to too many failed login attempts',
+      { lockedUntil }
+    );
   }
 }
 
@@ -317,14 +326,22 @@ export class ContactNotFoundError extends NotFoundError {
 
 export class ContactAlreadyExistsError extends ConflictError {
   constructor(userId: string, field: string, value: string) {
-    super(`Contact with ${field} '${value}' already exists for this user`, { userId, field, value });
+    super(`Contact with ${field} '${value}' already exists for this user`, {
+      userId,
+      field,
+      value,
+    });
   }
 }
 
 // Rate limiting error
 export class RateLimitExceededError extends TooManyRequestsError {
   constructor(limit: number, window: string, retryAfter?: number) {
-    super(`Rate limit exceeded: ${limit} requests per ${window}`, { limit, window, retryAfter });
+    super(`Rate limit exceeded: ${limit} requests per ${window}`, {
+      limit,
+      window,
+      retryAfter,
+    });
   }
 
   toJSON() {
@@ -359,7 +376,7 @@ export const isOperationalError = (error: any): boolean => {
 
 export const createErrorResponse = (error: AppError) => {
   const response = error.toJSON();
-  
+
   // Remove sensitive information in production
   if (process.env.NODE_ENV === 'production') {
     delete (response as any).stack;
@@ -368,7 +385,7 @@ export const createErrorResponse = (error: AppError) => {
       delete (response as any).context;
     }
   }
-  
+
   return response;
 };
 
@@ -384,7 +401,10 @@ export const createDatabaseError = (originalError: Error) => {
   });
 };
 
-export const createExternalServiceError = (service: string, originalError: Error) => {
+export const createExternalServiceError = (
+  service: string,
+  originalError: Error
+) => {
   return new ExternalServiceError(service, `${service} service error`, {
     originalError: originalError.message,
   });

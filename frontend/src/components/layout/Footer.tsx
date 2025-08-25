@@ -16,7 +16,7 @@ const Footer: React.FC = () => {
 
   return (
     <Box
-      component="footer"
+      component='footer'
       sx={{
         backgroundColor: 'background.paper',
         borderTop: '1px solid',
@@ -25,7 +25,7 @@ const Footer: React.FC = () => {
         py: { xs: 2, sm: 3 },
       }}
     >
-      <Container maxWidth="lg">
+      <Container maxWidth='lg'>
         <Box
           sx={{
             display: 'flex',
@@ -43,8 +43,8 @@ const Footer: React.FC = () => {
             }}
           >
             <Typography
-              variant="h6"
-              component="div"
+              variant='h6'
+              component='div'
               sx={{
                 fontWeight: 600,
                 color: 'primary.main',
@@ -53,13 +53,9 @@ const Footer: React.FC = () => {
             >
               ConnectKit
             </Typography>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ mb: 2 }}
-            >
-              Modern contact management for professionals. 
-              Keep your network organized and accessible.
+            <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
+              Modern contact management for professionals. Keep your network
+              organized and accessible.
             </Typography>
           </Box>
 
@@ -74,8 +70,8 @@ const Footer: React.FC = () => {
               {/* Product Links */}
               <Box>
                 <Typography
-                  variant="subtitle2"
-                  color="text.primary"
+                  variant='subtitle2'
+                  color='text.primary'
                   gutterBottom
                   sx={{ fontWeight: 600 }}
                 >
@@ -83,26 +79,26 @@ const Footer: React.FC = () => {
                 </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   <Link
-                    href="/contacts"
-                    color="text.secondary"
-                    underline="hover"
-                    variant="body2"
+                    href='/contacts'
+                    color='text.secondary'
+                    underline='hover'
+                    variant='body2'
                   >
                     Contacts
                   </Link>
                   <Link
-                    href="/profile"
-                    color="text.secondary"
-                    underline="hover"
-                    variant="body2"
+                    href='/profile'
+                    color='text.secondary'
+                    underline='hover'
+                    variant='body2'
                   >
                     Profile
                   </Link>
                   <Link
-                    href="/settings"
-                    color="text.secondary"
-                    underline="hover"
-                    variant="body2"
+                    href='/settings'
+                    color='text.secondary'
+                    underline='hover'
+                    variant='body2'
                   >
                     Settings
                   </Link>
@@ -112,8 +108,8 @@ const Footer: React.FC = () => {
               {/* Support Links */}
               <Box>
                 <Typography
-                  variant="subtitle2"
-                  color="text.primary"
+                  variant='subtitle2'
+                  color='text.primary'
                   gutterBottom
                   sx={{ fontWeight: 600 }}
                 >
@@ -121,11 +117,11 @@ const Footer: React.FC = () => {
                 </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   <Link
-                    href="#"
-                    color="text.secondary"
-                    underline="hover"
-                    variant="body2"
-                    onClick={(e) => {
+                    href='#'
+                    color='text.secondary'
+                    underline='hover'
+                    variant='body2'
+                    onClick={e => {
                       e.preventDefault();
                       // Handle help/documentation
                     }}
@@ -133,11 +129,11 @@ const Footer: React.FC = () => {
                     Help Center
                   </Link>
                   <Link
-                    href="#"
-                    color="text.secondary"
-                    underline="hover"
-                    variant="body2"
-                    onClick={(e) => {
+                    href='#'
+                    color='text.secondary'
+                    underline='hover'
+                    variant='body2'
+                    onClick={e => {
                       e.preventDefault();
                       // Handle contact support
                     }}
@@ -145,11 +141,11 @@ const Footer: React.FC = () => {
                     Contact Support
                   </Link>
                   <Link
-                    href="#"
-                    color="text.secondary"
-                    underline="hover"
-                    variant="body2"
-                    onClick={(e) => {
+                    href='#'
+                    color='text.secondary'
+                    underline='hover'
+                    variant='body2'
+                    onClick={e => {
                       e.preventDefault();
                       // Handle bug reporting
                     }}
@@ -162,8 +158,8 @@ const Footer: React.FC = () => {
               {/* Company Links */}
               <Box>
                 <Typography
-                  variant="subtitle2"
-                  color="text.primary"
+                  variant='subtitle2'
+                  color='text.primary'
                   gutterBottom
                   sx={{ fontWeight: 600 }}
                 >
@@ -171,11 +167,11 @@ const Footer: React.FC = () => {
                 </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   <Link
-                    href="#"
-                    color="text.secondary"
-                    underline="hover"
-                    variant="body2"
-                    onClick={(e) => {
+                    href='#'
+                    color='text.secondary'
+                    underline='hover'
+                    variant='body2'
+                    onClick={e => {
                       e.preventDefault();
                       // Handle about page
                     }}
@@ -183,11 +179,11 @@ const Footer: React.FC = () => {
                     About
                   </Link>
                   <Link
-                    href="#"
-                    color="text.secondary"
-                    underline="hover"
-                    variant="body2"
-                    onClick={(e) => {
+                    href='#'
+                    color='text.secondary'
+                    underline='hover'
+                    variant='body2'
+                    onClick={e => {
                       e.preventDefault();
                       // Handle privacy policy
                     }}
@@ -195,11 +191,11 @@ const Footer: React.FC = () => {
                     Privacy Policy
                   </Link>
                   <Link
-                    href="#"
-                    color="text.secondary"
-                    underline="hover"
-                    variant="body2"
-                    onClick={(e) => {
+                    href='#'
+                    color='text.secondary'
+                    underline='hover'
+                    variant='body2'
+                    onClick={e => {
                       e.preventDefault();
                       // Handle terms of service
                     }}
@@ -224,34 +220,34 @@ const Footer: React.FC = () => {
             }}
           >
             <Link
-              href="#"
-              color="text.secondary"
-              underline="hover"
-              variant="body2"
+              href='#'
+              color='text.secondary'
+              underline='hover'
+              variant='body2'
             >
               Help
             </Link>
             <Link
-              href="#"
-              color="text.secondary"
-              underline="hover"
-              variant="body2"
+              href='#'
+              color='text.secondary'
+              underline='hover'
+              variant='body2'
             >
               Privacy
             </Link>
             <Link
-              href="#"
-              color="text.secondary"
-              underline="hover"
-              variant="body2"
+              href='#'
+              color='text.secondary'
+              underline='hover'
+              variant='body2'
             >
               Terms
             </Link>
             <Link
-              href="#"
-              color="text.secondary"
-              underline="hover"
-              variant="body2"
+              href='#'
+              color='text.secondary'
+              underline='hover'
+              variant='body2'
             >
               Support
             </Link>
@@ -272,7 +268,7 @@ const Footer: React.FC = () => {
           }}
         >
           {/* Copyright */}
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant='body2' color='text.secondary'>
             © {currentYear} ConnectKit. All rights reserved.
           </Typography>
 
@@ -287,8 +283,8 @@ const Footer: React.FC = () => {
             }}
           >
             <Typography
-              variant="caption"
-              color="text.secondary"
+              variant='caption'
+              color='text.secondary'
               sx={{
                 px: 1.5,
                 py: 0.5,
@@ -301,8 +297,8 @@ const Footer: React.FC = () => {
             </Typography>
             {__DEV__ && (
               <Typography
-                variant="caption"
-                color="warning.main"
+                variant='caption'
+                color='warning.main'
                 sx={{
                   px: 1.5,
                   py: 0.5,
@@ -331,8 +327,8 @@ const Footer: React.FC = () => {
             }}
           >
             <Typography
-              variant="caption"
-              color="info.dark"
+              variant='caption'
+              color='info.dark'
               sx={{
                 display: 'block',
                 textAlign: 'center',

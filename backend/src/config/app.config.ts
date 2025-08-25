@@ -17,41 +17,41 @@ export interface AppConfig {
   apiPrefix: string;
   apiVersion: string;
   corsOrigins: string[];
-  
+
   // Security configuration
   trustProxy: boolean;
   helmet: {
     contentSecurityPolicy: boolean;
     crossOriginEmbedderPolicy: boolean;
   };
-  
+
   // Rate limiting
   rateLimit: {
     windowMs: number;
     maxRequests: number;
     skipSuccessfulRequests: boolean;
   };
-  
+
   // Request limits
   bodyLimit: string;
   parameterLimit: number;
-  
+
   // Logging
   logLevel: string;
   logFormat: string;
-  
+
   // Health check
   healthCheck: {
     endpoint: string;
     interval: number;
   };
-  
+
   // Graceful shutdown
   gracefulShutdown: {
     timeout: number;
     killTimeout: number;
   };
-  
+
   // Feature flags
   features: {
     swagger: boolean;
@@ -70,7 +70,7 @@ class AppConfiguration {
 
   private loadConfig(): AppConfig {
     const nodeEnv = process.env.NODE_ENV || 'development';
-    
+
     return {
       // Server configuration
       port: parseInt(process.env.PORT || '3000', 10),
@@ -84,41 +84,44 @@ class AppConfiguration {
       apiPrefix: process.env.API_PREFIX || '/api',
       apiVersion: process.env.API_VERSION || 'v1',
       corsOrigins: this.parseCorsOrigins(),
-      
+
       // Security configuration
       trustProxy: process.env.TRUST_PROXY === 'true',
       helmet: {
         contentSecurityPolicy: process.env.HELMET_CSP !== 'false',
         crossOriginEmbedderPolicy: process.env.HELMET_COEP !== 'false',
       },
-      
+
       // Rate limiting
       rateLimit: {
         windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10), // 15 minutes
         maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100', 10),
         skipSuccessfulRequests: process.env.RATE_LIMIT_SKIP_SUCCESS === 'true',
       },
-      
+
       // Request limits
       bodyLimit: process.env.BODY_LIMIT || '10mb',
       parameterLimit: parseInt(process.env.PARAMETER_LIMIT || '1000', 10),
-      
+
       // Logging
-      logLevel: process.env.LOG_LEVEL || (nodeEnv === 'production' ? 'info' : 'debug'),
-      logFormat: process.env.LOG_FORMAT || (nodeEnv === 'production' ? 'json' : 'combined'),
-      
+      logLevel:
+        process.env.LOG_LEVEL || (nodeEnv === 'production' ? 'info' : 'debug'),
+      logFormat:
+        process.env.LOG_FORMAT ||
+        (nodeEnv === 'production' ? 'json' : 'combined'),
+
       // Health check
       healthCheck: {
         endpoint: process.env.HEALTH_CHECK_ENDPOINT || '/health',
         interval: parseInt(process.env.HEALTH_CHECK_INTERVAL || '30000', 10),
       },
-      
+
       // Graceful shutdown
       gracefulShutdown: {
         timeout: parseInt(process.env.GRACEFUL_SHUTDOWN_TIMEOUT || '10000', 10),
         killTimeout: parseInt(process.env.GRACEFUL_KILL_TIMEOUT || '5000', 10),
       },
-      
+
       // Feature flags
       features: {
         swagger: process.env.FEATURE_SWAGGER !== 'false',
@@ -130,12 +133,17 @@ class AppConfiguration {
 
   private parseCorsOrigins(): string[] {
     const origins = process.env.CORS_ORIGINS || '';
-    
+
     if (!origins) {
-      return this.config?.isDevelopment ? ['http://localhost:3000', 'http://localhost:5173'] : [];
+      return this.config?.isDevelopment
+        ? ['http://localhost:3000', 'http://localhost:5173']
+        : [];
     }
-    
-    return origins.split(',').map(origin => origin.trim()).filter(Boolean);
+
+    return origins
+      .split(',')
+      .map(origin => origin.trim())
+      .filter(Boolean);
   }
 
   private validateConfig(): void {
@@ -167,14 +175,16 @@ class AppConfiguration {
     // Validate log level
     const validLogLevels = ['error', 'warn', 'info', 'debug', 'verbose'];
     if (!validLogLevels.includes(this.config.logLevel)) {
-      errors.push(`Invalid log level: ${this.config.logLevel}. Must be one of: ${validLogLevels.join(', ')}`);
+      errors.push(
+        `Invalid log level: ${this.config.logLevel}. Must be one of: ${validLogLevels.join(', ')}`
+      );
     }
 
     // Validate rate limit settings
     if (this.config.rateLimit.windowMs < 1000) {
       errors.push('Rate limit window must be at least 1000ms');
     }
-    
+
     if (this.config.rateLimit.maxRequests < 1) {
       errors.push('Rate limit max requests must be at least 1');
     }

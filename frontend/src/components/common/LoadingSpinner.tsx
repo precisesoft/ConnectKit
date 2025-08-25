@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  Box,
-  CircularProgress,
-  Typography,
-  Fade,
-} from '@mui/material';
+import { Box, CircularProgress, Typography, Fade } from '@mui/material';
 
 interface LoadingSpinnerProps {
   /**
@@ -18,7 +13,14 @@ interface LoadingSpinnerProps {
   /**
    * Color of the spinner
    */
-  color?: 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success' | 'inherit';
+  color?:
+    | 'primary'
+    | 'secondary'
+    | 'error'
+    | 'warning'
+    | 'info'
+    | 'success'
+    | 'inherit';
   /**
    * Whether to show the component with fade animation
    */
@@ -58,15 +60,15 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
         ...sx,
       }}
     >
-      <CircularProgress 
-        size={size} 
+      <CircularProgress
+        size={size}
         color={color}
         sx={{ mb: message ? 2 : 0 }}
       />
       {message && (
         <Typography
-          variant="body2"
-          color="text.secondary"
+          variant='body2'
+          color='text.secondary'
           sx={{
             textAlign: 'center',
             maxWidth: 300,

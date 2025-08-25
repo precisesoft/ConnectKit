@@ -2,7 +2,7 @@
 
 /**
  * ConnectKit API Server Entry Point
- * 
+ *
  * This is the main entry point for the ConnectKit API server.
  * It starts the HTTP server and handles initialization.
  */
@@ -22,24 +22,24 @@ logger.info('Starting ConnectKit API Server...', {
 
 // Start the server
 startServer()
-  .then((server) => {
+  .then(server => {
     logger.info('Server started successfully', {
       address: server.address(),
       pid: process.pid,
     });
   })
-  .catch((error) => {
+  .catch(error => {
     logger.error('Failed to start server:', error);
     process.exit(1);
   });
 
 // Log process information
-process.on('exit', (code) => {
+process.on('exit', code => {
   logger.info('Process exiting', { code });
 });
 
 // Handle warnings
-process.on('warning', (warning) => {
+process.on('warning', warning => {
   logger.warn('Process warning:', {
     name: warning.name,
     message: warning.message,

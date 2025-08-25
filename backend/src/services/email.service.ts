@@ -1,8 +1,5 @@
 import { logger } from '../utils/logger';
-import { 
-  ExternalServiceError,
-  ValidationError 
-} from '../utils/errors';
+import { ExternalServiceError, ValidationError } from '../utils/errors';
 import { EMAIL_CONSTANTS } from '../utils/constants';
 import appConfig from '../config/app.config';
 
@@ -54,7 +51,7 @@ export interface EmailStats {
 export class EmailService {
   private isConfigured: boolean;
   private provider: string;
-  
+
   constructor() {
     this.provider = process.env.EMAIL_PROVIDER || 'console';
     this.isConfigured = this.checkConfiguration();
@@ -67,13 +64,15 @@ export class EmailService {
     if (this.provider === 'console') {
       return true; // Console provider is always available
     }
-    
+
     // Check for required environment variables based on provider
     switch (this.provider) {
       case 'sendgrid':
-        return !!(process.env.SENDGRID_API_KEY);
+        return !!process.env.SENDGRID_API_KEY;
       case 'ses':
-        return !!(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY);
+        return !!(
+          process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
+        );
       case 'smtp':
         return !!(process.env.SMTP_HOST && process.env.SMTP_PORT);
       default:
@@ -88,12 +87,12 @@ export class EmailService {
     try {
       // Validate options
       this.validateEmailOptions(options);
-      
+
       // If email features are disabled or not configured, use console output
       if (!this.isConfigured || !process.env.FEATURE_EMAIL) {
         return this.sendToConsole(options);
       }
-      
+
       // Choose provider
       switch (this.provider) {
         case 'sendgrid':
@@ -105,14 +104,13 @@ export class EmailService {
         default:
           return this.sendToConsole(options);
       }
-      
     } catch (error) {
-      logger.error('Failed to send email', { 
-        error, 
-        to: options.to, 
-        subject: options.subject 
+      logger.error('Failed to send email', {
+        error,
+        to: options.to,
+        subject: options.subject,
       });
-      
+
       return {
         messageId: 'failed',
         status: 'failed',
@@ -124,11 +122,13 @@ export class EmailService {
   /**
    * Send welcome email
    */
-  async sendWelcomeEmail(
-    user: { email: string; firstName: string; lastName: string }
-  ): Promise<EmailResult> {
+  async sendWelcomeEmail(user: {
+    email: string;
+    firstName: string;
+    lastName: string;
+  }): Promise<EmailResult> {
     const template = this.getTemplate(EMAIL_CONSTANTS.TEMPLATES.WELCOME);
-    
+
     return await this.sendEmail({
       to: { email: user.email, name: `${user.firstName} ${user.lastName}` },
       subject: template.subject,
@@ -153,9 +153,11 @@ export class EmailService {
     user: { email: string; firstName: string },
     verificationToken: string
   ): Promise<EmailResult> {
-    const template = this.getTemplate(EMAIL_CONSTANTS.TEMPLATES.EMAIL_VERIFICATION);
+    const template = this.getTemplate(
+      EMAIL_CONSTANTS.TEMPLATES.EMAIL_VERIFICATION
+    );
     const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${verificationToken}`;
-    
+
     return await this.sendEmail({
       to: { email: user.email, name: user.firstName },
       subject: template.subject,
@@ -183,7 +185,7 @@ export class EmailService {
   ): Promise<EmailResult> {
     const template = this.getTemplate(EMAIL_CONSTANTS.TEMPLATES.PASSWORD_RESET);
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
-    
+
     return await this.sendEmail({
       to: { email: user.email, name: user.firstName },
       subject: template.subject,
@@ -205,11 +207,14 @@ export class EmailService {
   /**
    * Send password changed confirmation
    */
-  async sendPasswordChangedEmail(
-    user: { email: string; firstName: string }
-  ): Promise<EmailResult> {
-    const template = this.getTemplate(EMAIL_CONSTANTS.TEMPLATES.PASSWORD_CHANGED);
-    
+  async sendPasswordChangedEmail(user: {
+    email: string;
+    firstName: string;
+  }): Promise<EmailResult> {
+    const template = this.getTemplate(
+      EMAIL_CONSTANTS.TEMPLATES.PASSWORD_CHANGED
+    );
+
     return await this.sendEmail({
       to: { email: user.email, name: user.firstName },
       subject: template.subject,
@@ -234,7 +239,7 @@ export class EmailService {
     lockedUntil: Date
   ): Promise<EmailResult> {
     const template = this.getTemplate(EMAIL_CONSTANTS.TEMPLATES.ACCOUNT_LOCKED);
-    
+
     return await this.sendEmail({
       to: { email: user.email, name: user.firstName },
       subject: template.subject,
@@ -262,7 +267,7 @@ export class EmailService {
     loginInfo: { ip: string; userAgent: string; location?: string }
   ): Promise<EmailResult> {
     const template = this.getTemplate(EMAIL_CONSTANTS.TEMPLATES.LOGIN_ALERT);
-    
+
     return await this.sendEmail({
       to: { email: user.email, name: user.firstName },
       subject: template.subject,
@@ -286,29 +291,27 @@ export class EmailService {
   /**
    * Send bulk emails
    */
-  async sendBulkEmails(
-    emails: EmailOptions[]
-  ): Promise<EmailResult[]> {
+  async sendBulkEmails(emails: EmailOptions[]): Promise<EmailResult[]> {
     const results: EmailResult[] = [];
-    
+
     // Process emails in batches to avoid overwhelming the service
     const batchSize = 50;
-    
+
     for (let i = 0; i < emails.length; i += batchSize) {
       const batch = emails.slice(i, i + batchSize);
-      
+
       const batchResults = await Promise.all(
         batch.map(email => this.sendEmail(email))
       );
-      
+
       results.push(...batchResults);
-      
+
       // Add delay between batches to avoid rate limits
       if (i + batchSize < emails.length) {
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
-    
+
     return results;
   }
 
@@ -319,15 +322,17 @@ export class EmailService {
     if (!options.to) {
       throw new ValidationError('Email recipient is required');
     }
-    
+
     if (!options.subject) {
       throw new ValidationError('Email subject is required');
     }
-    
+
     if (!options.html && !options.text && !options.template) {
-      throw new ValidationError('Email content is required (html, text, or template)');
+      throw new ValidationError(
+        'Email content is required (html, text, or template)'
+      );
     }
-    
+
     // Validate email addresses
     const recipients = Array.isArray(options.to) ? options.to : [options.to];
     for (const recipient of recipients) {
@@ -350,32 +355,35 @@ export class EmailService {
    */
   private sendToConsole(options: EmailOptions): EmailResult {
     const recipients = Array.isArray(options.to) ? options.to : [options.to];
-    
+
     console.log('\n===== EMAIL =====');
     console.log('From:', options.from?.email || EMAIL_CONSTANTS.FROM_ADDRESS);
-    console.log('To:', recipients.map(r => `${r.name || ''} <${r.email}>`).join(', '));
+    console.log(
+      'To:',
+      recipients.map(r => `${r.name || ''} <${r.email}>`).join(', ')
+    );
     console.log('Subject:', options.subject);
     console.log('Template:', options.template || 'none');
     console.log('Tags:', options.tags?.join(', ') || 'none');
-    
+
     if (options.text) {
       console.log('\n--- TEXT CONTENT ---');
       console.log(options.text);
     }
-    
+
     if (options.html) {
       console.log('\n--- HTML CONTENT ---');
       console.log(options.html);
     }
-    
+
     console.log('================\n');
-    
+
     logger.info('Email sent to console', {
       to: recipients.map(r => r.email),
       subject: options.subject,
       template: options.template,
     });
-    
+
     return {
       messageId: `console-${Date.now()}`,
       status: 'sent',
@@ -389,19 +397,22 @@ export class EmailService {
     try {
       // This is a placeholder implementation
       // In a real application, you would use the SendGrid SDK
-      
+
       logger.info('Email would be sent via SendGrid', {
         to: options.to,
         subject: options.subject,
       });
-      
+
       return {
         messageId: `sendgrid-${Date.now()}`,
         status: 'sent',
       };
-      
     } catch (error) {
-      throw new ExternalServiceError('SendGrid', 'Failed to send email via SendGrid', { error });
+      throw new ExternalServiceError(
+        'SendGrid',
+        'Failed to send email via SendGrid',
+        { error }
+      );
     }
   }
 
@@ -412,19 +423,22 @@ export class EmailService {
     try {
       // This is a placeholder implementation
       // In a real application, you would use the AWS SDK
-      
+
       logger.info('Email would be sent via AWS SES', {
         to: options.to,
         subject: options.subject,
       });
-      
+
       return {
         messageId: `ses-${Date.now()}`,
         status: 'sent',
       };
-      
     } catch (error) {
-      throw new ExternalServiceError('AWS SES', 'Failed to send email via SES', { error });
+      throw new ExternalServiceError(
+        'AWS SES',
+        'Failed to send email via SES',
+        { error }
+      );
     }
   }
 
@@ -435,19 +449,20 @@ export class EmailService {
     try {
       // This is a placeholder implementation
       // In a real application, you would use nodemailer or similar
-      
+
       logger.info('Email would be sent via SMTP', {
         to: options.to,
         subject: options.subject,
       });
-      
+
       return {
         messageId: `smtp-${Date.now()}`,
         status: 'sent',
       };
-      
     } catch (error) {
-      throw new ExternalServiceError('SMTP', 'Failed to send email via SMTP', { error });
+      throw new ExternalServiceError('SMTP', 'Failed to send email via SMTP', {
+        error,
+      });
     }
   }
 
@@ -457,7 +472,7 @@ export class EmailService {
   private getTemplate(templateName: string): EmailTemplate {
     // This is a simplified template system
     // In production, you might use a more sophisticated template engine
-    
+
     const templates: Record<string, EmailTemplate> = {
       [EMAIL_CONSTANTS.TEMPLATES.WELCOME]: {
         subject: 'Welcome to ConnectKit!',
@@ -467,7 +482,7 @@ export class EmailService {
           <p>Start managing your contacts more effectively today.</p>
         `,
       },
-      
+
       [EMAIL_CONSTANTS.TEMPLATES.EMAIL_VERIFICATION]: {
         subject: 'Verify your email address',
         htmlContent: `
@@ -478,7 +493,7 @@ export class EmailService {
           <p>If you didn't create an account with {{appName}}, please ignore this email.</p>
         `,
       },
-      
+
       [EMAIL_CONSTANTS.TEMPLATES.PASSWORD_RESET]: {
         subject: 'Reset your password',
         htmlContent: `
@@ -490,7 +505,7 @@ export class EmailService {
           <p>This link will expire in 1 hour.</p>
         `,
       },
-      
+
       [EMAIL_CONSTANTS.TEMPLATES.PASSWORD_CHANGED]: {
         subject: 'Your password has been changed',
         htmlContent: `
@@ -501,7 +516,7 @@ export class EmailService {
           <p><a href="{{supportUrl}}">Contact Support</a></p>
         `,
       },
-      
+
       [EMAIL_CONSTANTS.TEMPLATES.ACCOUNT_LOCKED]: {
         subject: 'Your account has been temporarily locked',
         htmlContent: `
@@ -513,7 +528,7 @@ export class EmailService {
           <p><a href="{{supportUrl}}">Contact Support</a></p>
         `,
       },
-      
+
       [EMAIL_CONSTANTS.TEMPLATES.LOGIN_ALERT]: {
         subject: 'New login to your account',
         htmlContent: `
@@ -530,12 +545,12 @@ export class EmailService {
         `,
       },
     };
-    
+
     const template = templates[templateName];
     if (!template) {
       throw new ValidationError(`Email template not found: ${templateName}`);
     }
-    
+
     return template;
   }
 
@@ -544,12 +559,12 @@ export class EmailService {
    */
   private renderTemplate(template: string, data: Record<string, any>): string {
     let rendered = template;
-    
+
     for (const [key, value] of Object.entries(data)) {
       const placeholder = `{{${key}}}`;
       rendered = rendered.replace(new RegExp(placeholder, 'g'), String(value));
     }
-    
+
     return rendered;
   }
 
@@ -559,7 +574,7 @@ export class EmailService {
   async getEmailStats(): Promise<EmailStats> {
     // This would typically fetch from your email provider's API
     // For now, return mock data
-    
+
     return {
       sent: 0,
       delivered: 0,
@@ -581,14 +596,14 @@ export class EmailService {
         text: 'This is a test email to verify email configuration.',
         tags: ['test'],
       });
-      
+
       return {
         success: testResult.status === 'sent',
-        message: testResult.status === 'sent' 
-          ? 'Email configuration is working correctly' 
-          : `Email test failed: ${testResult.error}`,
+        message:
+          testResult.status === 'sent'
+            ? 'Email configuration is working correctly'
+            : `Email test failed: ${testResult.error}`,
       };
-      
     } catch (error) {
       return {
         success: false,

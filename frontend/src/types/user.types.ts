@@ -18,15 +18,15 @@ export interface User {
   website?: string;
   timezone?: string;
   language?: string;
-  
+
   // Notification preferences
   emailNotifications: boolean;
   marketingEmails: boolean;
-  
+
   // Security
   twoFactorEnabled: boolean;
   lastLogin?: string;
-  
+
   // Timestamps
   createdAt: string;
   updatedAt: string;
@@ -41,7 +41,12 @@ export interface UserProfile extends User {
 
 export interface UserActivity {
   id: string;
-  type: 'contact_created' | 'contact_updated' | 'contact_deleted' | 'login' | 'password_changed';
+  type:
+    | 'contact_created'
+    | 'contact_updated'
+    | 'contact_deleted'
+    | 'login'
+    | 'password_changed';
   description: string;
   metadata?: Record<string, any>;
   timestamp: string;
@@ -51,7 +56,7 @@ export interface UserSettings {
   // Appearance
   theme: 'light' | 'dark' | 'system';
   density: 'compact' | 'standard' | 'comfortable';
-  
+
   // Notifications
   emailNotifications: boolean;
   pushNotifications: boolean;
@@ -59,16 +64,16 @@ export interface UserSettings {
   weeklyDigest: boolean;
   contactUpdates: boolean;
   securityAlerts: boolean;
-  
+
   // Privacy
   profileVisibility: 'public' | 'private';
   showEmail: boolean;
   showPhone: boolean;
-  
+
   // Data & Storage
   autoBackup: boolean;
   dataRetention: number; // days
-  
+
   // Advanced
   apiAccess: boolean;
   developerMode: boolean;
@@ -92,24 +97,24 @@ export interface UserStats {
   companiesCount: number;
   tagsCount: number;
   averageContactsPerMonth: number;
-  
+
   // Activity stats
   lastLoginAt?: string;
   loginCount: number;
   profileCompleteness: number; // percentage
-  
+
   // Usage patterns
   mostUsedFeatures: Array<{
     feature: string;
     count: number;
   }>;
-  
+
   // Time-based stats
   dailyActivity: Array<{
     date: string;
     actions: number;
   }>;
-  
+
   weeklyActivity: Array<{
     week: string;
     actions: number;
@@ -192,7 +197,7 @@ export interface AccountImport {
 }
 
 // Role and permissions
-export type Permission = 
+export type Permission =
   | 'contacts:read'
   | 'contacts:write'
   | 'contacts:delete'

@@ -6,10 +6,7 @@
     "source.fixAll.eslint": "explicit",
     "source.organizeImports": "explicit"
   },
-  "eslint.workingDirectories": [
-    "frontend",
-    "backend"
-  ],
+  "eslint.workingDirectories": ["frontend", "backend"],
   "typescript.suggest.autoImports": true,
   "typescript.updateImportsOnFileMove.enabled": "always",
   "files.exclude": {

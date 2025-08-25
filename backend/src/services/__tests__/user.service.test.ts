@@ -30,13 +30,16 @@ describe('UserService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Create mock instances
-    mockUserRepository = createMockUserRepository() as jest.Mocked<UserRepository>;
+    mockUserRepository =
+      createMockUserRepository() as jest.Mocked<UserRepository>;
     mockRedis = createMockRedis();
 
     // Mock the constructor dependencies
-    (UserRepository as jest.MockedClass<typeof UserRepository>).mockImplementation(() => mockUserRepository);
+    (
+      UserRepository as jest.MockedClass<typeof UserRepository>
+    ).mockImplementation(() => mockUserRepository);
 
     // Mock Redis connection
     jest.mock('../../config/redis.config', () => ({
@@ -58,7 +61,7 @@ describe('UserService', () => {
       const userId = 'user-123';
       const mockUser = createUser({ id: userId });
       mockUserRepository.findById.mockResolvedValue(mockUser);
-      
+
       // Mock cache miss
       mockRedis.get.mockResolvedValue(null);
       mockRedis.setex.mockResolvedValue('OK');
@@ -98,7 +101,9 @@ describe('UserService', () => {
       mockRedis.get.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(userService.getUserById(userId)).rejects.toThrow(NotFoundError);
+      await expect(userService.getUserById(userId)).rejects.toThrow(
+        NotFoundError
+      );
       expect(mockUserRepository.findById).toHaveBeenCalledWith(userId);
     });
   });
@@ -202,7 +207,10 @@ describe('UserService', () => {
 
       // Assert
       expect(mockUserRepository.findByIdOrFail).toHaveBeenCalledWith(userId);
-      expect(mockUserRepository.updateUser).toHaveBeenCalledWith(userId, updateData);
+      expect(mockUserRepository.updateUser).toHaveBeenCalledWith(
+        userId,
+        updateData
+      );
       expect(mockRedis.del).toHaveBeenCalledWith(`user:${userId}`);
       expect(result).toEqual(updatedUser);
     });
@@ -229,7 +237,10 @@ describe('UserService', () => {
       const result = await userService.updateUser(userId, updateData, adminId);
 
       // Assert
-      expect(mockUserRepository.updateUser).toHaveBeenCalledWith(userId, updateData);
+      expect(mockUserRepository.updateUser).toHaveBeenCalledWith(
+        userId,
+        updateData
+      );
       expect(result).toEqual(updatedUser);
     });
 
@@ -238,7 +249,10 @@ describe('UserService', () => {
       const userId = 'user-123';
       const currentUserId = 'other-user-456';
       const existingUser = createUser({ id: userId });
-      const currentUser = createUser({ id: currentUserId, role: UserRole.USER });
+      const currentUser = createUser({
+        id: currentUserId,
+        role: UserRole.USER,
+      });
       const updateData = {
         role: UserRole.ADMIN,
       };
@@ -258,7 +272,10 @@ describe('UserService', () => {
       const userId = 'user-123';
       const currentUserId = 'other-user-456';
       const existingUser = createUser({ id: userId });
-      const currentUser = createUser({ id: currentUserId, role: UserRole.USER });
+      const currentUser = createUser({
+        id: currentUserId,
+        role: UserRole.USER,
+      });
       const updateData = {
         firstName: 'Hacker',
       };
@@ -280,9 +297,9 @@ describe('UserService', () => {
       const updateData = {
         email: 'existing@example.com',
       };
-      const conflictingUser = createUser({ 
-        id: 'other-user-456', 
-        email: 'existing@example.com' 
+      const conflictingUser = createUser({
+        id: 'other-user-456',
+        email: 'existing@example.com',
       });
 
       mockUserRepository.findByIdOrFail.mockResolvedValue(existingUser);
@@ -301,9 +318,9 @@ describe('UserService', () => {
       const updateData = {
         username: 'existinguser',
       };
-      const conflictingUser = createUser({ 
-        id: 'other-user-456', 
-        username: 'existinguser' 
+      const conflictingUser = createUser({
+        id: 'other-user-456',
+        username: 'existinguser',
       });
 
       mockUserRepository.findByIdOrFail.mockResolvedValue(existingUser);
@@ -344,7 +361,10 @@ describe('UserService', () => {
       const userId = 'user-123';
       const currentUserId = 'other-user-456';
       const existingUser = createUser({ id: userId });
-      const currentUser = createUser({ id: currentUserId, role: UserRole.USER });
+      const currentUser = createUser({
+        id: currentUserId,
+        role: UserRole.USER,
+      });
 
       mockUserRepository.findByIdOrFail
         .mockResolvedValueOnce(existingUser)
@@ -366,9 +386,9 @@ describe('UserService', () => {
         .mockResolvedValueOnce(adminUser);
 
       // Act & Assert
-      await expect(
-        userService.deleteUser(adminId, adminId)
-      ).rejects.toThrow(ValidationError);
+      await expect(userService.deleteUser(adminId, adminId)).rejects.toThrow(
+        ValidationError
+      );
     });
   });
 
@@ -448,7 +468,10 @@ describe('UserService', () => {
       const result = await userService.searchUsers(query, searchOptions);
 
       // Assert
-      expect(mockUserRepository.searchUsers).toHaveBeenCalledWith(query, searchOptions);
+      expect(mockUserRepository.searchUsers).toHaveBeenCalledWith(
+        query,
+        searchOptions
+      );
       expect(result).toEqual(searchResults);
     });
 
@@ -481,7 +504,9 @@ describe('UserService', () => {
       const result = await userService.activateUser(userId, adminId);
 
       // Assert
-      expect(mockUserRepository.updateUser).toHaveBeenCalledWith(userId, { isActive: true });
+      expect(mockUserRepository.updateUser).toHaveBeenCalledWith(userId, {
+        isActive: true,
+      });
       expect(result).toEqual(activatedUser);
     });
 
@@ -490,7 +515,10 @@ describe('UserService', () => {
       const userId = 'user-123';
       const currentUserId = 'other-user-456';
       const inactiveUser = createUser({ id: userId, isActive: false });
-      const currentUser = createUser({ id: currentUserId, role: UserRole.USER });
+      const currentUser = createUser({
+        id: currentUserId,
+        role: UserRole.USER,
+      });
 
       mockUserRepository.findByIdOrFail
         .mockResolvedValueOnce(inactiveUser)
@@ -522,7 +550,9 @@ describe('UserService', () => {
       const result = await userService.deactivateUser(userId, adminId);
 
       // Assert
-      expect(mockUserRepository.updateUser).toHaveBeenCalledWith(userId, { isActive: false });
+      expect(mockUserRepository.updateUser).toHaveBeenCalledWith(userId, {
+        isActive: false,
+      });
       expect(result).toEqual(deactivatedUser);
     });
 
@@ -555,10 +585,17 @@ describe('UserService', () => {
       mockUserRepository.bulkUpdate.mockResolvedValue(updatedCount);
 
       // Act
-      const result = await userService.bulkUpdateUsers(userIds, updates, adminId);
+      const result = await userService.bulkUpdateUsers(
+        userIds,
+        updates,
+        adminId
+      );
 
       // Assert
-      expect(mockUserRepository.bulkUpdate).toHaveBeenCalledWith(userIds, updates);
+      expect(mockUserRepository.bulkUpdate).toHaveBeenCalledWith(
+        userIds,
+        updates
+      );
       expect(result).toEqual({
         updated: updatedCount,
         message: `Successfully updated ${updatedCount} users`,
@@ -598,7 +635,7 @@ describe('UserService', () => {
       const userId = 'user-123';
       const mockUser = createUser({ id: userId });
       const redisError = new Error('Redis connection failed');
-      
+
       mockRedis.get.mockRejectedValue(redisError);
       mockUserRepository.findById.mockResolvedValue(mockUser);
       mockRedis.setex.mockRejectedValue(redisError);

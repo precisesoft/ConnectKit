@@ -5,20 +5,23 @@ module.exports = {
   roots: ['<rootDir>/src'],
   testMatch: [
     '**/__tests__/**/*.+(ts|tsx|js)',
-    '**/?(*.)+(spec|test).+(ts|tsx|js)'
+    '**/?(*.)+(spec|test).+(ts|tsx|js)',
   ],
   transform: {
-    '^.+\\.(ts|tsx)$': ['ts-jest', {
-      tsconfig: {
-        strict: true,
-        esModuleInterop: true,
-        skipLibCheck: true,
-        forceConsistentCasingInFileNames: true,
-        resolveJsonModule: true,
-        allowJs: true,
-        noEmit: true
-      }
-    }]
+    '^.+\\.(ts|tsx)$': [
+      'ts-jest',
+      {
+        tsconfig: {
+          strict: true,
+          esModuleInterop: true,
+          skipLibCheck: true,
+          forceConsistentCasingInFileNames: true,
+          resolveJsonModule: true,
+          allowJs: true,
+          noEmit: true,
+        },
+      },
+    ],
   },
   collectCoverage: true,
   collectCoverageFrom: [
@@ -27,21 +30,21 @@ module.exports = {
     '!src/**/*.interface.ts',
     '!src/**/*.mock.ts',
     '!src/tests/**',
-    '!src/index.ts'
+    '!src/index.ts',
   ],
   coverageThreshold: {
     global: {
       branches: 80,
       functions: 80,
       lines: 80,
-      statements: 80
+      statements: 80,
     },
     './src/services/': {
       branches: 90,
       functions: 90,
       lines: 90,
-      statements: 90
-    }
+      statements: 90,
+    },
   },
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
@@ -55,11 +58,11 @@ module.exports = {
     '^@services/(.*)$': '<rootDir>/src/services/$1',
     '^@utils/(.*)$': '<rootDir>/src/utils/$1',
     '^@validators/(.*)$': '<rootDir>/src/validators/$1',
-    '^@types/(.*)$': '<rootDir>/src/types/$1'
+    '^@types/(.*)$': '<rootDir>/src/types/$1',
   },
   setupFilesAfterEnv: ['<rootDir>/src/tests/setup.ts'],
   globalSetup: '<rootDir>/src/tests/globalSetup.ts',
   globalTeardown: '<rootDir>/src/tests/globalTeardown.ts',
   testTimeout: 10000,
-  verbose: true
+  verbose: true,
 };

@@ -19,12 +19,12 @@ const NotFoundPage = React.lazy(() => import('@pages/NotFoundPage'));
 // Loading fallback component
 const PageLoader: React.FC = () => (
   <Box
-    display="flex"
-    justifyContent="center"
-    alignItems="center"
-    minHeight="60vh"
+    display='flex'
+    justifyContent='center'
+    alignItems='center'
+    minHeight='60vh'
   >
-    <LoadingSpinner size={60} message="Loading page..." />
+    <LoadingSpinner size={60} message='Loading page...' />
   </Box>
 );
 
@@ -33,7 +33,7 @@ const AuthenticatedRoutes: React.FC = () => (
   <MainLayout>
     <Routes>
       <Route
-        path="/"
+        path='/'
         element={
           <Suspense fallback={<PageLoader />}>
             <HomePage />
@@ -41,7 +41,7 @@ const AuthenticatedRoutes: React.FC = () => (
         }
       />
       <Route
-        path="/contacts"
+        path='/contacts'
         element={
           <Suspense fallback={<PageLoader />}>
             <ContactsPage />
@@ -49,7 +49,7 @@ const AuthenticatedRoutes: React.FC = () => (
         }
       />
       <Route
-        path="/contacts/:id"
+        path='/contacts/:id'
         element={
           <Suspense fallback={<PageLoader />}>
             <ContactDetailPage />
@@ -57,7 +57,7 @@ const AuthenticatedRoutes: React.FC = () => (
         }
       />
       <Route
-        path="/profile"
+        path='/profile'
         element={
           <Suspense fallback={<PageLoader />}>
             <ProfilePage />
@@ -65,10 +65,10 @@ const AuthenticatedRoutes: React.FC = () => (
         }
       />
       {/* Redirect /dashboard to home for backward compatibility */}
-      <Route path="/dashboard" element={<Navigate to="/" replace />} />
+      <Route path='/dashboard' element={<Navigate to='/' replace />} />
       {/* Catch all other authenticated routes */}
       <Route
-        path="*"
+        path='*'
         element={
           <Suspense fallback={<PageLoader />}>
             <NotFoundPage />
@@ -85,7 +85,7 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   // If user is already authenticated, redirect to home
   if (isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to='/' replace />;
   }
 
   return <>{children}</>;
@@ -98,7 +98,7 @@ const AppRoutes: React.FC = () => {
       <Routes>
         {/* Public routes */}
         <Route
-          path="/login"
+          path='/login'
           element={
             <PublicRoute>
               <LoginPage />
@@ -106,17 +106,17 @@ const AppRoutes: React.FC = () => {
           }
         />
         <Route
-          path="/register"
+          path='/register'
           element={
             <PublicRoute>
               <RegisterPage />
             </PublicRoute>
           }
         />
-        
+
         {/* Password reset routes - accessible to both authenticated and unauthenticated users */}
         <Route
-          path="/forgot-password"
+          path='/forgot-password'
           element={
             <Suspense fallback={<PageLoader />}>
               <LoginPage />
@@ -124,17 +124,17 @@ const AppRoutes: React.FC = () => {
           }
         />
         <Route
-          path="/reset-password/:token"
+          path='/reset-password/:token'
           element={
             <Suspense fallback={<PageLoader />}>
               <LoginPage />
             </Suspense>
           }
         />
-        
+
         {/* Email verification route */}
         <Route
-          path="/verify-email"
+          path='/verify-email'
           element={
             <Suspense fallback={<PageLoader />}>
               <LoginPage />
@@ -142,7 +142,7 @@ const AppRoutes: React.FC = () => {
           }
         />
         <Route
-          path="/verify-email/:token"
+          path='/verify-email/:token'
           element={
             <Suspense fallback={<PageLoader />}>
               <LoginPage />
@@ -152,7 +152,7 @@ const AppRoutes: React.FC = () => {
 
         {/* Protected routes */}
         <Route
-          path="/*"
+          path='/*'
           element={
             <PrivateRoute>
               <AuthenticatedRoutes />

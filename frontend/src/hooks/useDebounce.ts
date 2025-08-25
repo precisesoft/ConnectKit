@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 /**
  * Custom hook to debounce a value
  * Useful for search inputs, API calls, etc.
- * 
+ *
  * @param value - The value to debounce
  * @param delay - Delay in milliseconds
  * @returns The debounced value
@@ -31,7 +31,7 @@ export function useDebounce<T>(value: T, delay: number): T {
 /**
  * Custom hook to debounce a callback function
  * Useful for expensive operations that shouldn't run on every render
- * 
+ *
  * @param callback - The function to debounce
  * @param delay - Delay in milliseconds
  * @param dependencies - Dependencies array (like useEffect)

@@ -1,4 +1,9 @@
-import { Contact, ContactStatus, CreateContactDTO, UpdateContactDTO } from '../contact.model';
+import {
+  Contact,
+  ContactStatus,
+  CreateContactDTO,
+  UpdateContactDTO,
+} from '../contact.model';
 
 describe('Contact Model', () => {
   describe('Contact Creation', () => {
@@ -60,7 +65,7 @@ describe('Contact Model', () => {
 
     it('should validate email format if provided', () => {
       const invalidEmails = ['invalid', 'test@', '@example.com', 'test@.com'];
-      
+
       invalidEmails.forEach(email => {
         expect(() => {
           new Contact({
@@ -85,7 +90,7 @@ describe('Contact Model', () => {
 
     it('should validate phone format if provided', () => {
       const invalidPhones = ['123', 'abc', '++1234567890'];
-      
+
       invalidPhones.forEach(phone => {
         expect(() => {
           new Contact({
@@ -127,7 +132,9 @@ describe('Contact Model', () => {
       expect(contact.phone).toBe('+9876543210');
       expect(contact.company).toBe('New Corp');
       expect(contact.isFavorite).toBe(true);
-      expect(contact.updatedAt.getTime()).toBeGreaterThan(contact.createdAt.getTime());
+      expect(contact.updatedAt.getTime()).toBeGreaterThan(
+        contact.createdAt.getTime()
+      );
     });
 
     it('should not update userId', () => {
@@ -166,21 +173,23 @@ describe('Contact Model', () => {
 
     it('should archive contact', () => {
       contact.archive();
-      
+
       expect(contact.status).toBe(ContactStatus.ARCHIVED);
-      expect(contact.updatedAt.getTime()).toBeGreaterThan(contact.createdAt.getTime());
+      expect(contact.updatedAt.getTime()).toBeGreaterThan(
+        contact.createdAt.getTime()
+      );
     });
 
     it('should activate contact', () => {
       contact.status = ContactStatus.INACTIVE;
       contact.activate();
-      
+
       expect(contact.status).toBe(ContactStatus.ACTIVE);
     });
 
     it('should deactivate contact', () => {
       contact.deactivate();
-      
+
       expect(contact.status).toBe(ContactStatus.INACTIVE);
     });
   });
@@ -199,27 +208,27 @@ describe('Contact Model', () => {
 
     it('should add new tag', () => {
       contact.addTag('family');
-      
+
       expect(contact.tags).toContain('family');
       expect(contact.tags).toHaveLength(3);
     });
 
     it('should not add duplicate tag', () => {
       contact.addTag('friend');
-      
+
       expect(contact.tags).toHaveLength(2);
     });
 
     it('should remove tag', () => {
       contact.removeTag('friend');
-      
+
       expect(contact.tags).not.toContain('friend');
       expect(contact.tags).toHaveLength(1);
     });
 
     it('should handle removing non-existent tag', () => {
       contact.removeTag('non-existent');
-      
+
       expect(contact.tags).toHaveLength(2);
     });
 
@@ -242,13 +251,13 @@ describe('Contact Model', () => {
 
     it('should set metadata', () => {
       contact.setMetadata('source', 'linkedin');
-      
+
       expect(contact.metadata.source).toBe('linkedin');
     });
 
     it('should get metadata', () => {
       contact.setMetadata('source', 'linkedin');
-      
+
       expect(contact.getMetadata('source')).toBe('linkedin');
       expect(contact.getMetadata('nonexistent')).toBeUndefined();
     });
@@ -256,7 +265,7 @@ describe('Contact Model', () => {
     it('should remove metadata', () => {
       contact.setMetadata('source', 'linkedin');
       contact.removeMetadata('source');
-      
+
       expect(contact.metadata.source).toBeUndefined();
     });
   });
@@ -274,7 +283,7 @@ describe('Contact Model', () => {
 
     it('should soft delete contact', () => {
       contact.softDelete();
-      
+
       expect(contact.deletedAt).toBeInstanceOf(Date);
       expect(contact.isDeleted()).toBe(true);
     });
@@ -282,7 +291,7 @@ describe('Contact Model', () => {
     it('should restore soft deleted contact', () => {
       contact.softDelete();
       contact.restore();
-      
+
       expect(contact.deletedAt).toBeNull();
       expect(contact.isDeleted()).toBe(false);
     });
@@ -310,7 +319,7 @@ describe('Contact Model', () => {
       });
 
       const searchString = contact.getSearchString();
-      
+
       expect(searchString).toContain('jane');
       expect(searchString).toContain('smith');
       expect(searchString).toContain('jane@example.com');
@@ -330,7 +339,7 @@ describe('Contact Model', () => {
       });
 
       const serialized = contact.toJSON();
-      
+
       expect(serialized.id).toBe(contact.id);
       expect(serialized.firstName).toBe('Jane');
       expect(serialized.lastName).toBe('Smith');

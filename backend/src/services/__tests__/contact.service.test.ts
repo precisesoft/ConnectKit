@@ -39,15 +39,21 @@ describe('ContactService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Create mock instances
-    mockContactRepository = createMockContactRepository() as jest.Mocked<ContactRepository>;
-    mockUserRepository = createMockUserRepository() as jest.Mocked<UserRepository>;
+    mockContactRepository =
+      createMockContactRepository() as jest.Mocked<ContactRepository>;
+    mockUserRepository =
+      createMockUserRepository() as jest.Mocked<UserRepository>;
     mockRedis = createMockRedis();
 
     // Mock the constructor dependencies
-    (ContactRepository as jest.MockedClass<typeof ContactRepository>).mockImplementation(() => mockContactRepository);
-    (UserRepository as jest.MockedClass<typeof UserRepository>).mockImplementation(() => mockUserRepository);
+    (
+      ContactRepository as jest.MockedClass<typeof ContactRepository>
+    ).mockImplementation(() => mockContactRepository);
+    (
+      UserRepository as jest.MockedClass<typeof UserRepository>
+    ).mockImplementation(() => mockUserRepository);
 
     // Mock Redis connection
     jest.mock('../../config/redis.config', () => ({
@@ -68,7 +74,7 @@ describe('ContactService', () => {
       // Arrange
       const contactId = 'contact-123';
       const mockContact = createContact(testUserId, { id: contactId });
-      
+
       mockContactRepository.findById.mockResolvedValue(mockContact);
       mockRedis.get.mockResolvedValue(null);
       mockRedis.setex.mockResolvedValue('OK');
@@ -93,7 +99,11 @@ describe('ContactService', () => {
       mockRedis.get.mockResolvedValue(JSON.stringify(cachedContact));
 
       // Act
-      const result = await contactService.getContactById(contactId, testUserId, { useCache: true });
+      const result = await contactService.getContactById(
+        contactId,
+        testUserId,
+        { useCache: true }
+      );
 
       // Assert
       expect(mockRedis.get).toHaveBeenCalledWith(`contact:${contactId}`);
@@ -118,7 +128,7 @@ describe('ContactService', () => {
       const contactId = 'contact-123';
       const otherUserId = 'other-user-456';
       const mockContact = createContact(otherUserId, { id: contactId });
-      
+
       mockContactRepository.findById.mockResolvedValue(mockContact);
       mockRedis.get.mockResolvedValue(null);
 
@@ -135,7 +145,7 @@ describe('ContactService', () => {
       const otherUserId = 'other-user-789';
       const mockContact = createContact(otherUserId, { id: contactId });
       const adminUser = createAdminUser({ id: adminId });
-      
+
       mockContactRepository.findById.mockResolvedValue(mockContact);
       mockUserRepository.findById.mockResolvedValue(adminUser);
       mockRedis.get.mockResolvedValue(null);
@@ -178,11 +188,14 @@ describe('ContactService', () => {
       const result = await contactService.getContacts(testUserId, request);
 
       // Assert
-      expect(mockContactRepository.findByUserId).toHaveBeenCalledWith(testUserId, {
-        pagination: { page: 1, limit: 5 },
-        sorting: { sort: 'createdAt', order: 'desc' },
-        filters: {},
-      });
+      expect(mockContactRepository.findByUserId).toHaveBeenCalledWith(
+        testUserId,
+        {
+          pagination: { page: 1, limit: 5 },
+          sorting: { sort: 'createdAt', order: 'desc' },
+          filters: {},
+        }
+      );
       expect(result).toEqual(paginationResult);
     });
 
@@ -214,14 +227,17 @@ describe('ContactService', () => {
       const result = await contactService.getContacts(testUserId, request);
 
       // Assert
-      expect(mockContactRepository.findByUserId).toHaveBeenCalledWith(testUserId, {
-        pagination: { page: 1, limit: 10 },
-        sorting: { sort: 'createdAt', order: 'desc' },
-        search: 'john',
-        filters: {
-          isFavorite: true,
-        },
-      });
+      expect(mockContactRepository.findByUserId).toHaveBeenCalledWith(
+        testUserId,
+        {
+          pagination: { page: 1, limit: 10 },
+          sorting: { sort: 'createdAt', order: 'desc' },
+          search: 'john',
+          filters: {
+            isFavorite: true,
+          },
+        }
+      );
       expect(result).toEqual(paginationResult);
     });
   });
@@ -235,7 +251,7 @@ describe('ContactService', () => {
         email: 'john.doe@example.com',
         phone: '123-456-7890',
       };
-      
+
       const createdContact = createContact(testUserId, {
         id: 'new-contact-123',
         ...contactData,
@@ -246,7 +262,10 @@ describe('ContactService', () => {
       mockRedis.del.mockResolvedValue(1);
 
       // Act
-      const result = await contactService.createContact(testUserId, contactData);
+      const result = await contactService.createContact(
+        testUserId,
+        contactData
+      );
 
       // Assert
       expect(mockContactRepository.findByUserIdAndEmail).toHaveBeenCalledWith(
@@ -269,12 +288,14 @@ describe('ContactService', () => {
         email: 'existing@example.com',
         phone: '123-456-7890',
       };
-      
+
       const existingContact = createContact(testUserId, {
         email: contactData.email,
       });
 
-      mockContactRepository.findByUserIdAndEmail.mockResolvedValue(existingContact);
+      mockContactRepository.findByUserIdAndEmail.mockResolvedValue(
+        existingContact
+      );
 
       // Act & Assert
       await expect(
@@ -289,7 +310,7 @@ describe('ContactService', () => {
         lastName: 'Doe',
         phone: '123-456-7890',
       };
-      
+
       const createdContact = createContact(testUserId, {
         id: 'new-contact-123',
         ...contactData,
@@ -300,7 +321,10 @@ describe('ContactService', () => {
       mockRedis.del.mockResolvedValue(1);
 
       // Act
-      const result = await contactService.createContact(testUserId, contactData);
+      const result = await contactService.createContact(
+        testUserId,
+        contactData
+      );
 
       // Assert
       expect(mockContactRepository.findByUserIdAndEmail).not.toHaveBeenCalled();
@@ -325,11 +349,18 @@ describe('ContactService', () => {
       mockRedis.del.mockResolvedValueOnce(1); // user contacts cache
 
       // Act
-      const result = await contactService.updateContact(contactId, updateData, testUserId);
+      const result = await contactService.updateContact(
+        contactId,
+        updateData,
+        testUserId
+      );
 
       // Assert
       expect(mockContactRepository.findById).toHaveBeenCalledWith(contactId);
-      expect(mockContactRepository.update).toHaveBeenCalledWith(contactId, updateData);
+      expect(mockContactRepository.update).toHaveBeenCalledWith(
+        contactId,
+        updateData
+      );
       expect(result).toEqual(updatedContact);
       expect(mockRedis.del).toHaveBeenCalledWith(`contact:${contactId}`);
       expect(mockRedis.del).toHaveBeenCalledWith(`user_contacts:${testUserId}`);
@@ -353,7 +384,7 @@ describe('ContactService', () => {
     it('should validate email uniqueness on update', async () => {
       // Arrange
       const contactId = 'contact-123';
-      const existingContact = createContact(testUserId, { 
+      const existingContact = createContact(testUserId, {
         id: contactId,
         email: 'current@example.com',
       });
@@ -366,7 +397,9 @@ describe('ContactService', () => {
       });
 
       mockContactRepository.findById.mockResolvedValue(existingContact);
-      mockContactRepository.findByUserIdAndEmail.mockResolvedValue(conflictingContact);
+      mockContactRepository.findByUserIdAndEmail.mockResolvedValue(
+        conflictingContact
+      );
 
       // Act & Assert
       await expect(
@@ -415,7 +448,7 @@ describe('ContactService', () => {
     it('should toggle contact favorite status', async () => {
       // Arrange
       const contactId = 'contact-123';
-      const existingContact = createContact(testUserId, { 
+      const existingContact = createContact(testUserId, {
         id: contactId,
         isFavorite: false,
       });
@@ -450,7 +483,11 @@ describe('ContactService', () => {
       mockContactRepository.searchByUserId.mockResolvedValue(searchResults);
 
       // Act
-      const result = await contactService.searchContacts(testUserId, query, searchOptions);
+      const result = await contactService.searchContacts(
+        testUserId,
+        query,
+        searchOptions
+      );
 
       // Assert
       expect(mockContactRepository.searchByUserId).toHaveBeenCalledWith(
@@ -479,20 +516,26 @@ describe('ContactService', () => {
         createFavoriteContact(testUserId),
       ];
 
-      mockContactRepository.findFavoritesByUserId.mockResolvedValue(favoriteContacts);
+      mockContactRepository.findFavoritesByUserId.mockResolvedValue(
+        favoriteContacts
+      );
 
       // Act
       const result = await contactService.getFavoriteContacts(testUserId);
 
       // Assert
-      expect(mockContactRepository.findFavoritesByUserId).toHaveBeenCalledWith(testUserId);
+      expect(mockContactRepository.findFavoritesByUserId).toHaveBeenCalledWith(
+        testUserId
+      );
       expect(result).toEqual(favoriteContacts);
     });
 
     it('should cache favorite contacts', async () => {
       // Arrange
       const favoriteContacts = [createFavoriteContact(testUserId)];
-      mockContactRepository.findFavoritesByUserId.mockResolvedValue(favoriteContacts);
+      mockContactRepository.findFavoritesByUserId.mockResolvedValue(
+        favoriteContacts
+      );
       mockRedis.get.mockResolvedValue(null);
       mockRedis.setex.mockResolvedValue('OK');
 
@@ -531,7 +574,9 @@ describe('ContactService', () => {
       const result = await contactService.getContactStats(testUserId);
 
       // Assert
-      expect(mockContactRepository.getStatsByUserId).toHaveBeenCalledWith(testUserId);
+      expect(mockContactRepository.getStatsByUserId).toHaveBeenCalledWith(
+        testUserId
+      );
       expect(result).toEqual(mockStats);
       expect(mockRedis.setex).toHaveBeenCalledWith(
         `user_contact_stats:${testUserId}`,
@@ -552,7 +597,11 @@ describe('ContactService', () => {
       mockRedis.del.mockResolvedValue(1);
 
       // Act
-      const result = await contactService.bulkUpdateContacts(testUserId, contactIds, updates);
+      const result = await contactService.bulkUpdateContacts(
+        testUserId,
+        contactIds,
+        updates
+      );
 
       // Assert
       expect(mockContactRepository.bulkUpdateByUserId).toHaveBeenCalledWith(
@@ -578,7 +627,10 @@ describe('ContactService', () => {
       mockRedis.del.mockResolvedValue(1);
 
       // Act
-      const result = await contactService.bulkDeleteContacts(testUserId, contactIds);
+      const result = await contactService.bulkDeleteContacts(
+        testUserId,
+        contactIds
+      );
 
       // Assert
       expect(mockContactRepository.bulkDeleteByUserId).toHaveBeenCalledWith(
@@ -601,7 +653,7 @@ describe('ContactService', () => {
         fields: ['firstName', 'lastName', 'email'],
         filters: { isFavorite: true },
       };
-      
+
       const contactsToExport = createContacts(5, testUserId);
       mockContactRepository.findByUserId.mockResolvedValue({
         data: contactsToExport,
@@ -616,14 +668,20 @@ describe('ContactService', () => {
       });
 
       // Act
-      const result = await contactService.exportContacts(testUserId, exportRequest);
+      const result = await contactService.exportContacts(
+        testUserId,
+        exportRequest
+      );
 
       // Assert
-      expect(mockContactRepository.findByUserId).toHaveBeenCalledWith(testUserId, {
-        pagination: { page: 1, limit: 10000 },
-        sorting: { sort: 'createdAt', order: 'asc' },
-        filters: exportRequest.filters,
-      });
+      expect(mockContactRepository.findByUserId).toHaveBeenCalledWith(
+        testUserId,
+        {
+          pagination: { page: 1, limit: 10000 },
+          sorting: { sort: 'createdAt', order: 'asc' },
+          filters: exportRequest.filters,
+        }
+      );
       expect(result).toHaveProperty('data');
       expect(result).toHaveProperty('filename');
       expect(result).toHaveProperty('mimeType');
@@ -649,7 +707,7 @@ describe('ContactService', () => {
       const contactId = 'contact-123';
       const mockContact = createContact(testUserId, { id: contactId });
       const redisError = new Error('Redis connection failed');
-      
+
       mockRedis.get.mockRejectedValue(redisError);
       mockContactRepository.findById.mockResolvedValue(mockContact);
       mockRedis.setex.mockRejectedValue(redisError);

@@ -150,7 +150,13 @@ export interface ContactFilters {
   tags?: string[];
   isFavorite?: boolean;
   company?: string;
-  sortBy?: 'firstName' | 'lastName' | 'email' | 'company' | 'createdAt' | 'updatedAt';
+  sortBy?:
+    | 'firstName'
+    | 'lastName'
+    | 'email'
+    | 'company'
+    | 'createdAt'
+    | 'updatedAt';
   sortOrder?: 'asc' | 'desc';
   page?: number;
   limit?: number;

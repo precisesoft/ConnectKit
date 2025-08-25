@@ -28,19 +28,22 @@ describe('ContactController', () => {
   let mockContactService: jest.Mocked<ContactService>;
   let mockRequest: Request;
   let mockResponse: Response;
-  
+
   const testUser = createUser();
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
-    mockContactService = createMockContactService() as jest.Mocked<ContactService>;
+
+    mockContactService =
+      createMockContactService() as jest.Mocked<ContactService>;
     mockRequest = createMockRequest() as Request;
     mockResponse = createMockResponse() as Response;
 
-    (ContactService as jest.MockedClass<typeof ContactService>).mockImplementation(() => mockContactService);
+    (
+      ContactService as jest.MockedClass<typeof ContactService>
+    ).mockImplementation(() => mockContactService);
     controller = new ContactController();
-    
+
     // Set authenticated user
     (mockRequest as any).user = testUser;
   });
@@ -54,7 +57,7 @@ describe('ContactController', () => {
       // Arrange
       const contactId = 'contact-123';
       const mockContact = createContact(testUser.id, { id: contactId });
-      
+
       mockRequest.params = { id: contactId };
       mockContactService.getContactById.mockResolvedValue(mockContact);
 
@@ -62,7 +65,11 @@ describe('ContactController', () => {
       await controller.getContactById(mockRequest, mockResponse);
 
       // Assert
-      expect(mockContactService.getContactById).toHaveBeenCalledWith(contactId, testUser.id, { useCache: true });
+      expect(mockContactService.getContactById).toHaveBeenCalledWith(
+        contactId,
+        testUser.id,
+        { useCache: true }
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(StatusCodes.OK);
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
@@ -74,12 +81,14 @@ describe('ContactController', () => {
       // Arrange
       const contactId = 'non-existent-contact';
       const error = new NotFoundError('Contact not found');
-      
+
       mockRequest.params = { id: contactId };
       mockContactService.getContactById.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(controller.getContactById(mockRequest, mockResponse)).rejects.toThrow(error);
+      await expect(
+        controller.getContactById(mockRequest, mockResponse)
+      ).rejects.toThrow(error);
     });
   });
 
@@ -98,7 +107,7 @@ describe('ContactController', () => {
           hasPrevious: false,
         },
       };
-      
+
       mockRequest.query = { page: '1', limit: '10' };
       mockContactService.getContacts.mockResolvedValue(paginationResult);
 
@@ -131,7 +140,7 @@ describe('ContactController', () => {
           hasPrevious: false,
         },
       };
-      
+
       mockRequest.query = { search: 'john', isFavorite: 'true' };
       mockContactService.getContacts.mockResolvedValue(paginationResult);
 
@@ -167,7 +176,10 @@ describe('ContactController', () => {
       await controller.createContact(mockRequest, mockResponse);
 
       // Assert
-      expect(mockContactService.createContact).toHaveBeenCalledWith(testUser.id, contactData);
+      expect(mockContactService.createContact).toHaveBeenCalledWith(
+        testUser.id,
+        contactData
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(StatusCodes.CREATED);
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
@@ -184,7 +196,7 @@ describe('ContactController', () => {
       const updateData = { firstName: 'Updated', lastName: 'Name' };
       const existingContact = createContact(testUser.id, { id: contactId });
       const updatedContact = { ...existingContact, ...updateData };
-      
+
       mockRequest.params = { id: contactId };
       mockRequest.body = updateData;
       mockContactService.updateContact.mockResolvedValue(updatedContact);
@@ -193,7 +205,11 @@ describe('ContactController', () => {
       await controller.updateContact(mockRequest, mockResponse);
 
       // Assert
-      expect(mockContactService.updateContact).toHaveBeenCalledWith(contactId, updateData, testUser.id);
+      expect(mockContactService.updateContact).toHaveBeenCalledWith(
+        contactId,
+        updateData,
+        testUser.id
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(StatusCodes.OK);
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
@@ -207,7 +223,7 @@ describe('ContactController', () => {
     it('should delete contact successfully', async () => {
       // Arrange
       const contactId = 'contact-123';
-      
+
       mockRequest.params = { id: contactId };
       mockContactService.deleteContact.mockResolvedValue(undefined);
 
@@ -215,7 +231,10 @@ describe('ContactController', () => {
       await controller.deleteContact(mockRequest, mockResponse);
 
       // Assert
-      expect(mockContactService.deleteContact).toHaveBeenCalledWith(contactId, testUser.id);
+      expect(mockContactService.deleteContact).toHaveBeenCalledWith(
+        contactId,
+        testUser.id
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(StatusCodes.OK);
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
@@ -232,7 +251,7 @@ describe('ContactController', () => {
         id: contactId,
         isFavorite: true,
       });
-      
+
       mockRequest.params = { id: contactId };
       mockContactService.toggleFavorite.mockResolvedValue(updatedContact);
 
@@ -240,7 +259,10 @@ describe('ContactController', () => {
       await controller.toggleFavorite(mockRequest, mockResponse);
 
       // Assert
-      expect(mockContactService.toggleFavorite).toHaveBeenCalledWith(contactId, testUser.id);
+      expect(mockContactService.toggleFavorite).toHaveBeenCalledWith(
+        contactId,
+        testUser.id
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(StatusCodes.OK);
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
@@ -255,7 +277,7 @@ describe('ContactController', () => {
       // Arrange
       const query = 'john doe';
       const searchResults = createContacts(3, testUser.id);
-      
+
       mockRequest.query = { q: query, limit: '10' };
       mockContactService.searchContacts.mockResolvedValue(searchResults);
 
@@ -271,7 +293,7 @@ describe('ContactController', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(StatusCodes.OK);
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
-        data: { 
+        data: {
           contacts: searchResults,
           query,
           total: searchResults.length,
@@ -284,7 +306,9 @@ describe('ContactController', () => {
       mockRequest.query = {};
 
       // Act & Assert
-      await expect(controller.searchContacts(mockRequest, mockResponse)).rejects.toThrow(ValidationError);
+      await expect(
+        controller.searchContacts(mockRequest, mockResponse)
+      ).rejects.toThrow(ValidationError);
     });
   });
 
@@ -295,18 +319,22 @@ describe('ContactController', () => {
         ...contact,
         isFavorite: true,
       }));
-      
-      mockContactService.getFavoriteContacts.mockResolvedValue(favoriteContacts);
+
+      mockContactService.getFavoriteContacts.mockResolvedValue(
+        favoriteContacts
+      );
 
       // Act
       await controller.getFavoriteContacts(mockRequest, mockResponse);
 
       // Assert
-      expect(mockContactService.getFavoriteContacts).toHaveBeenCalledWith(testUser.id);
+      expect(mockContactService.getFavoriteContacts).toHaveBeenCalledWith(
+        testUser.id
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(StatusCodes.OK);
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
-        data: { 
+        data: {
           contacts: favoriteContacts,
           total: favoriteContacts.length,
         },
@@ -328,14 +356,16 @@ describe('ContactController', () => {
           'Company B': 8,
         },
       };
-      
+
       mockContactService.getContactStats.mockResolvedValue(mockStats);
 
       // Act
       await controller.getContactStats(mockRequest, mockResponse);
 
       // Assert
-      expect(mockContactService.getContactStats).toHaveBeenCalledWith(testUser.id);
+      expect(mockContactService.getContactStats).toHaveBeenCalledWith(
+        testUser.id
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(StatusCodes.OK);
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
@@ -353,7 +383,7 @@ describe('ContactController', () => {
         updated: 3,
         message: 'Successfully updated 3 contacts',
       };
-      
+
       mockRequest.body = { contactIds, updates };
       mockContactService.bulkUpdateContacts.mockResolvedValue(mockResult);
 
@@ -387,7 +417,7 @@ describe('ContactController', () => {
         filename: 'contacts.json',
         mimeType: 'application/json',
       };
-      
+
       mockRequest.body = exportRequest;
       mockContactService.exportContacts.mockResolvedValue(exportResult);
 
@@ -395,7 +425,10 @@ describe('ContactController', () => {
       await controller.exportContacts(mockRequest, mockResponse);
 
       // Assert
-      expect(mockContactService.exportContacts).toHaveBeenCalledWith(testUser.id, exportRequest);
+      expect(mockContactService.exportContacts).toHaveBeenCalledWith(
+        testUser.id,
+        exportRequest
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(StatusCodes.OK);
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,

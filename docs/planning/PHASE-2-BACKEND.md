@@ -166,15 +166,15 @@ backend/
 ### Application Entry Point (`src/index.ts`)
 
 ```typescript
-import 'express-async-errors';
-import express from 'express';
-import { AppConfig } from '@/shared/config/app-config';
-import { DatabaseConnection } from '@/infrastructure/database/config/database';
-import { CacheService } from '@/infrastructure/cache/CacheService';
-import { Logger } from '@/shared/utils/logger';
-import { setupMiddleware } from '@/presentation/middleware';
-import { setupRoutes } from '@/presentation/routes';
-import { errorHandler } from '@/presentation/middleware/error-handler';
+import "express-async-errors";
+import express from "express";
+import { AppConfig } from "@/shared/config/app-config";
+import { DatabaseConnection } from "@/infrastructure/database/config/database";
+import { CacheService } from "@/infrastructure/cache/CacheService";
+import { Logger } from "@/shared/utils/logger";
+import { setupMiddleware } from "@/presentation/middleware";
+import { setupRoutes } from "@/presentation/routes";
+import { errorHandler } from "@/presentation/middleware/error-handler";
 
 async function bootstrap(): Promise<void> {
   const app = express();
@@ -184,11 +184,11 @@ async function bootstrap(): Promise<void> {
   try {
     // Initialize database connection
     await DatabaseConnection.getInstance().connect();
-    logger.info('Database connected successfully');
+    logger.info("Database connected successfully");
 
     // Initialize cache service
     await CacheService.getInstance().connect();
-    logger.info('Cache service connected successfully');
+    logger.info("Cache service connected successfully");
 
     // Setup middleware
     setupMiddleware(app);
@@ -200,32 +200,32 @@ async function bootstrap(): Promise<void> {
     app.use(errorHandler);
 
     // Start server
-    const port = config.get('PORT');
+    const port = config.get("PORT");
     app.listen(port, () => {
       logger.info(`Server running on port ${port}`);
-      logger.info(`Environment: ${config.get('NODE_ENV')}`);
+      logger.info(`Environment: ${config.get("NODE_ENV")}`);
     });
   } catch (error) {
-    logger.error('Failed to start application:', error);
+    logger.error("Failed to start application:", error);
     process.exit(1);
   }
 }
 
 // Handle unhandled promise rejections
-process.on('unhandledRejection', (reason: unknown) => {
-  Logger.getInstance().error('Unhandled Promise Rejection:', reason);
+process.on("unhandledRejection", (reason: unknown) => {
+  Logger.getInstance().error("Unhandled Promise Rejection:", reason);
   process.exit(1);
 });
 
 // Handle uncaught exceptions
-process.on('uncaughtException', (error: Error) => {
-  Logger.getInstance().error('Uncaught Exception:', error);
+process.on("uncaughtException", (error: Error) => {
+  Logger.getInstance().error("Uncaught Exception:", error);
   process.exit(1);
 });
 
 // Graceful shutdown
-process.on('SIGTERM', async () => {
-  Logger.getInstance().info('SIGTERM received, shutting down gracefully');
+process.on("SIGTERM", async () => {
+  Logger.getInstance().info("SIGTERM received, shutting down gracefully");
   await DatabaseConnection.getInstance().disconnect();
   await CacheService.getInstance().disconnect();
   process.exit(0);
@@ -237,50 +237,56 @@ bootstrap();
 ### Express App Configuration (`src/app.ts`)
 
 ```typescript
-import express, { Application } from 'express';
-import helmet from 'helmet';
-import cors from 'cors';
-import compression from 'compression';
-import morgan from 'morgan';
-import rateLimit from 'express-rate-limit';
-import mongoSanitize from 'express-mongo-sanitize';
-import hpp from 'hpp';
-import { AppConfig } from '@/shared/config/app-config';
-import { Logger } from '@/shared/utils/logger';
+import express, { Application } from "express";
+import helmet from "helmet";
+import cors from "cors";
+import compression from "compression";
+import morgan from "morgan";
+import rateLimit from "express-rate-limit";
+import mongoSanitize from "express-mongo-sanitize";
+import hpp from "hpp";
+import { AppConfig } from "@/shared/config/app-config";
+import { Logger } from "@/shared/utils/logger";
 
 export function setupMiddleware(app: Application): void {
   const config = AppConfig.getInstance();
   const logger = Logger.getInstance();
 
   // Security middleware
-  app.use(helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        scriptSrc: ["'self'"],
-        imgSrc: ["'self'", "data:", "https:"],
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          scriptSrc: ["'self'"],
+          imgSrc: ["'self'", "data:", "https:"],
+        },
       },
-    },
-    hsts: {
-      maxAge: 31536000,
-      includeSubDomains: true,
-      preload: true,
-    },
-  }));
+      hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true,
+      },
+    }),
+  );
 
   // CORS configuration
-  app.use(cors({
-    origin: config.get('ALLOWED_ORIGINS')?.split(',') || ['http://localhost:3000'],
-    credentials: true,
-    optionsSuccessStatus: 200,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  }));
+  app.use(
+    cors({
+      origin: config.get("ALLOWED_ORIGINS")?.split(",") || [
+        "http://localhost:3000",
+      ],
+      credentials: true,
+      optionsSuccessStatus: 200,
+      methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    }),
+  );
 
   // Request parsing
-  app.use(express.json({ limit: '10mb' }));
-  app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+  app.use(express.json({ limit: "10mb" }));
+  app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
   // Compression
   app.use(compression());
@@ -290,27 +296,32 @@ export function setupMiddleware(app: Application): void {
   app.use(hpp());
 
   // Rate limiting
-  app.use('/api/', rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
-    message: {
-      error: 'Too many requests from this IP, please try again later.',
-    },
-    standardHeaders: true,
-    legacyHeaders: false,
-  }));
+  app.use(
+    "/api/",
+    rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 100, // limit each IP to 100 requests per windowMs
+      message: {
+        error: "Too many requests from this IP, please try again later.",
+      },
+      standardHeaders: true,
+      legacyHeaders: false,
+    }),
+  );
 
   // Logging
-  app.use(morgan('combined', {
-    stream: {
-      write: (message: string) => logger.info(message.trim()),
-    },
-  }));
+  app.use(
+    morgan("combined", {
+      stream: {
+        write: (message: string) => logger.info(message.trim()),
+      },
+    }),
+  );
 
   // Request ID middleware
   app.use((req, res, next) => {
     req.id = crypto.randomUUID();
-    res.setHeader('X-Request-ID', req.id);
+    res.setHeader("X-Request-ID", req.id);
     next();
   });
 }
@@ -322,9 +333,9 @@ export function setupMiddleware(app: Application): void {
 
 ```typescript
 // src/infrastructure/auth/JWTService.ts
-import jwt from 'jsonwebtoken';
-import { AppConfig } from '@/shared/config/app-config';
-import { UnauthorizedError } from '@/shared/errors/UnauthorizedError';
+import jwt from "jsonwebtoken";
+import { AppConfig } from "@/shared/config/app-config";
+import { UnauthorizedError } from "@/shared/errors/UnauthorizedError";
 
 export interface JWTPayload {
   userId: string;
@@ -342,12 +353,14 @@ export interface TokenPair {
 
 export class JWTService {
   private readonly config = AppConfig.getInstance();
-  private readonly accessTokenSecret = this.config.get('JWT_ACCESS_SECRET');
-  private readonly refreshTokenSecret = this.config.get('JWT_REFRESH_SECRET');
-  private readonly accessTokenExpiry = this.config.get('JWT_ACCESS_EXPIRY') || '15m';
-  private readonly refreshTokenExpiry = this.config.get('JWT_REFRESH_EXPIRY') || '7d';
+  private readonly accessTokenSecret = this.config.get("JWT_ACCESS_SECRET");
+  private readonly refreshTokenSecret = this.config.get("JWT_REFRESH_SECRET");
+  private readonly accessTokenExpiry =
+    this.config.get("JWT_ACCESS_EXPIRY") || "15m";
+  private readonly refreshTokenExpiry =
+    this.config.get("JWT_REFRESH_EXPIRY") || "7d";
 
-  generateTokenPair(payload: Omit<JWTPayload, 'iat' | 'exp'>): TokenPair {
+  generateTokenPair(payload: Omit<JWTPayload, "iat" | "exp">): TokenPair {
     const accessToken = jwt.sign(payload, this.accessTokenSecret, {
       expiresIn: this.accessTokenExpiry,
     });
@@ -355,7 +368,7 @@ export class JWTService {
     const refreshToken = jwt.sign(
       { userId: payload.userId },
       this.refreshTokenSecret,
-      { expiresIn: this.refreshTokenExpiry }
+      { expiresIn: this.refreshTokenExpiry },
     );
 
     return { accessToken, refreshToken };
@@ -365,7 +378,7 @@ export class JWTService {
     try {
       return jwt.verify(token, this.accessTokenSecret) as JWTPayload;
     } catch (error) {
-      throw new UnauthorizedError('Invalid access token');
+      throw new UnauthorizedError("Invalid access token");
     }
   }
 
@@ -373,13 +386,13 @@ export class JWTService {
     try {
       return jwt.verify(token, this.refreshTokenSecret) as { userId: string };
     } catch (error) {
-      throw new UnauthorizedError('Invalid refresh token');
+      throw new UnauthorizedError("Invalid refresh token");
     }
   }
 
   extractTokenFromHeader(authHeader: string | undefined): string {
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedError('No token provided');
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      throw new UnauthorizedError("No token provided");
     }
     return authHeader.substring(7);
   }
@@ -390,10 +403,10 @@ export class JWTService {
 
 ```typescript
 // src/presentation/middleware/auth.ts
-import { Request, Response, NextFunction } from 'express';
-import { JWTService, JWTPayload } from '@/infrastructure/auth/JWTService';
-import { UnauthorizedError } from '@/shared/errors/UnauthorizedError';
-import { Logger } from '@/shared/utils/logger';
+import { Request, Response, NextFunction } from "express";
+import { JWTService, JWTPayload } from "@/infrastructure/auth/JWTService";
+import { UnauthorizedError } from "@/shared/errors/UnauthorizedError";
+import { Logger } from "@/shared/utils/logger";
 
 declare global {
   namespace Express {
@@ -411,27 +424,27 @@ export class AuthMiddleware {
   authenticate = async (
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> => {
     try {
       const token = this.jwtService.extractTokenFromHeader(
-        req.headers.authorization
+        req.headers.authorization,
       );
-      
+
       const payload = this.jwtService.verifyAccessToken(token);
       req.user = payload;
-      
+
       this.logger.info(`User authenticated: ${payload.userId}`, {
         requestId: req.id,
         userId: payload.userId,
         tenantId: payload.tenantId,
       });
-      
+
       next();
     } catch (error) {
-      this.logger.warn('Authentication failed', {
+      this.logger.warn("Authentication failed", {
         requestId: req.id,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       });
       next(error);
     }
@@ -440,11 +453,11 @@ export class AuthMiddleware {
   authorize = (roles: string[]) => {
     return (req: Request, res: Response, next: NextFunction): void => {
       if (!req.user) {
-        return next(new UnauthorizedError('Authentication required'));
+        return next(new UnauthorizedError("Authentication required"));
       }
 
       if (!roles.includes(req.user.role)) {
-        return next(new UnauthorizedError('Insufficient permissions'));
+        return next(new UnauthorizedError("Insufficient permissions"));
       }
 
       next();
@@ -461,9 +474,9 @@ export const authMiddleware = new AuthMiddleware();
 
 ```typescript
 // src/infrastructure/database/config/database.ts
-import { Pool, PoolConfig, Client } from 'pg';
-import { AppConfig } from '@/shared/config/app-config';
-import { Logger } from '@/shared/utils/logger';
+import { Pool, PoolConfig, Client } from "pg";
+import { AppConfig } from "@/shared/config/app-config";
+import { Logger } from "@/shared/utils/logger";
 
 export class DatabaseConnection {
   private static instance: DatabaseConnection;
@@ -482,48 +495,57 @@ export class DatabaseConnection {
 
   async connect(): Promise<void> {
     const poolConfig: PoolConfig = {
-      host: this.config.get('DB_HOST'),
-      port: parseInt(this.config.get('DB_PORT') || '5432'),
-      database: this.config.get('DB_NAME'),
-      user: this.config.get('DB_USER'),
-      password: this.config.get('DB_PASSWORD'),
-      ssl: this.config.get('NODE_ENV') === 'production' ? { rejectUnauthorized: false } : false,
-      max: parseInt(this.config.get('DB_POOL_MAX') || '10'),
-      min: parseInt(this.config.get('DB_POOL_MIN') || '2'),
-      idleTimeoutMillis: parseInt(this.config.get('DB_IDLE_TIMEOUT') || '10000'),
-      connectionTimeoutMillis: parseInt(this.config.get('DB_CONNECTION_TIMEOUT') || '2000'),
-      acquireTimeoutMillis: parseInt(this.config.get('DB_ACQUIRE_TIMEOUT') || '2000'),
+      host: this.config.get("DB_HOST"),
+      port: parseInt(this.config.get("DB_PORT") || "5432"),
+      database: this.config.get("DB_NAME"),
+      user: this.config.get("DB_USER"),
+      password: this.config.get("DB_PASSWORD"),
+      ssl:
+        this.config.get("NODE_ENV") === "production"
+          ? { rejectUnauthorized: false }
+          : false,
+      max: parseInt(this.config.get("DB_POOL_MAX") || "10"),
+      min: parseInt(this.config.get("DB_POOL_MIN") || "2"),
+      idleTimeoutMillis: parseInt(
+        this.config.get("DB_IDLE_TIMEOUT") || "10000",
+      ),
+      connectionTimeoutMillis: parseInt(
+        this.config.get("DB_CONNECTION_TIMEOUT") || "2000",
+      ),
+      acquireTimeoutMillis: parseInt(
+        this.config.get("DB_ACQUIRE_TIMEOUT") || "2000",
+      ),
     };
 
     this.pool = new Pool(poolConfig);
 
     // Test connection
     const client = await this.pool.connect();
-    await client.query('SELECT NOW()');
+    await client.query("SELECT NOW()");
     client.release();
 
-    this.logger.info('Database connection pool created successfully');
+    this.logger.info("Database connection pool created successfully");
 
     // Monitor pool events
-    this.pool.on('connect', () => {
-      this.logger.debug('New client connected to database');
+    this.pool.on("connect", () => {
+      this.logger.debug("New client connected to database");
     });
 
-    this.pool.on('error', (err) => {
-      this.logger.error('Unexpected error on idle client', err);
+    this.pool.on("error", (err) => {
+      this.logger.error("Unexpected error on idle client", err);
     });
   }
 
   async disconnect(): Promise<void> {
     if (this.pool) {
       await this.pool.end();
-      this.logger.info('Database connection pool closed');
+      this.logger.info("Database connection pool closed");
     }
   }
 
   getPool(): Pool {
     if (!this.pool) {
-      throw new Error('Database not connected');
+      throw new Error("Database not connected");
     }
     return this.pool;
   }
@@ -533,20 +555,20 @@ export class DatabaseConnection {
     try {
       const result = await this.pool!.query(text, params);
       const duration = Date.now() - start;
-      
-      this.logger.debug('Database query executed', {
+
+      this.logger.debug("Database query executed", {
         query: text,
         duration: `${duration}ms`,
         rows: result.rows.length,
       });
-      
+
       return result.rows;
     } catch (error) {
       const duration = Date.now() - start;
-      this.logger.error('Database query failed', {
+      this.logger.error("Database query failed", {
         query: text,
         duration: `${duration}ms`,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       });
       throw error;
     }
@@ -555,12 +577,12 @@ export class DatabaseConnection {
   async transaction<T>(callback: (client: Client) => Promise<T>): Promise<T> {
     const client = await this.pool!.connect();
     try {
-      await client.query('BEGIN');
+      await client.query("BEGIN");
       const result = await callback(client);
-      await client.query('COMMIT');
+      await client.query("COMMIT");
       return result;
     } catch (error) {
-      await client.query('ROLLBACK');
+      await client.query("ROLLBACK");
       throw error;
     } finally {
       client.release();
@@ -575,27 +597,32 @@ export class DatabaseConnection {
 
 ```typescript
 // src/application/services/BaseService.ts
-import { Logger } from '@/shared/utils/logger';
-import { ValidationError } from '@/shared/errors/ValidationError';
+import { Logger } from "@/shared/utils/logger";
+import { ValidationError } from "@/shared/errors/ValidationError";
 
 export abstract class BaseService {
   protected readonly logger = Logger.getInstance();
 
-  protected validateRequired(data: Record<string, any>, fields: string[]): void {
-    const missing = fields.filter(field => !data[field]);
+  protected validateRequired(
+    data: Record<string, any>,
+    fields: string[],
+  ): void {
+    const missing = fields.filter((field) => !data[field]);
     if (missing.length > 0) {
-      throw new ValidationError(`Missing required fields: ${missing.join(', ')}`);
+      throw new ValidationError(
+        `Missing required fields: ${missing.join(", ")}`,
+      );
     }
   }
 
   protected sanitizeInput<T>(data: T): T {
-    if (typeof data === 'string') {
+    if (typeof data === "string") {
       return data.trim() as T;
     }
     if (Array.isArray(data)) {
-      return data.map(item => this.sanitizeInput(item)) as T;
+      return data.map((item) => this.sanitizeInput(item)) as T;
     }
-    if (typeof data === 'object' && data !== null) {
+    if (typeof data === "object" && data !== null) {
       const sanitized = {} as T;
       for (const [key, value] of Object.entries(data)) {
         (sanitized as any)[key] = this.sanitizeInput(value);
@@ -618,14 +645,14 @@ export abstract class BaseService {
 
 ```typescript
 // src/application/services/ContactService.ts
-import { BaseService } from './BaseService';
-import { IContactRepository } from '@/domain/repositories/IContactRepository';
-import { Contact } from '@/domain/entities/Contact';
-import { CreateContactDto } from '@/application/dtos/contacts/CreateContactDto';
-import { UpdateContactDto } from '@/application/dtos/contacts/UpdateContactDto';
-import { ContactResponseDto } from '@/application/dtos/contacts/ContactResponseDto';
-import { NotFoundError } from '@/shared/errors/NotFoundError';
-import { ConflictError } from '@/shared/errors/ConflictError';
+import { BaseService } from "./BaseService";
+import { IContactRepository } from "@/domain/repositories/IContactRepository";
+import { Contact } from "@/domain/entities/Contact";
+import { CreateContactDto } from "@/application/dtos/contacts/CreateContactDto";
+import { UpdateContactDto } from "@/application/dtos/contacts/UpdateContactDto";
+import { ContactResponseDto } from "@/application/dtos/contacts/ContactResponseDto";
+import { NotFoundError } from "@/shared/errors/NotFoundError";
+import { ConflictError } from "@/shared/errors/ConflictError";
 
 export class ContactService extends BaseService {
   constructor(private readonly contactRepository: IContactRepository) {
@@ -635,26 +662,26 @@ export class ContactService extends BaseService {
   async createContact(
     userId: string,
     tenantId: string,
-    createContactDto: CreateContactDto
+    createContactDto: CreateContactDto,
   ): Promise<ContactResponseDto> {
-    this.logOperation('createContact', { userId, tenantId });
-    
+    this.logOperation("createContact", { userId, tenantId });
+
     // Validate required fields
-    this.validateRequired(createContactDto, ['firstName', 'lastName', 'email']);
-    
+    this.validateRequired(createContactDto, ["firstName", "lastName", "email"]);
+
     // Sanitize input
     const sanitizedData = this.sanitizeInput(createContactDto);
-    
+
     // Check for existing contact with same email
     const existingContact = await this.contactRepository.findByEmail(
       tenantId,
-      sanitizedData.email[0]
+      sanitizedData.email[0],
     );
-    
+
     if (existingContact) {
-      throw new ConflictError('Contact with this email already exists');
+      throw new ConflictError("Contact with this email already exists");
     }
-    
+
     // Create contact entity
     const contact = Contact.create({
       ...sanitizedData,
@@ -662,31 +689,31 @@ export class ContactService extends BaseService {
       createdBy: userId,
       lastModifiedBy: userId,
     });
-    
+
     // Save to repository
     const savedContact = await this.contactRepository.save(contact);
-    
-    this.logger.info('Contact created successfully', {
+
+    this.logger.info("Contact created successfully", {
       contactId: savedContact.id,
       tenantId,
     });
-    
+
     return ContactResponseDto.fromEntity(savedContact);
   }
 
   async getContact(
     userId: string,
     tenantId: string,
-    contactId: string
+    contactId: string,
   ): Promise<ContactResponseDto> {
-    this.logOperation('getContact', { userId, tenantId, contactId });
-    
+    this.logOperation("getContact", { userId, tenantId, contactId });
+
     const contact = await this.contactRepository.findById(tenantId, contactId);
-    
+
     if (!contact) {
-      throw new NotFoundError('Contact not found');
+      throw new NotFoundError("Contact not found");
     }
-    
+
     return ContactResponseDto.fromEntity(contact);
   }
 
@@ -694,53 +721,56 @@ export class ContactService extends BaseService {
     userId: string,
     tenantId: string,
     contactId: string,
-    updateContactDto: UpdateContactDto
+    updateContactDto: UpdateContactDto,
   ): Promise<ContactResponseDto> {
-    this.logOperation('updateContact', { userId, tenantId, contactId });
-    
+    this.logOperation("updateContact", { userId, tenantId, contactId });
+
     // Get existing contact
-    const existingContact = await this.contactRepository.findById(tenantId, contactId);
-    
+    const existingContact = await this.contactRepository.findById(
+      tenantId,
+      contactId,
+    );
+
     if (!existingContact) {
-      throw new NotFoundError('Contact not found');
+      throw new NotFoundError("Contact not found");
     }
-    
+
     // Sanitize input
     const sanitizedData = this.sanitizeInput(updateContactDto);
-    
+
     // Update contact
     const updatedContact = existingContact.update({
       ...sanitizedData,
       lastModifiedBy: userId,
     });
-    
+
     // Save to repository
     const savedContact = await this.contactRepository.save(updatedContact);
-    
-    this.logger.info('Contact updated successfully', {
+
+    this.logger.info("Contact updated successfully", {
       contactId: savedContact.id,
       tenantId,
     });
-    
+
     return ContactResponseDto.fromEntity(savedContact);
   }
 
   async deleteContact(
     userId: string,
     tenantId: string,
-    contactId: string
+    contactId: string,
   ): Promise<void> {
-    this.logOperation('deleteContact', { userId, tenantId, contactId });
-    
+    this.logOperation("deleteContact", { userId, tenantId, contactId });
+
     const contact = await this.contactRepository.findById(tenantId, contactId);
-    
+
     if (!contact) {
-      throw new NotFoundError('Contact not found');
+      throw new NotFoundError("Contact not found");
     }
-    
+
     await this.contactRepository.softDelete(tenantId, contactId);
-    
-    this.logger.info('Contact deleted successfully', {
+
+    this.logger.info("Contact deleted successfully", {
       contactId,
       tenantId,
     });
@@ -751,19 +781,32 @@ export class ContactService extends BaseService {
     tenantId: string,
     query: string,
     page: number = 1,
-    limit: number = 10
-  ): Promise<{ contacts: ContactResponseDto[]; total: number; page: number; limit: number }> {
-    this.logOperation('searchContacts', { userId, tenantId, query, page, limit });
-    
+    limit: number = 10,
+  ): Promise<{
+    contacts: ContactResponseDto[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    this.logOperation("searchContacts", {
+      userId,
+      tenantId,
+      query,
+      page,
+      limit,
+    });
+
     const { contacts, total } = await this.contactRepository.search(
       tenantId,
       query,
       (page - 1) * limit,
-      limit
+      limit,
     );
-    
-    const contactDtos = contacts.map(contact => ContactResponseDto.fromEntity(contact));
-    
+
+    const contactDtos = contacts.map((contact) =>
+      ContactResponseDto.fromEntity(contact),
+    );
+
     return {
       contacts: contactDtos,
       total,
@@ -794,10 +837,10 @@ export interface IBaseRepository<T> {
 
 ```typescript
 // src/infrastructure/database/repositories/PostgresContactRepository.ts
-import { IContactRepository } from '@/domain/repositories/IContactRepository';
-import { Contact } from '@/domain/entities/Contact';
-import { DatabaseConnection } from '@/infrastructure/database/config/database';
-import { Logger } from '@/shared/utils/logger';
+import { IContactRepository } from "@/domain/repositories/IContactRepository";
+import { Contact } from "@/domain/entities/Contact";
+import { DatabaseConnection } from "@/infrastructure/database/config/database";
+import { Logger } from "@/shared/utils/logger";
 
 export class PostgresContactRepository implements IContactRepository {
   private readonly db = DatabaseConnection.getInstance();
@@ -808,13 +851,13 @@ export class PostgresContactRepository implements IContactRepository {
       SELECT * FROM contacts 
       WHERE id = $1 AND tenant_id = $2 AND is_deleted = false
     `;
-    
+
     const rows = await this.db.query(query, [id, tenantId]);
-    
+
     if (rows.length === 0) {
       return null;
     }
-    
+
     return this.mapRowToEntity(rows[0]);
   }
 
@@ -836,7 +879,7 @@ export class PostgresContactRepository implements IContactRepository {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       RETURNING *
     `;
-    
+
     const values = [
       contact.tenantId,
       contact.firstName,
@@ -851,7 +894,7 @@ export class PostgresContactRepository implements IContactRepository {
       contact.createdBy,
       contact.lastModifiedBy,
     ];
-    
+
     const rows = await this.db.query(query, values);
     return this.mapRowToEntity(rows[0]);
   }
@@ -866,7 +909,7 @@ export class PostgresContactRepository implements IContactRepository {
       WHERE id = $1 AND tenant_id = $2 AND is_deleted = false
       RETURNING *
     `;
-    
+
     const values = [
       contact.id,
       contact.tenantId,
@@ -881,13 +924,13 @@ export class PostgresContactRepository implements IContactRepository {
       JSON.stringify(contact.customFields),
       contact.lastModifiedBy,
     ];
-    
+
     const rows = await this.db.query(query, values);
-    
+
     if (rows.length === 0) {
-      throw new Error('Contact not found or update failed');
+      throw new Error("Contact not found or update failed");
     }
-    
+
     return this.mapRowToEntity(rows[0]);
   }
 
@@ -911,13 +954,13 @@ export class PostgresContactRepository implements IContactRepository {
       SELECT * FROM contacts 
       WHERE tenant_id = $1 AND email_encrypted LIKE $2 AND is_deleted = false
     `;
-    
+
     const rows = await this.db.query(query, [tenantId, `%${email}%`]);
-    
+
     if (rows.length === 0) {
       return null;
     }
-    
+
     return this.mapRowToEntity(rows[0]);
   }
 
@@ -925,7 +968,7 @@ export class PostgresContactRepository implements IContactRepository {
     tenantId: string,
     query: string,
     offset: number,
-    limit: number
+    limit: number,
   ): Promise<{ contacts: Contact[]; total: number }> {
     const searchQuery = `
       SELECT * FROM contacts 
@@ -939,7 +982,7 @@ export class PostgresContactRepository implements IContactRepository {
       ORDER BY created_at DESC
       LIMIT $3 OFFSET $4
     `;
-    
+
     const countQuery = `
       SELECT COUNT(*) FROM contacts 
       WHERE tenant_id = $1 AND is_deleted = false
@@ -950,24 +993,24 @@ export class PostgresContactRepository implements IContactRepository {
         title ILIKE $2
       )
     `;
-    
+
     const searchTerm = `%${query}%`;
-    
+
     const [rows, countRows] = await Promise.all([
       this.db.query(searchQuery, [tenantId, searchTerm, limit, offset]),
       this.db.query(countQuery, [tenantId, searchTerm]),
     ]);
-    
-    const contacts = rows.map(row => this.mapRowToEntity(row));
+
+    const contacts = rows.map((row) => this.mapRowToEntity(row));
     const total = parseInt(countRows[0].count);
-    
+
     return { contacts, total };
   }
 
   async findAll(
     tenantId: string,
     offset: number = 0,
-    limit: number = 10
+    limit: number = 10,
   ): Promise<Contact[]> {
     const query = `
       SELECT * FROM contacts 
@@ -975,9 +1018,9 @@ export class PostgresContactRepository implements IContactRepository {
       ORDER BY created_at DESC
       LIMIT $2 OFFSET $3
     `;
-    
+
     const rows = await this.db.query(query, [tenantId, limit, offset]);
-    return rows.map(row => this.mapRowToEntity(row));
+    return rows.map((row) => this.mapRowToEntity(row));
   }
 
   async count(tenantId: string): Promise<number> {
@@ -985,7 +1028,7 @@ export class PostgresContactRepository implements IContactRepository {
       SELECT COUNT(*) FROM contacts 
       WHERE tenant_id = $1 AND is_deleted = false
     `;
-    
+
     const rows = await this.db.query(query, [tenantId]);
     return parseInt(rows[0].count);
   }
@@ -996,13 +1039,13 @@ export class PostgresContactRepository implements IContactRepository {
       tenantId: row.tenant_id,
       firstName: row.first_name,
       lastName: row.last_name,
-      email: JSON.parse(row.email_encrypted || '[]'),
-      phone: JSON.parse(row.phone_encrypted || '[]'),
+      email: JSON.parse(row.email_encrypted || "[]"),
+      phone: JSON.parse(row.phone_encrypted || "[]"),
       company: row.company,
       title: row.title,
-      address: JSON.parse(row.address_encrypted || '[]'),
+      address: JSON.parse(row.address_encrypted || "[]"),
       tags: row.tags || [],
-      customFields: JSON.parse(row.custom_fields || '{}'),
+      customFields: JSON.parse(row.custom_fields || "{}"),
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       createdBy: row.created_by,
@@ -1019,9 +1062,9 @@ export class PostgresContactRepository implements IContactRepository {
 
 ```typescript
 // src/presentation/middleware/security.ts
-import { Request, Response, NextFunction } from 'express';
-import xss from 'xss';
-import { Logger } from '@/shared/utils/logger';
+import { Request, Response, NextFunction } from "express";
+import xss from "xss";
+import { Logger } from "@/shared/utils/logger";
 
 export class SecurityMiddleware {
   private readonly logger = Logger.getInstance();
@@ -1032,43 +1075,43 @@ export class SecurityMiddleware {
       if (req.body) {
         req.body = this.sanitizeObject(req.body);
       }
-      
+
       // Sanitize query parameters
       if (req.query) {
         req.query = this.sanitizeObject(req.query);
       }
-      
+
       next();
     } catch (error) {
-      this.logger.error('XSS sanitization error', error);
+      this.logger.error("XSS sanitization error", error);
       next(error);
     }
   };
 
   private sanitizeObject(obj: any): any {
-    if (typeof obj === 'string') {
+    if (typeof obj === "string") {
       return xss(obj);
     }
-    
+
     if (Array.isArray(obj)) {
-      return obj.map(item => this.sanitizeObject(item));
+      return obj.map((item) => this.sanitizeObject(item));
     }
-    
-    if (obj && typeof obj === 'object') {
+
+    if (obj && typeof obj === "object") {
       const sanitized: any = {};
       for (const [key, value] of Object.entries(obj)) {
         sanitized[key] = this.sanitizeObject(value);
       }
       return sanitized;
     }
-    
+
     return obj;
   }
 
   tenantIsolation = (req: Request, res: Response, next: NextFunction): void => {
     if (req.user) {
       // Ensure all database queries are scoped to the user's tenant
-      req.headers['x-tenant-id'] = req.user.tenantId;
+      req.headers["x-tenant-id"] = req.user.tenantId;
     }
     next();
   };
@@ -1081,23 +1124,23 @@ export const securityMiddleware = new SecurityMiddleware();
 
 ```typescript
 // src/presentation/middleware/validation.ts
-import { Request, Response, NextFunction } from 'express';
-import Joi from 'joi';
-import { ValidationError } from '@/shared/errors/ValidationError';
+import { Request, Response, NextFunction } from "express";
+import Joi from "joi";
+import { ValidationError } from "@/shared/errors/ValidationError";
 
 export const validate = (schema: Joi.ObjectSchema) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     const { error } = schema.validate(req.body, { abortEarly: false });
-    
+
     if (error) {
-      const details = error.details.map(detail => ({
-        field: detail.path.join('.'),
+      const details = error.details.map((detail) => ({
+        field: detail.path.join("."),
         message: detail.message,
       }));
-      
-      throw new ValidationError('Validation failed', details);
+
+      throw new ValidationError("Validation failed", details);
     }
-    
+
     next();
   };
 };
@@ -1105,16 +1148,16 @@ export const validate = (schema: Joi.ObjectSchema) => {
 export const validateQuery = (schema: Joi.ObjectSchema) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     const { error } = schema.validate(req.query, { abortEarly: false });
-    
+
     if (error) {
-      const details = error.details.map(detail => ({
-        field: detail.path.join('.'),
+      const details = error.details.map((detail) => ({
+        field: detail.path.join("."),
         message: detail.message,
       }));
-      
-      throw new ValidationError('Query validation failed', details);
+
+      throw new ValidationError("Query validation failed", details);
     }
-    
+
     next();
   };
 };
@@ -1124,24 +1167,24 @@ export const validateQuery = (schema: Joi.ObjectSchema) => {
 
 ```typescript
 // src/presentation/middleware/error-handler.ts
-import { Request, Response, NextFunction } from 'express';
-import { StatusCodes } from 'http-status-codes';
-import { Logger } from '@/shared/utils/logger';
-import { AppError } from '@/shared/errors/AppError';
-import { ValidationError } from '@/shared/errors/ValidationError';
-import { UnauthorizedError } from '@/shared/errors/UnauthorizedError';
-import { NotFoundError } from '@/shared/errors/NotFoundError';
-import { ConflictError } from '@/shared/errors/ConflictError';
+import { Request, Response, NextFunction } from "express";
+import { StatusCodes } from "http-status-codes";
+import { Logger } from "@/shared/utils/logger";
+import { AppError } from "@/shared/errors/AppError";
+import { ValidationError } from "@/shared/errors/ValidationError";
+import { UnauthorizedError } from "@/shared/errors/UnauthorizedError";
+import { NotFoundError } from "@/shared/errors/NotFoundError";
+import { ConflictError } from "@/shared/errors/ConflictError";
 
 export const errorHandler = (
   error: Error,
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): void => {
   const logger = Logger.getInstance();
-  
-  logger.error('Request error', {
+
+  logger.error("Request error", {
     requestId: req.id,
     method: req.method,
     url: req.url,
@@ -1152,7 +1195,7 @@ export const errorHandler = (
   if (error instanceof ValidationError) {
     res.status(StatusCodes.BAD_REQUEST).json({
       success: false,
-      error: 'Validation Error',
+      error: "Validation Error",
       message: error.message,
       details: error.details,
       requestId: req.id,
@@ -1163,7 +1206,7 @@ export const errorHandler = (
   if (error instanceof UnauthorizedError) {
     res.status(StatusCodes.UNAUTHORIZED).json({
       success: false,
-      error: 'Unauthorized',
+      error: "Unauthorized",
       message: error.message,
       requestId: req.id,
     });
@@ -1173,7 +1216,7 @@ export const errorHandler = (
   if (error instanceof NotFoundError) {
     res.status(StatusCodes.NOT_FOUND).json({
       success: false,
-      error: 'Not Found',
+      error: "Not Found",
       message: error.message,
       requestId: req.id,
     });
@@ -1183,7 +1226,7 @@ export const errorHandler = (
   if (error instanceof ConflictError) {
     res.status(StatusCodes.CONFLICT).json({
       success: false,
-      error: 'Conflict',
+      error: "Conflict",
       message: error.message,
       requestId: req.id,
     });
@@ -1201,11 +1244,11 @@ export const errorHandler = (
   }
 
   // Handle database errors
-  if (error.message.includes('duplicate key value')) {
+  if (error.message.includes("duplicate key value")) {
     res.status(StatusCodes.CONFLICT).json({
       success: false,
-      error: 'Duplicate Entry',
-      message: 'Resource already exists',
+      error: "Duplicate Entry",
+      message: "Resource already exists",
       requestId: req.id,
     });
     return;
@@ -1214,10 +1257,11 @@ export const errorHandler = (
   // Default error response
   res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
     success: false,
-    error: 'Internal Server Error',
-    message: process.env.NODE_ENV === 'production' 
-      ? 'Something went wrong' 
-      : error.message,
+    error: "Internal Server Error",
+    message:
+      process.env.NODE_ENV === "production"
+        ? "Something went wrong"
+        : error.message,
     requestId: req.id,
   });
 };
@@ -1229,24 +1273,24 @@ export const errorHandler = (
 
 ```typescript
 // src/presentation/routes/index.ts
-import { Application } from 'express';
-import { v1Routes } from './v1';
-import { v2Routes } from './v2'; // Future version
+import { Application } from "express";
+import { v1Routes } from "./v1";
+import { v2Routes } from "./v2"; // Future version
 
 export function setupRoutes(app: Application): void {
   // Version 1 routes (current)
-  app.use('/api/v1', v1Routes);
-  
+  app.use("/api/v1", v1Routes);
+
   // Version 2 routes (future)
   // app.use('/api/v2', v2Routes);
-  
+
   // Default to latest version
-  app.use('/api', v1Routes);
-  
+  app.use("/api", v1Routes);
+
   // Health check endpoint (unversioned)
-  app.get('/health', (req, res) => {
+  app.get("/health", (req, res) => {
     res.json({
-      status: 'healthy',
+      status: "healthy",
       timestamp: new Date().toISOString(),
       version: process.env.npm_package_version,
     });
@@ -1258,24 +1302,24 @@ export function setupRoutes(app: Application): void {
 
 ```typescript
 // src/presentation/routes/v1/index.ts
-import { Router } from 'express';
-import { authRoutes } from './auth';
-import { contactRoutes } from './contacts';
-import { organizationRoutes } from './organizations';
+import { Router } from "express";
+import { authRoutes } from "./auth";
+import { contactRoutes } from "./contacts";
+import { organizationRoutes } from "./organizations";
 
 const router = Router();
 
 // Mount version-specific routes
-router.use('/auth', authRoutes);
-router.use('/contacts', contactRoutes);
-router.use('/organizations', organizationRoutes);
+router.use("/auth", authRoutes);
+router.use("/contacts", contactRoutes);
+router.use("/organizations", organizationRoutes);
 
 // Version information
-router.get('/', (req, res) => {
+router.get("/", (req, res) => {
   res.json({
-    version: 'v1',
-    description: 'ConnectKit API Version 1',
-    documentation: '/api/v1/docs',
+    version: "v1",
+    description: "ConnectKit API Version 1",
+    documentation: "/api/v1/docs",
   });
 });
 
@@ -1288,77 +1332,77 @@ export { router as v1Routes };
 
 ```typescript
 // src/shared/config/swagger.ts
-import swaggerJsdoc from 'swagger-jsdoc';
-import swaggerUi from 'swagger-ui-express';
-import { Application } from 'express';
-import { AppConfig } from './app-config';
+import swaggerJsdoc from "swagger-jsdoc";
+import swaggerUi from "swagger-ui-express";
+import { Application } from "express";
+import { AppConfig } from "./app-config";
 
 const config = AppConfig.getInstance();
 
 const options: swaggerJsdoc.Options = {
   definition: {
-    openapi: '3.0.0',
+    openapi: "3.0.0",
     info: {
-      title: 'ConnectKit API',
-      version: '1.0.0',
-      description: 'Enterprise Contact Management API',
+      title: "ConnectKit API",
+      version: "1.0.0",
+      description: "Enterprise Contact Management API",
       contact: {
-        name: 'ConnectKit Team',
-        email: 'api-support@connectkit.com',
+        name: "ConnectKit Team",
+        email: "api-support@connectkit.com",
       },
     },
     servers: [
       {
-        url: config.get('API_BASE_URL') || 'http://localhost:3001/api/v1',
-        description: 'Development server',
+        url: config.get("API_BASE_URL") || "http://localhost:3001/api/v1",
+        description: "Development server",
       },
     ],
     components: {
       securitySchemes: {
         bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
         },
       },
       responses: {
         UnauthorizedError: {
-          description: 'Authentication information is missing or invalid',
+          description: "Authentication information is missing or invalid",
           content: {
-            'application/json': {
+            "application/json": {
               schema: {
-                type: 'object',
+                type: "object",
                 properties: {
-                  success: { type: 'boolean', example: false },
-                  error: { type: 'string', example: 'Unauthorized' },
-                  message: { type: 'string', example: 'Invalid token' },
-                  requestId: { type: 'string', format: 'uuid' },
+                  success: { type: "boolean", example: false },
+                  error: { type: "string", example: "Unauthorized" },
+                  message: { type: "string", example: "Invalid token" },
+                  requestId: { type: "string", format: "uuid" },
                 },
               },
             },
           },
         },
         ValidationError: {
-          description: 'Validation error',
+          description: "Validation error",
           content: {
-            'application/json': {
+            "application/json": {
               schema: {
-                type: 'object',
+                type: "object",
                 properties: {
-                  success: { type: 'boolean', example: false },
-                  error: { type: 'string', example: 'Validation Error' },
-                  message: { type: 'string', example: 'Validation failed' },
+                  success: { type: "boolean", example: false },
+                  error: { type: "string", example: "Validation Error" },
+                  message: { type: "string", example: "Validation failed" },
                   details: {
-                    type: 'array',
+                    type: "array",
                     items: {
-                      type: 'object',
+                      type: "object",
                       properties: {
-                        field: { type: 'string' },
-                        message: { type: 'string' },
+                        field: { type: "string" },
+                        message: { type: "string" },
                       },
                     },
                   },
-                  requestId: { type: 'string', format: 'uuid' },
+                  requestId: { type: "string", format: "uuid" },
                 },
               },
             },
@@ -1367,19 +1411,26 @@ const options: swaggerJsdoc.Options = {
       },
     },
   },
-  apis: ['./src/presentation/routes/**/*.ts', './src/presentation/controllers/**/*.ts'],
+  apis: [
+    "./src/presentation/routes/**/*.ts",
+    "./src/presentation/controllers/**/*.ts",
+  ],
 };
 
 const specs = swaggerJsdoc(options);
 
 export function setupSwagger(app: Application): void {
-  app.use('/api/v1/docs', swaggerUi.serve, swaggerUi.setup(specs, {
-    customCssUrl: '/swagger-ui-custom.css',
-    customSiteTitle: 'ConnectKit API Documentation',
-    swaggerOptions: {
-      persistAuthorization: true,
-    },
-  }));
+  app.use(
+    "/api/v1/docs",
+    swaggerUi.serve,
+    swaggerUi.setup(specs, {
+      customCssUrl: "/swagger-ui-custom.css",
+      customSiteTitle: "ConnectKit API Documentation",
+      swaggerOptions: {
+        persistAuthorization: true,
+      },
+    }),
+  );
 }
 ```
 
@@ -1389,9 +1440,9 @@ export function setupSwagger(app: Application): void {
 
 ```typescript
 // src/infrastructure/cache/CacheService.ts
-import Redis from 'ioredis';
-import { AppConfig } from '@/shared/config/app-config';
-import { Logger } from '@/shared/utils/logger';
+import Redis from "ioredis";
+import { AppConfig } from "@/shared/config/app-config";
+import { Logger } from "@/shared/utils/logger";
 
 export class CacheService {
   private static instance: CacheService;
@@ -1410,23 +1461,23 @@ export class CacheService {
 
   async connect(): Promise<void> {
     this.redis = new Redis({
-      host: this.config.get('REDIS_HOST') || 'localhost',
-      port: parseInt(this.config.get('REDIS_PORT') || '6379'),
-      password: this.config.get('REDIS_PASSWORD'),
-      db: parseInt(this.config.get('REDIS_DB') || '0'),
+      host: this.config.get("REDIS_HOST") || "localhost",
+      port: parseInt(this.config.get("REDIS_PORT") || "6379"),
+      password: this.config.get("REDIS_PASSWORD"),
+      db: parseInt(this.config.get("REDIS_DB") || "0"),
       retryDelayOnFailover: 100,
       maxRetriesPerRequest: 3,
       lazyConnect: true,
     });
 
     await this.redis.connect();
-    this.logger.info('Redis cache connected successfully');
+    this.logger.info("Redis cache connected successfully");
   }
 
   async disconnect(): Promise<void> {
     if (this.redis) {
       await this.redis.disconnect();
-      this.logger.info('Redis cache disconnected');
+      this.logger.info("Redis cache disconnected");
     }
   }
 
@@ -1435,7 +1486,7 @@ export class CacheService {
       const value = await this.redis!.get(key);
       return value ? JSON.parse(value) : null;
     } catch (error) {
-      this.logger.error('Cache get error', { key, error });
+      this.logger.error("Cache get error", { key, error });
       return null;
     }
   }
@@ -1449,7 +1500,7 @@ export class CacheService {
         await this.redis!.set(key, serialized);
       }
     } catch (error) {
-      this.logger.error('Cache set error', { key, error });
+      this.logger.error("Cache set error", { key, error });
     }
   }
 
@@ -1457,7 +1508,7 @@ export class CacheService {
     try {
       await this.redis!.del(key);
     } catch (error) {
-      this.logger.error('Cache delete error', { key, error });
+      this.logger.error("Cache delete error", { key, error });
     }
   }
 
@@ -1468,12 +1519,12 @@ export class CacheService {
         await this.redis!.del(...keys);
       }
     } catch (error) {
-      this.logger.error('Cache pattern invalidation error', { pattern, error });
+      this.logger.error("Cache pattern invalidation error", { pattern, error });
     }
   }
 
   generateKey(prefix: string, ...parts: string[]): string {
-    return `${prefix}:${parts.join(':')}`;
+    return `${prefix}:${parts.join(":")}`;
   }
 }
 ```
@@ -1482,43 +1533,47 @@ export class CacheService {
 
 ```typescript
 // src/infrastructure/database/repositories/OptimizedContactRepository.ts
-import { PostgresContactRepository } from './PostgresContactRepository';
-import { CacheService } from '@/infrastructure/cache/CacheService';
-import { Contact } from '@/domain/entities/Contact';
+import { PostgresContactRepository } from "./PostgresContactRepository";
+import { CacheService } from "@/infrastructure/cache/CacheService";
+import { Contact } from "@/domain/entities/Contact";
 
 export class OptimizedContactRepository extends PostgresContactRepository {
   private readonly cache = CacheService.getInstance();
   private readonly CACHE_TTL = 300; // 5 minutes
 
   async findById(tenantId: string, id: string): Promise<Contact | null> {
-    const cacheKey = this.cache.generateKey('contact', tenantId, id);
-    
+    const cacheKey = this.cache.generateKey("contact", tenantId, id);
+
     // Try cache first
     const cached = await this.cache.get<Contact>(cacheKey);
     if (cached) {
       return cached;
     }
-    
+
     // Fallback to database
     const contact = await super.findById(tenantId, id);
-    
+
     if (contact) {
       await this.cache.set(cacheKey, contact, this.CACHE_TTL);
     }
-    
+
     return contact;
   }
 
   async save(contact: Contact): Promise<Contact> {
     const savedContact = await super.save(contact);
-    
+
     // Update cache
-    const cacheKey = this.cache.generateKey('contact', contact.tenantId, contact.id!);
+    const cacheKey = this.cache.generateKey(
+      "contact",
+      contact.tenantId,
+      contact.id!,
+    );
     await this.cache.set(cacheKey, savedContact, this.CACHE_TTL);
-    
+
     // Invalidate search cache
     await this.cache.invalidatePattern(`search:${contact.tenantId}:*`);
-    
+
     return savedContact;
   }
 
@@ -1526,32 +1581,40 @@ export class OptimizedContactRepository extends PostgresContactRepository {
     tenantId: string,
     query: string,
     offset: number,
-    limit: number
+    limit: number,
   ): Promise<{ contacts: Contact[]; total: number }> {
-    const cacheKey = this.cache.generateKey('search', tenantId, query, offset.toString(), limit.toString());
-    
+    const cacheKey = this.cache.generateKey(
+      "search",
+      tenantId,
+      query,
+      offset.toString(),
+      limit.toString(),
+    );
+
     // Try cache first
-    const cached = await this.cache.get<{ contacts: Contact[]; total: number }>(cacheKey);
+    const cached = await this.cache.get<{ contacts: Contact[]; total: number }>(
+      cacheKey,
+    );
     if (cached) {
       return cached;
     }
-    
+
     // Fallback to database with optimized query
     const result = await super.search(tenantId, query, offset, limit);
-    
+
     // Cache for shorter time due to frequent updates
     await this.cache.set(cacheKey, result, 60); // 1 minute
-    
+
     return result;
   }
 
   async softDelete(tenantId: string, id: string): Promise<void> {
     await super.softDelete(tenantId, id);
-    
+
     // Remove from cache
-    const cacheKey = this.cache.generateKey('contact', tenantId, id);
+    const cacheKey = this.cache.generateKey("contact", tenantId, id);
     await this.cache.del(cacheKey);
-    
+
     // Invalidate search cache
     await this.cache.invalidatePattern(`search:${tenantId}:*`);
   }
@@ -1672,21 +1735,21 @@ CMD ["node", "dist/index.js"]
 ```typescript
 // jest.config.js
 module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  roots: ['<rootDir>/src'],
-  testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
+  preset: "ts-jest",
+  testEnvironment: "node",
+  roots: ["<rootDir>/src"],
+  testMatch: ["**/__tests__/**/*.ts", "**/?(*.)+(spec|test).ts"],
   collectCoverageFrom: [
-    'src/**/*.ts',
-    '!src/**/*.d.ts',
-    '!src/tests/**',
-    '!src/migrations/**',
+    "src/**/*.ts",
+    "!src/**/*.d.ts",
+    "!src/tests/**",
+    "!src/migrations/**",
   ],
-  coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'clover'],
-  setupFilesAfterEnv: ['<rootDir>/src/tests/setup.ts'],
+  coverageDirectory: "coverage",
+  coverageReporters: ["text", "lcov", "clover"],
+  setupFilesAfterEnv: ["<rootDir>/src/tests/setup.ts"],
   moduleNameMapping: {
-    '^@/(.*)$': '<rootDir>/src/$1',
+    "^@/(.*)$": "<rootDir>/src/$1",
   },
   testTimeout: 30000,
   maxWorkers: 4,
@@ -1698,7 +1761,7 @@ module.exports = {
       lines: 80,
       statements: 80,
     },
-    './src/application/services/': {
+    "./src/application/services/": {
       branches: 90,
       functions: 90,
       lines: 90,

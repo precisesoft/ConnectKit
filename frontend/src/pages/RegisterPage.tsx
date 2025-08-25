@@ -16,7 +16,7 @@ const RegisterPage: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [searchParams] = useSearchParams();
-  
+
   const message = searchParams.get('message');
   const error = searchParams.get('error');
 
@@ -31,7 +31,7 @@ const RegisterPage: React.FC = () => {
         py: 4,
       }}
     >
-      <Container maxWidth="sm">
+      <Container maxWidth='sm'>
         <Box
           sx={{
             display: 'flex',
@@ -50,8 +50,8 @@ const RegisterPage: React.FC = () => {
             }}
           >
             <Typography
-              variant="h2"
-              component="h1"
+              variant='h2'
+              component='h1'
               sx={{
                 fontWeight: 700,
                 color: 'white',
@@ -63,7 +63,7 @@ const RegisterPage: React.FC = () => {
               ConnectKit
             </Typography>
             <Typography
-              variant="h6"
+              variant='h6'
               sx={{
                 color: 'rgba(255, 255, 255, 0.9)',
                 fontWeight: 300,
@@ -76,17 +76,14 @@ const RegisterPage: React.FC = () => {
 
           {/* Success/Error Messages */}
           {message && (
-            <Alert 
-              severity="info" 
-              sx={{ mb: 3, width: '100%', maxWidth: 480 }}
-            >
+            <Alert severity='info' sx={{ mb: 3, width: '100%', maxWidth: 480 }}>
               {message}
             </Alert>
           )}
-          
+
           {error && (
-            <Alert 
-              severity="error" 
+            <Alert
+              severity='error'
               sx={{ mb: 3, width: '100%', maxWidth: 480 }}
             >
               {error}
@@ -104,7 +101,7 @@ const RegisterPage: React.FC = () => {
               color: 'rgba(255, 255, 255, 0.8)',
             }}
           >
-            <Typography variant="body2" sx={{ mb: 1 }}>
+            <Typography variant='body2' sx={{ mb: 1 }}>
               © 2024 ConnectKit. All rights reserved.
             </Typography>
             <Box
@@ -116,9 +113,9 @@ const RegisterPage: React.FC = () => {
               }}
             >
               <Typography
-                variant="caption"
-                component="a"
-                href="#"
+                variant='caption'
+                component='a'
+                href='#'
                 sx={{
                   color: 'rgba(255, 255, 255, 0.7)',
                   textDecoration: 'none',
@@ -131,9 +128,9 @@ const RegisterPage: React.FC = () => {
                 Privacy Policy
               </Typography>
               <Typography
-                variant="caption"
-                component="a"
-                href="#"
+                variant='caption'
+                component='a'
+                href='#'
                 sx={{
                   color: 'rgba(255, 255, 255, 0.7)',
                   textDecoration: 'none',
@@ -146,9 +143,9 @@ const RegisterPage: React.FC = () => {
                 Terms of Service
               </Typography>
               <Typography
-                variant="caption"
-                component="a"
-                href="#"
+                variant='caption'
+                component='a'
+                href='#'
                 sx={{
                   color: 'rgba(255, 255, 255, 0.7)',
                   textDecoration: 'none',

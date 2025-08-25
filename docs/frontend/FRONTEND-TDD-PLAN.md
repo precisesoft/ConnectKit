@@ -44,28 +44,28 @@ This document outlines the comprehensive Test-Driven Development (TDD) strategy 
 
 ```typescript
 // vitest.config.ts
-import { defineConfig } from 'vitest/config';
-import react from '@vitejs/plugin-react';
-import { resolve } from 'path';
+import { defineConfig } from "vitest/config";
+import react from "@vitejs/plugin-react";
+import { resolve } from "path";
 
 export default defineConfig({
   plugins: [react()],
   test: {
     globals: true,
-    environment: 'jsdom',
-    setupFiles: ['./src/tests/setup.ts'],
+    environment: "jsdom",
+    setupFiles: ["./src/tests/setup.ts"],
     css: true,
     coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html', 'lcov'],
+      provider: "v8",
+      reporter: ["text", "json", "html", "lcov"],
       exclude: [
-        'node_modules/',
-        'src/tests/',
-        '**/*.d.ts',
-        '**/*.stories.{ts,tsx}',
-        '**/index.ts',
-        'src/main.tsx',
-        'src/vite-env.d.ts',
+        "node_modules/",
+        "src/tests/",
+        "**/*.d.ts",
+        "**/*.stories.{ts,tsx}",
+        "**/index.ts",
+        "src/main.tsx",
+        "src/vite-env.d.ts",
       ],
       thresholds: {
         global: {
@@ -79,13 +79,13 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, './src'),
-      '@/components': resolve(__dirname, './src/components'),
-      '@/hooks': resolve(__dirname, './src/hooks'),
-      '@/services': resolve(__dirname, './src/services'),
-      '@/stores': resolve(__dirname, './src/stores'),
-      '@/types': resolve(__dirname, './src/types'),
-      '@/utils': resolve(__dirname, './src/utils'),
+      "@": resolve(__dirname, "./src"),
+      "@/components": resolve(__dirname, "./src/components"),
+      "@/hooks": resolve(__dirname, "./src/hooks"),
+      "@/services": resolve(__dirname, "./src/services"),
+      "@/stores": resolve(__dirname, "./src/stores"),
+      "@/types": resolve(__dirname, "./src/types"),
+      "@/utils": resolve(__dirname, "./src/utils"),
     },
   },
 });
@@ -95,13 +95,13 @@ export default defineConfig({
 
 ```typescript
 // src/tests/setup.ts
-import '@testing-library/jest-dom';
-import { cleanup } from '@testing-library/react';
-import { afterEach, beforeAll, afterAll } from 'vitest';
-import { server } from './mocks/server';
+import "@testing-library/jest-dom";
+import { cleanup } from "@testing-library/react";
+import { afterEach, beforeAll, afterAll } from "vitest";
+import { server } from "./mocks/server";
 
 // MSW server setup
-beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
+beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 afterEach(() => {
   server.resetHandlers();
   cleanup();
@@ -125,7 +125,7 @@ global.ResizeObserver = class ResizeObserver {
 };
 
 // Mock matchMedia
-Object.defineProperty(window, 'matchMedia', {
+Object.defineProperty(window, "matchMedia", {
   writable: true,
   value: vi.fn().mockImplementation((query) => ({
     matches: false,
@@ -233,52 +233,52 @@ export const createMockUser = (overrides = {}) => ({
 
 ```typescript
 // src/tests/mocks/handlers.ts
-import { rest } from 'msw';
-import { createMockContact, createMockUser } from '../utils/test-utils';
+import { rest } from "msw";
+import { createMockContact, createMockUser } from "../utils/test-utils";
 
 export const handlers = [
   // Auth endpoints
-  rest.post('/api/auth/login', (req, res, ctx) => {
+  rest.post("/api/auth/login", (req, res, ctx) => {
     return res(
       ctx.json({
         user: createMockUser(),
-        token: 'mock-jwt-token',
-        refreshToken: 'mock-refresh-token',
-      })
+        token: "mock-jwt-token",
+        refreshToken: "mock-refresh-token",
+      }),
     );
   }),
 
-  rest.post('/api/auth/register', (req, res, ctx) => {
+  rest.post("/api/auth/register", (req, res, ctx) => {
     return res(
       ctx.json({
         user: createMockUser(),
-        token: 'mock-jwt-token',
-        refreshToken: 'mock-refresh-token',
-      })
+        token: "mock-jwt-token",
+        refreshToken: "mock-refresh-token",
+      }),
     );
   }),
 
-  rest.post('/api/auth/refresh', (req, res, ctx) => {
+  rest.post("/api/auth/refresh", (req, res, ctx) => {
     return res(
       ctx.json({
-        token: 'new-mock-jwt-token',
-        refreshToken: 'new-mock-refresh-token',
-      })
+        token: "new-mock-jwt-token",
+        refreshToken: "new-mock-refresh-token",
+      }),
     );
   }),
 
   // Contact endpoints
-  rest.get('/api/contacts', (req, res, ctx) => {
-    const page = parseInt(req.url.searchParams.get('page') || '1');
-    const limit = parseInt(req.url.searchParams.get('limit') || '10');
-    const search = req.url.searchParams.get('search');
+  rest.get("/api/contacts", (req, res, ctx) => {
+    const page = parseInt(req.url.searchParams.get("page") || "1");
+    const limit = parseInt(req.url.searchParams.get("limit") || "10");
+    const search = req.url.searchParams.get("search");
 
     let contacts = Array.from({ length: 25 }, (_, i) =>
       createMockContact({
         id: (i + 1).toString(),
         firstName: `Contact${i + 1}`,
         email: [`contact${i + 1}@example.com`],
-      })
+      }),
     );
 
     if (search) {
@@ -286,7 +286,7 @@ export const handlers = [
         (contact) =>
           contact.firstName.toLowerCase().includes(search.toLowerCase()) ||
           contact.lastName.toLowerCase().includes(search.toLowerCase()) ||
-          contact.email[0].toLowerCase().includes(search.toLowerCase())
+          contact.email[0].toLowerCase().includes(search.toLowerCase()),
       );
     }
 
@@ -300,44 +300,41 @@ export const handlers = [
         totalCount: contacts.length,
         totalPages: Math.ceil(contacts.length / limit),
         currentPage: page,
-      })
+      }),
     );
   }),
 
-  rest.get('/api/contacts/:id', (req, res, ctx) => {
+  rest.get("/api/contacts/:id", (req, res, ctx) => {
     const { id } = req.params;
     return res(ctx.json(createMockContact({ id })));
   }),
 
-  rest.post('/api/contacts', (req, res, ctx) => {
+  rest.post("/api/contacts", (req, res, ctx) => {
     const body = req.body;
     return res(ctx.json(createMockContact(body)));
   }),
 
-  rest.put('/api/contacts/:id', (req, res, ctx) => {
+  rest.put("/api/contacts/:id", (req, res, ctx) => {
     const { id } = req.params;
     const body = req.body;
     return res(ctx.json(createMockContact({ ...body, id })));
   }),
 
-  rest.delete('/api/contacts/:id', (req, res, ctx) => {
-    return res(ctx.json({ message: 'Contact deleted successfully' }));
+  rest.delete("/api/contacts/:id", (req, res, ctx) => {
+    return res(ctx.json({ message: "Contact deleted successfully" }));
   }),
 
   // Error scenarios
-  rest.get('/api/contacts/error', (req, res, ctx) => {
-    return res(
-      ctx.status(500),
-      ctx.json({ message: 'Internal server error' })
-    );
+  rest.get("/api/contacts/error", (req, res, ctx) => {
+    return res(ctx.status(500), ctx.json({ message: "Internal server error" }));
   }),
 ];
 ```
 
 ```typescript
 // src/tests/mocks/server.ts
-import { setupServer } from 'msw/node';
-import { handlers } from './handlers';
+import { setupServer } from "msw/node";
+import { handlers } from "./handlers";
 
 export const server = setupServer(...handlers);
 ```
@@ -386,7 +383,7 @@ describe('Button Component', () => {
     it('should call onClick handler when clicked', () => {
       const handleClick = vi.fn();
       render(<Button onClick={handleClick}>Click me</Button>);
-      
+
       fireEvent.click(screen.getByRole('button'));
       expect(handleClick).toHaveBeenCalledTimes(1);
     });
@@ -394,7 +391,7 @@ describe('Button Component', () => {
     it('should not call onClick when disabled', () => {
       const handleClick = vi.fn();
       render(<Button onClick={handleClick} disabled>Disabled</Button>);
-      
+
       fireEvent.click(screen.getByRole('button'));
       expect(handleClick).not.toHaveBeenCalled();
     });
@@ -402,7 +399,7 @@ describe('Button Component', () => {
     it('should not call onClick when loading', () => {
       const handleClick = vi.fn();
       render(<Button onClick={handleClick} isLoading>Loading</Button>);
-      
+
       fireEvent.click(screen.getByRole('button'));
       expect(handleClick).not.toHaveBeenCalled();
     });
@@ -415,7 +412,7 @@ describe('Button Component', () => {
           Button
         </Button>
       );
-      
+
       const button = screen.getByRole('button');
       expect(button).toHaveAttribute('aria-label', 'Custom label');
       expect(button).toHaveAttribute('aria-describedby', 'description');
@@ -424,13 +421,13 @@ describe('Button Component', () => {
     it('should support keyboard navigation', () => {
       const handleClick = vi.fn();
       render(<Button onClick={handleClick}>Press me</Button>);
-      
+
       const button = screen.getByRole('button');
       button.focus();
-      
+
       fireEvent.keyDown(button, { key: 'Enter' });
       expect(handleClick).toHaveBeenCalledTimes(1);
-      
+
       fireEvent.keyDown(button, { key: ' ' });
       expect(handleClick).toHaveBeenCalledTimes(2);
     });
@@ -490,7 +487,7 @@ describe('ContactCard Component', () => {
   describe('TDD: Action Buttons', () => {
     it('RED: should have view, edit, and delete buttons', () => {
       render(<ContactCard contact={mockContact} {...mockHandlers} />);
-      
+
       expect(screen.getByRole('button', { name: /view/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /edit/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
@@ -498,21 +495,21 @@ describe('ContactCard Component', () => {
 
     it('GREEN: should call onView when view button is clicked', () => {
       render(<ContactCard contact={mockContact} {...mockHandlers} />);
-      
+
       fireEvent.click(screen.getByRole('button', { name: /view/i }));
       expect(mockHandlers.onView).toHaveBeenCalledWith(mockContact);
     });
 
     it('GREEN: should call onEdit when edit button is clicked', () => {
       render(<ContactCard contact={mockContact} {...mockHandlers} />);
-      
+
       fireEvent.click(screen.getByRole('button', { name: /edit/i }));
       expect(mockHandlers.onEdit).toHaveBeenCalledWith(mockContact);
     });
 
     it('GREEN: should call onDelete when delete button is clicked', () => {
       render(<ContactCard contact={mockContact} {...mockHandlers} />);
-      
+
       fireEvent.click(screen.getByRole('button', { name: /delete/i }));
       expect(mockHandlers.onDelete).toHaveBeenCalledWith(mockContact.id);
     });
@@ -521,10 +518,10 @@ describe('ContactCard Component', () => {
   describe('TDD: Responsive Behavior', () => {
     it('RED: should apply hover effects', () => {
       render(<ContactCard contact={mockContact} {...mockHandlers} />);
-      
+
       const card = screen.getByRole('article');
       fireEvent.mouseEnter(card);
-      
+
       expect(card).toHaveClass('hover-elevated');
     });
   });
@@ -534,13 +531,13 @@ describe('ContactCard Component', () => {
       const { rerender } = render(
         <ContactCard contact={mockContact} {...mockHandlers} />
       );
-      
+
       const viewButton = screen.getByRole('button', { name: /view/i });
       const initialButton = viewButton;
-      
+
       // Re-render with same props
       rerender(<ContactCard contact={mockContact} {...mockHandlers} />);
-      
+
       expect(screen.getByRole('button', { name: /view/i })).toBe(initialButton);
     });
 
@@ -548,12 +545,12 @@ describe('ContactCard Component', () => {
       const { rerender } = render(
         <ContactCard contact={mockContact} {...mockHandlers} />
       );
-      
+
       expect(screen.getByText('John Doe')).toBeInTheDocument();
-      
+
       const updatedContact = { ...mockContact, firstName: 'Jane' };
       rerender(<ContactCard contact={updatedContact} {...mockHandlers} />);
-      
+
       expect(screen.getByText('Jane Doe')).toBeInTheDocument();
     });
   });
@@ -589,11 +586,11 @@ describe('ContactList Component', () => {
 
     it('GREEN: should display contacts after loading', async () => {
       render(<ContactList {...mockHandlers} />);
-      
+
       await waitFor(() => {
         expect(screen.getByText('Contact1')).toBeInTheDocument();
       });
-      
+
       // Should show first page of contacts
       expect(screen.getByText('Contact1')).toBeInTheDocument();
       expect(screen.getByText('Contact10')).toBeInTheDocument();
@@ -614,7 +611,7 @@ describe('ContactList Component', () => {
       );
 
       render(<ContactList {...mockHandlers} />);
-      
+
       await waitFor(() => {
         expect(screen.getByText('No contacts yet')).toBeInTheDocument();
       });
@@ -624,7 +621,7 @@ describe('ContactList Component', () => {
   describe('TDD: Search Functionality', () => {
     it('RED: should have search input', async () => {
       render(<ContactList {...mockHandlers} />);
-      
+
       await waitFor(() => {
         expect(screen.getByPlaceholderText('Search contacts...')).toBeInTheDocument();
       });
@@ -632,7 +629,7 @@ describe('ContactList Component', () => {
 
     it('GREEN: should filter contacts based on search term', async () => {
       render(<ContactList {...mockHandlers} />);
-      
+
       await waitFor(() => {
         expect(screen.getByText('Contact1')).toBeInTheDocument();
       });
@@ -648,7 +645,7 @@ describe('ContactList Component', () => {
 
     it('GREEN: should show "no results" message for no matches', async () => {
       render(<ContactList {...mockHandlers} />);
-      
+
       await waitFor(() => {
         expect(screen.getByText('Contact1')).toBeInTheDocument();
       });
@@ -665,7 +662,7 @@ describe('ContactList Component', () => {
   describe('TDD: Pagination', () => {
     it('RED: should show pagination when there are multiple pages', async () => {
       render(<ContactList {...mockHandlers} />);
-      
+
       await waitFor(() => {
         expect(screen.getByRole('navigation')).toBeInTheDocument();
       });
@@ -673,7 +670,7 @@ describe('ContactList Component', () => {
 
     it('GREEN: should navigate to next page', async () => {
       render(<ContactList {...mockHandlers} />);
-      
+
       await waitFor(() => {
         expect(screen.getByText('Contact1')).toBeInTheDocument();
       });
@@ -699,7 +696,7 @@ describe('ContactList Component', () => {
       );
 
       render(<ContactList {...mockHandlers} />);
-      
+
       await waitFor(() => {
         expect(screen.getByText(/error loading contacts/i)).toBeInTheDocument();
       });
@@ -709,7 +706,7 @@ describe('ContactList Component', () => {
   describe('TDD: Contact Actions Integration', () => {
     it('GREEN: should call edit handler when contact card edit is clicked', async () => {
       render(<ContactList {...mockHandlers} />);
-      
+
       await waitFor(() => {
         expect(screen.getByText('Contact1')).toBeInTheDocument();
       });
@@ -722,7 +719,7 @@ describe('ContactList Component', () => {
 
     it('GREEN: should call delete handler when contact card delete is clicked', async () => {
       render(<ContactList {...mockHandlers} />);
-      
+
       await waitFor(() => {
         expect(screen.getByText('Contact1')).toBeInTheDocument();
       });
@@ -737,28 +734,28 @@ describe('ContactList Component', () => {
   describe('REFACTOR: Performance Optimizations', () => {
     it('should debounce search input', async () => {
       vi.useFakeTimers();
-      
+
       render(<ContactList {...mockHandlers} />);
-      
+
       await waitFor(() => {
         expect(screen.getByPlaceholderText('Search contacts...')).toBeInTheDocument();
       });
 
       const searchInput = screen.getByPlaceholderText('Search contacts...');
-      
+
       // Type multiple characters quickly
       fireEvent.change(searchInput, { target: { value: 'C' } });
       fireEvent.change(searchInput, { target: { value: 'Co' } });
       fireEvent.change(searchInput, { target: { value: 'Con' } });
-      
+
       // Fast forward timers
       vi.advanceTimersByTime(500);
-      
+
       // Should only make one API call after debounce
       await waitFor(() => {
         expect(screen.getByDisplayValue('Con')).toBeInTheDocument();
       });
-      
+
       vi.useRealTimers();
     });
   });
@@ -1209,7 +1206,7 @@ describe('ContactForm Component', () => {
 
     it('GREEN: should render form in create mode by default', () => {
       render(<ContactForm {...mockHandlers} />);
-      
+
       expect(screen.getByText('Add New Contact')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /create contact/i })).toBeInTheDocument();
     });
@@ -1217,7 +1214,7 @@ describe('ContactForm Component', () => {
     it('GREEN: should render form in edit mode when contact provided', () => {
       const mockContact = createMockContact();
       render(<ContactForm contact={mockContact} {...mockHandlers} />);
-      
+
       expect(screen.getByText('Edit Contact')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /update contact/i })).toBeInTheDocument();
       expect(screen.getByDisplayValue('John')).toBeInTheDocument();
@@ -1304,7 +1301,7 @@ describe('ContactForm Component', () => {
       });
 
       const submitButton = screen.getByRole('button', { name: /create contact/i });
-      
+
       await waitFor(() => {
         expect(submitButton).not.toBeDisabled();
       });
@@ -1339,7 +1336,7 @@ describe('ContactForm Component', () => {
       });
 
       const submitButton = screen.getByRole('button', { name: /create contact/i });
-      
+
       await waitFor(() => {
         expect(submitButton).not.toBeDisabled();
       });
@@ -1387,7 +1384,7 @@ describe('ContactForm Component', () => {
 
       const developerTag = screen.getByText('developer');
       const removeButton = developerTag.parentElement?.querySelector('[data-testid="CancelIcon"]');
-      
+
       if (removeButton) {
         fireEvent.click(removeButton);
       }
@@ -1435,21 +1432,21 @@ describe('ContactForm Component', () => {
 
 ```typescript
 // tests/e2e/auth.spec.ts
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test.describe('Authentication Flow', () => {
+test.describe("Authentication Flow", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto("/");
   });
 
-  test('TDD: Complete login flow', async ({ page }) => {
+  test("TDD: Complete login flow", async ({ page }) => {
     // RED: Should redirect to login page when not authenticated
     await expect(page).toHaveURL(/.*login/);
-    await expect(page.locator('h1')).toContainText('Sign In');
+    await expect(page.locator("h1")).toContainText("Sign In");
 
     // GREEN: Should login with valid credentials
-    await page.fill('[data-testid="email-input"]', 'user@example.com');
-    await page.fill('[data-testid="password-input"]', 'password123');
+    await page.fill('[data-testid="email-input"]', "user@example.com");
+    await page.fill('[data-testid="password-input"]', "password123");
     await page.click('[data-testid="login-button"]');
 
     // Should redirect to dashboard after login
@@ -1457,44 +1454,52 @@ test.describe('Authentication Flow', () => {
     await expect(page.locator('[data-testid="welcome-message"]')).toBeVisible();
   });
 
-  test('TDD: Login validation errors', async ({ page }) => {
-    await page.goto('/login');
+  test("TDD: Login validation errors", async ({ page }) => {
+    await page.goto("/login");
 
     // RED: Should show validation errors for empty fields
     await page.click('[data-testid="login-button"]');
-    
-    await expect(page.locator('[data-testid="email-error"]')).toContainText('Email is required');
-    await expect(page.locator('[data-testid="password-error"]')).toContainText('Password is required');
+
+    await expect(page.locator('[data-testid="email-error"]')).toContainText(
+      "Email is required",
+    );
+    await expect(page.locator('[data-testid="password-error"]')).toContainText(
+      "Password is required",
+    );
 
     // GREEN: Should show error for invalid email format
-    await page.fill('[data-testid="email-input"]', 'invalid-email');
+    await page.fill('[data-testid="email-input"]', "invalid-email");
     await page.blur('[data-testid="email-input"]');
-    
-    await expect(page.locator('[data-testid="email-error"]')).toContainText('Invalid email format');
+
+    await expect(page.locator('[data-testid="email-error"]')).toContainText(
+      "Invalid email format",
+    );
   });
 
-  test('TDD: Registration flow', async ({ page }) => {
-    await page.goto('/register');
+  test("TDD: Registration flow", async ({ page }) => {
+    await page.goto("/register");
 
     // Fill registration form
-    await page.fill('[data-testid="first-name-input"]', 'John');
-    await page.fill('[data-testid="last-name-input"]', 'Doe');
-    await page.fill('[data-testid="email-input"]', 'john.doe@example.com');
-    await page.fill('[data-testid="password-input"]', 'password123');
-    await page.fill('[data-testid="confirm-password-input"]', 'password123');
+    await page.fill('[data-testid="first-name-input"]', "John");
+    await page.fill('[data-testid="last-name-input"]', "Doe");
+    await page.fill('[data-testid="email-input"]', "john.doe@example.com");
+    await page.fill('[data-testid="password-input"]', "password123");
+    await page.fill('[data-testid="confirm-password-input"]', "password123");
 
     await page.click('[data-testid="register-button"]');
 
     // Should redirect to dashboard after registration
     await expect(page).toHaveURL(/.*dashboard/);
-    await expect(page.locator('[data-testid="welcome-message"]')).toContainText('Welcome, John!');
+    await expect(page.locator('[data-testid="welcome-message"]')).toContainText(
+      "Welcome, John!",
+    );
   });
 
-  test('TDD: Logout flow', async ({ page }) => {
+  test("TDD: Logout flow", async ({ page }) => {
     // Login first
-    await page.goto('/login');
-    await page.fill('[data-testid="email-input"]', 'user@example.com');
-    await page.fill('[data-testid="password-input"]', 'password123');
+    await page.goto("/login");
+    await page.fill('[data-testid="email-input"]', "user@example.com");
+    await page.fill('[data-testid="password-input"]', "password123");
     await page.click('[data-testid="login-button"]');
 
     await expect(page).toHaveURL(/.*dashboard/);
@@ -1513,98 +1518,112 @@ test.describe('Authentication Flow', () => {
 
 ```typescript
 // tests/e2e/contacts.spec.ts
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test.describe('Contact Management', () => {
+test.describe("Contact Management", () => {
   test.beforeEach(async ({ page }) => {
     // Login before each test
-    await page.goto('/login');
-    await page.fill('[data-testid="email-input"]', 'user@example.com');
-    await page.fill('[data-testid="password-input"]', 'password123');
+    await page.goto("/login");
+    await page.fill('[data-testid="email-input"]', "user@example.com");
+    await page.fill('[data-testid="password-input"]', "password123");
     await page.click('[data-testid="login-button"]');
     await expect(page).toHaveURL(/.*dashboard/);
   });
 
-  test('TDD: Create new contact', async ({ page }) => {
-    await page.goto('/contacts');
+  test("TDD: Create new contact", async ({ page }) => {
+    await page.goto("/contacts");
 
     // RED: Should show empty state initially
     await expect(page.locator('[data-testid="empty-state"]')).toBeVisible();
 
     // GREEN: Should create new contact
     await page.click('[data-testid="add-contact-button"]');
-    
-    await page.fill('[data-testid="first-name-input"]', 'John');
-    await page.fill('[data-testid="last-name-input"]', 'Doe');
-    await page.fill('[data-testid="email-input"]', 'john.doe@example.com');
-    await page.fill('[data-testid="company-input"]', 'Acme Corp');
-    await page.fill('[data-testid="title-input"]', 'Software Engineer');
+
+    await page.fill('[data-testid="first-name-input"]', "John");
+    await page.fill('[data-testid="last-name-input"]', "Doe");
+    await page.fill('[data-testid="email-input"]', "john.doe@example.com");
+    await page.fill('[data-testid="company-input"]', "Acme Corp");
+    await page.fill('[data-testid="title-input"]', "Software Engineer");
 
     await page.click('[data-testid="save-contact-button"]');
 
     // Should show success message and redirect to contact list
-    await expect(page.locator('[data-testid="success-toast"]')).toContainText('Contact created successfully');
-    await expect(page.locator('[data-testid="contact-card"]')).toContainText('John Doe');
+    await expect(page.locator('[data-testid="success-toast"]')).toContainText(
+      "Contact created successfully",
+    );
+    await expect(page.locator('[data-testid="contact-card"]')).toContainText(
+      "John Doe",
+    );
   });
 
-  test('TDD: Search contacts', async ({ page }) => {
-    await page.goto('/contacts');
+  test("TDD: Search contacts", async ({ page }) => {
+    await page.goto("/contacts");
 
     // Assuming contacts already exist
     await expect(page.locator('[data-testid="contact-card"]')).toHaveCount(10);
 
     // RED: Should filter contacts based on search
-    await page.fill('[data-testid="search-input"]', 'John');
-    
+    await page.fill('[data-testid="search-input"]', "John");
+
     await page.waitForTimeout(500); // Wait for debounce
 
     // Should show only matching contacts
     const contactCards = page.locator('[data-testid="contact-card"]');
     await expect(contactCards).toHaveCount(1);
-    await expect(contactCards.first()).toContainText('John');
+    await expect(contactCards.first()).toContainText("John");
   });
 
-  test('TDD: Edit contact', async ({ page }) => {
-    await page.goto('/contacts');
+  test("TDD: Edit contact", async ({ page }) => {
+    await page.goto("/contacts");
 
     // Click edit on first contact
     const firstContact = page.locator('[data-testid="contact-card"]').first();
     await firstContact.locator('[data-testid="edit-button"]').click();
 
     // Update contact information
-    await page.fill('[data-testid="title-input"]', 'Senior Software Engineer');
+    await page.fill('[data-testid="title-input"]', "Senior Software Engineer");
     await page.click('[data-testid="save-contact-button"]');
 
     // Should show success message
-    await expect(page.locator('[data-testid="success-toast"]')).toContainText('Contact updated successfully');
-    await expect(firstContact).toContainText('Senior Software Engineer');
+    await expect(page.locator('[data-testid="success-toast"]')).toContainText(
+      "Contact updated successfully",
+    );
+    await expect(firstContact).toContainText("Senior Software Engineer");
   });
 
-  test('TDD: Delete contact', async ({ page }) => {
-    await page.goto('/contacts');
+  test("TDD: Delete contact", async ({ page }) => {
+    await page.goto("/contacts");
 
-    const initialContactCount = await page.locator('[data-testid="contact-card"]').count();
+    const initialContactCount = await page
+      .locator('[data-testid="contact-card"]')
+      .count();
 
     // Click delete on first contact
     const firstContact = page.locator('[data-testid="contact-card"]').first();
-    const contactName = await firstContact.locator('[data-testid="contact-name"]').textContent();
-    
+    const contactName = await firstContact
+      .locator('[data-testid="contact-name"]')
+      .textContent();
+
     await firstContact.locator('[data-testid="delete-button"]').click();
 
     // Confirm deletion
     await page.click('[data-testid="confirm-delete-button"]');
 
     // Should show success message and remove contact
-    await expect(page.locator('[data-testid="success-toast"]')).toContainText('Contact deleted successfully');
-    await expect(page.locator('[data-testid="contact-card"]')).toHaveCount(initialContactCount - 1);
-    
+    await expect(page.locator('[data-testid="success-toast"]')).toContainText(
+      "Contact deleted successfully",
+    );
+    await expect(page.locator('[data-testid="contact-card"]')).toHaveCount(
+      initialContactCount - 1,
+    );
+
     if (contactName) {
       await expect(page.locator(`text=${contactName}`)).not.toBeVisible();
     }
   });
 
-  test('TDD: Contact pagination', async ({ page }) => {
-    await page.goto('/contacts');
+  test("TDD: Contact pagination", async ({ page }) => {
+    await page.goto("/contacts");
 
     // Should show pagination if more than one page
     const pagination = page.locator('[data-testid="pagination"]');
@@ -1612,13 +1631,17 @@ test.describe('Contact Management', () => {
 
     const page2Button = pagination.locator('button:has-text("2")');
     if (await page2Button.isVisible()) {
-      const firstPageContacts = await page.locator('[data-testid="contact-card"]').allTextContents();
-      
+      const firstPageContacts = await page
+        .locator('[data-testid="contact-card"]')
+        .allTextContents();
+
       await page2Button.click();
       await page.waitForTimeout(1000);
 
-      const secondPageContacts = await page.locator('[data-testid="contact-card"]').allTextContents();
-      
+      const secondPageContacts = await page
+        .locator('[data-testid="contact-card"]')
+        .allTextContents();
+
       // Contact lists should be different
       expect(firstPageContacts).not.toEqual(secondPageContacts);
     }
@@ -1630,74 +1653,110 @@ test.describe('Contact Management', () => {
 
 ```typescript
 // tests/visual/components.spec.ts
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test.describe('Visual Regression Tests', () => {
-  test('TDD: Button component variations', async ({ page }) => {
-    await page.goto('/storybook/iframe.html?id=atoms-button--primary');
-    await expect(page.locator('[data-testid="button"]')).toHaveScreenshot('button-primary.png');
+test.describe("Visual Regression Tests", () => {
+  test("TDD: Button component variations", async ({ page }) => {
+    await page.goto("/storybook/iframe.html?id=atoms-button--primary");
+    await expect(page.locator('[data-testid="button"]')).toHaveScreenshot(
+      "button-primary.png",
+    );
 
-    await page.goto('/storybook/iframe.html?id=atoms-button--secondary');
-    await expect(page.locator('[data-testid="button"]')).toHaveScreenshot('button-secondary.png');
+    await page.goto("/storybook/iframe.html?id=atoms-button--secondary");
+    await expect(page.locator('[data-testid="button"]')).toHaveScreenshot(
+      "button-secondary.png",
+    );
 
-    await page.goto('/storybook/iframe.html?id=atoms-button--danger');
-    await expect(page.locator('[data-testid="button"]')).toHaveScreenshot('button-danger.png');
+    await page.goto("/storybook/iframe.html?id=atoms-button--danger");
+    await expect(page.locator('[data-testid="button"]')).toHaveScreenshot(
+      "button-danger.png",
+    );
 
-    await page.goto('/storybook/iframe.html?id=atoms-button--loading');
-    await expect(page.locator('[data-testid="button"]')).toHaveScreenshot('button-loading.png');
+    await page.goto("/storybook/iframe.html?id=atoms-button--loading");
+    await expect(page.locator('[data-testid="button"]')).toHaveScreenshot(
+      "button-loading.png",
+    );
   });
 
-  test('TDD: Contact card component', async ({ page }) => {
-    await page.goto('/storybook/iframe.html?id=molecules-contactcard--default');
-    await expect(page.locator('[data-testid="contact-card"]')).toHaveScreenshot('contact-card-default.png');
+  test("TDD: Contact card component", async ({ page }) => {
+    await page.goto("/storybook/iframe.html?id=molecules-contactcard--default");
+    await expect(page.locator('[data-testid="contact-card"]')).toHaveScreenshot(
+      "contact-card-default.png",
+    );
 
-    await page.goto('/storybook/iframe.html?id=molecules-contactcard--with-long-name');
-    await expect(page.locator('[data-testid="contact-card"]')).toHaveScreenshot('contact-card-long-name.png');
+    await page.goto(
+      "/storybook/iframe.html?id=molecules-contactcard--with-long-name",
+    );
+    await expect(page.locator('[data-testid="contact-card"]')).toHaveScreenshot(
+      "contact-card-long-name.png",
+    );
 
-    await page.goto('/storybook/iframe.html?id=molecules-contactcard--with-many-tags');
-    await expect(page.locator('[data-testid="contact-card"]')).toHaveScreenshot('contact-card-many-tags.png');
+    await page.goto(
+      "/storybook/iframe.html?id=molecules-contactcard--with-many-tags",
+    );
+    await expect(page.locator('[data-testid="contact-card"]')).toHaveScreenshot(
+      "contact-card-many-tags.png",
+    );
   });
 
-  test('TDD: Contact form component', async ({ page }) => {
-    await page.goto('/storybook/iframe.html?id=organisms-contactform--create-mode');
-    await expect(page.locator('[data-testid="contact-form"]')).toHaveScreenshot('contact-form-create.png');
+  test("TDD: Contact form component", async ({ page }) => {
+    await page.goto(
+      "/storybook/iframe.html?id=organisms-contactform--create-mode",
+    );
+    await expect(page.locator('[data-testid="contact-form"]')).toHaveScreenshot(
+      "contact-form-create.png",
+    );
 
-    await page.goto('/storybook/iframe.html?id=organisms-contactform--edit-mode');
-    await expect(page.locator('[data-testid="contact-form"]')).toHaveScreenshot('contact-form-edit.png');
+    await page.goto(
+      "/storybook/iframe.html?id=organisms-contactform--edit-mode",
+    );
+    await expect(page.locator('[data-testid="contact-form"]')).toHaveScreenshot(
+      "contact-form-edit.png",
+    );
 
-    await page.goto('/storybook/iframe.html?id=organisms-contactform--with-errors');
-    await expect(page.locator('[data-testid="contact-form"]')).toHaveScreenshot('contact-form-errors.png');
+    await page.goto(
+      "/storybook/iframe.html?id=organisms-contactform--with-errors",
+    );
+    await expect(page.locator('[data-testid="contact-form"]')).toHaveScreenshot(
+      "contact-form-errors.png",
+    );
   });
 
-  test('TDD: Dashboard page layout', async ({ page }) => {
+  test("TDD: Dashboard page layout", async ({ page }) => {
     // Login first
-    await page.goto('/login');
-    await page.fill('[data-testid="email-input"]', 'user@example.com');
-    await page.fill('[data-testid="password-input"]', 'password123');
+    await page.goto("/login");
+    await page.fill('[data-testid="email-input"]', "user@example.com");
+    await page.fill('[data-testid="password-input"]', "password123");
     await page.click('[data-testid="login-button"]');
 
-    await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
-    
-    await expect(page).toHaveScreenshot('dashboard-page.png', {
+    await page.goto("/dashboard");
+    await page.waitForLoadState("networkidle");
+
+    await expect(page).toHaveScreenshot("dashboard-page.png", {
       fullPage: true,
     });
   });
 
-  test('TDD: Responsive design breakpoints', async ({ page }) => {
+  test("TDD: Responsive design breakpoints", async ({ page }) => {
     // Mobile view
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.goto('/contacts');
-    await page.waitForLoadState('networkidle');
-    await expect(page).toHaveScreenshot('contacts-mobile.png', { fullPage: true });
+    await page.goto("/contacts");
+    await page.waitForLoadState("networkidle");
+    await expect(page).toHaveScreenshot("contacts-mobile.png", {
+      fullPage: true,
+    });
 
     // Tablet view
     await page.setViewportSize({ width: 768, height: 1024 });
-    await expect(page).toHaveScreenshot('contacts-tablet.png', { fullPage: true });
+    await expect(page).toHaveScreenshot("contacts-tablet.png", {
+      fullPage: true,
+    });
 
     // Desktop view
     await page.setViewportSize({ width: 1440, height: 900 });
-    await expect(page).toHaveScreenshot('contacts-desktop.png', { fullPage: true });
+    await expect(page).toHaveScreenshot("contacts-desktop.png", {
+      fullPage: true,
+    });
   });
 });
 ```
@@ -1706,22 +1765,22 @@ test.describe('Visual Regression Tests', () => {
 
 ```typescript
 // tests/performance/performance.spec.ts
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test.describe('Performance Tests', () => {
-  test('TDD: Page load performance', async ({ page }) => {
+test.describe("Performance Tests", () => {
+  test("TDD: Page load performance", async ({ page }) => {
     // Start tracing
     await page.tracing.start({ screenshots: true, snapshots: true });
 
     const startTime = Date.now();
-    await page.goto('/dashboard');
-    
+    await page.goto("/dashboard");
+
     // Wait for the page to be fully loaded
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState("networkidle");
     const endTime = Date.now();
 
     const loadTime = endTime - startTime;
-    
+
     // Page should load within 3 seconds
     expect(loadTime).toBeLessThan(3000);
 
@@ -1731,37 +1790,37 @@ test.describe('Performance Tests', () => {
         new PerformanceObserver((list) => {
           const entries = list.getEntries();
           const vitals: any = {};
-          
+
           entries.forEach((entry) => {
-            if (entry.entryType === 'largest-contentful-paint') {
+            if (entry.entryType === "largest-contentful-paint") {
               vitals.lcp = entry.startTime;
             }
-            if (entry.entryType === 'first-input') {
+            if (entry.entryType === "first-input") {
               vitals.fid = entry.processingStart - entry.startTime;
             }
-            if (entry.entryType === 'layout-shift' && !entry.hadRecentInput) {
+            if (entry.entryType === "layout-shift" && !entry.hadRecentInput) {
               vitals.cls = (vitals.cls || 0) + entry.value;
             }
           });
-          
+
           resolve(vitals);
-        }).observe({ type: 'largest-contentful-paint', buffered: true });
+        }).observe({ type: "largest-contentful-paint", buffered: true });
       });
     });
 
     // LCP should be less than 2.5s
     expect(metrics.lcp).toBeLessThan(2500);
-    
-    await page.tracing.stop({ path: 'traces/dashboard-load.zip' });
+
+    await page.tracing.stop({ path: "traces/dashboard-load.zip" });
   });
 
-  test('TDD: Contact list rendering performance', async ({ page }) => {
-    await page.goto('/login');
-    await page.fill('[data-testid="email-input"]', 'user@example.com');
-    await page.fill('[data-testid="password-input"]', 'password123');
+  test("TDD: Contact list rendering performance", async ({ page }) => {
+    await page.goto("/login");
+    await page.fill('[data-testid="email-input"]', "user@example.com");
+    await page.fill('[data-testid="password-input"]', "password123");
     await page.click('[data-testid="login-button"]');
 
-    await page.goto('/contacts');
+    await page.goto("/contacts");
 
     // Measure time to render contact list
     const renderStart = Date.now();
@@ -1769,7 +1828,7 @@ test.describe('Performance Tests', () => {
     const renderEnd = Date.now();
 
     const renderTime = renderEnd - renderStart;
-    
+
     // Contact list should render within 1 second
     expect(renderTime).toBeLessThan(1000);
 
@@ -1778,18 +1837,18 @@ test.describe('Performance Tests', () => {
     await expect(contactCards).toHaveCount(10);
   });
 
-  test('TDD: Search performance', async ({ page }) => {
-    await page.goto('/login');
-    await page.fill('[data-testid="email-input"]', 'user@example.com');
-    await page.fill('[data-testid="password-input"]', 'password123');
+  test("TDD: Search performance", async ({ page }) => {
+    await page.goto("/login");
+    await page.fill('[data-testid="email-input"]', "user@example.com");
+    await page.fill('[data-testid="password-input"]', "password123");
     await page.click('[data-testid="login-button"]');
 
-    await page.goto('/contacts');
+    await page.goto("/contacts");
     await page.waitForSelector('[data-testid="contact-card"]');
 
     // Measure search response time
     const searchStart = Date.now();
-    await page.fill('[data-testid="search-input"]', 'John');
+    await page.fill('[data-testid="search-input"]', "John");
     await page.waitForFunction(() => {
       const cards = document.querySelectorAll('[data-testid="contact-card"]');
       return cards.length === 1;
@@ -1797,7 +1856,7 @@ test.describe('Performance Tests', () => {
     const searchEnd = Date.now();
 
     const searchTime = searchEnd - searchStart;
-    
+
     // Search should complete within 500ms
     expect(searchTime).toBeLessThan(500);
   });
@@ -1808,82 +1867,86 @@ test.describe('Performance Tests', () => {
 
 ```typescript
 // tests/accessibility/a11y.spec.ts
-import { test, expect } from '@playwright/test';
-import AxeBuilder from '@axe-core/playwright';
+import { test, expect } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 
-test.describe('Accessibility Tests', () => {
-  test('TDD: Dashboard page accessibility', async ({ page }) => {
-    await page.goto('/login');
-    await page.fill('[data-testid="email-input"]', 'user@example.com');
-    await page.fill('[data-testid="password-input"]', 'password123');
+test.describe("Accessibility Tests", () => {
+  test("TDD: Dashboard page accessibility", async ({ page }) => {
+    await page.goto("/login");
+    await page.fill('[data-testid="email-input"]', "user@example.com");
+    await page.fill('[data-testid="password-input"]', "password123");
     await page.click('[data-testid="login-button"]');
 
-    await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.goto("/dashboard");
+    await page.waitForLoadState("networkidle");
 
     const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
     expect(accessibilityScanResults.violations).toEqual([]);
   });
 
-  test('TDD: Contact form accessibility', async ({ page }) => {
-    await page.goto('/login');
-    await page.fill('[data-testid="email-input"]', 'user@example.com');
-    await page.fill('[data-testid="password-input"]', 'password123');
+  test("TDD: Contact form accessibility", async ({ page }) => {
+    await page.goto("/login");
+    await page.fill('[data-testid="email-input"]', "user@example.com");
+    await page.fill('[data-testid="password-input"]', "password123");
     await page.click('[data-testid="login-button"]');
 
-    await page.goto('/contacts/new');
-    
+    await page.goto("/contacts/new");
+
     const accessibilityScanResults = await new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+      .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
       .analyze();
-      
+
     expect(accessibilityScanResults.violations).toEqual([]);
   });
 
-  test('TDD: Keyboard navigation', async ({ page }) => {
-    await page.goto('/login');
-    await page.fill('[data-testid="email-input"]', 'user@example.com');
-    await page.fill('[data-testid="password-input"]', 'password123');
+  test("TDD: Keyboard navigation", async ({ page }) => {
+    await page.goto("/login");
+    await page.fill('[data-testid="email-input"]', "user@example.com");
+    await page.fill('[data-testid="password-input"]', "password123");
     await page.click('[data-testid="login-button"]');
 
-    await page.goto('/contacts');
-    
-    // Test tab navigation through contact cards
-    await page.keyboard.press('Tab');
-    let focusedElement = await page.evaluate(() => document.activeElement?.getAttribute('data-testid'));
-    expect(focusedElement).toBe('add-contact-button');
+    await page.goto("/contacts");
 
-    await page.keyboard.press('Tab');
-    focusedElement = await page.evaluate(() => document.activeElement?.getAttribute('data-testid'));
-    expect(focusedElement).toBe('search-input');
+    // Test tab navigation through contact cards
+    await page.keyboard.press("Tab");
+    let focusedElement = await page.evaluate(() =>
+      document.activeElement?.getAttribute("data-testid"),
+    );
+    expect(focusedElement).toBe("add-contact-button");
+
+    await page.keyboard.press("Tab");
+    focusedElement = await page.evaluate(() =>
+      document.activeElement?.getAttribute("data-testid"),
+    );
+    expect(focusedElement).toBe("search-input");
 
     // Test Enter key activation
-    await page.keyboard.press('Tab');
-    await page.keyboard.press('Enter');
-    
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Enter");
+
     // Should open first contact
     await expect(page.locator('[data-testid="contact-details"]')).toBeVisible();
   });
 
-  test('TDD: Screen reader compatibility', async ({ page }) => {
-    await page.goto('/contacts');
-    
+  test("TDD: Screen reader compatibility", async ({ page }) => {
+    await page.goto("/contacts");
+
     // Check ARIA labels
     const searchInput = page.locator('[data-testid="search-input"]');
-    await expect(searchInput).toHaveAttribute('aria-label', 'Search contacts');
-    
+    await expect(searchInput).toHaveAttribute("aria-label", "Search contacts");
+
     const addButton = page.locator('[data-testid="add-contact-button"]');
-    await expect(addButton).toHaveAttribute('aria-label', 'Add new contact');
-    
+    await expect(addButton).toHaveAttribute("aria-label", "Add new contact");
+
     // Check heading hierarchy
-    const headings = page.locator('h1, h2, h3, h4, h5, h6');
-    const headingLevels = await headings.evaluateAll(elements =>
-      elements.map(el => parseInt(el.tagName.charAt(1)))
+    const headings = page.locator("h1, h2, h3, h4, h5, h6");
+    const headingLevels = await headings.evaluateAll((elements) =>
+      elements.map((el) => parseInt(el.tagName.charAt(1))),
     );
-    
+
     // Heading levels should not skip (1, 2, 3, not 1, 3, 2)
     for (let i = 1; i < headingLevels.length; i++) {
-      expect(headingLevels[i] - headingLevels[i-1]).toBeLessThanOrEqual(1);
+      expect(headingLevels[i] - headingLevels[i - 1]).toBeLessThanOrEqual(1);
     }
   });
 });
@@ -2018,7 +2081,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+          cache: "npm"
 
       - name: Install dependencies
         run: |

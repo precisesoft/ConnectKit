@@ -11,7 +11,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   lastActivity: number;
-  
+
   // Actions
   setUser: (user: User) => void;
   setTokens: (token: string, refreshToken?: string) => void;
@@ -25,7 +25,7 @@ interface AuthState {
 // Token utility functions
 const isTokenExpired = (token: string | null): boolean => {
   if (!token) return true;
-  
+
   try {
     // Decode JWT token (basic decode, not verification)
     const base64Url = token.split('.')[1];
@@ -36,11 +36,11 @@ const isTokenExpired = (token: string | null): boolean => {
         .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
         .join('')
     );
-    
+
     const { exp } = JSON.parse(jsonPayload);
-    
+
     if (!exp) return true;
-    
+
     // Check if token is expired (with 5 minute buffer)
     const now = Date.now() / 1000;
     return exp < now + 300; // 5 minutes buffer
@@ -127,7 +127,7 @@ export const useAuthStore = create<AuthState>()(
       })),
       {
         name: 'connectkit-auth', // localStorage key
-        partialize: (state) => ({
+        partialize: state => ({
           user: state.user,
           token: state.token,
           refreshToken: state.refreshToken,
@@ -136,7 +136,7 @@ export const useAuthStore = create<AuthState>()(
         }),
         // Custom storage handlers for security
         storage: {
-          getItem: (name) => {
+          getItem: name => {
             try {
               const item = localStorage.getItem(name);
               return item ? JSON.parse(item) : null;
@@ -152,7 +152,7 @@ export const useAuthStore = create<AuthState>()(
               console.error('Error writing to localStorage:', error);
             }
           },
-          removeItem: (name) => {
+          removeItem: name => {
             try {
               localStorage.removeItem(name);
             } catch (error) {
@@ -181,23 +181,27 @@ export const useAuthStore = create<AuthState>()(
 );
 
 // Selectors for performance optimization
-export const useUser = () => useAuthStore((state) => state.user);
-export const useIsAuthenticated = () => useAuthStore((state) => state.isAuthenticated);
-export const useAuthToken = () => useAuthStore((state) => state.token);
-export const useAuthLoading = () => useAuthStore((state) => state.isLoading);
+export const useUser = () => useAuthStore(state => state.user);
+export const useIsAuthenticated = () =>
+  useAuthStore(state => state.isAuthenticated);
+export const useAuthToken = () => useAuthStore(state => state.token);
+export const useAuthLoading = () => useAuthStore(state => state.isLoading);
 
 // Session timeout management
 const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
 // Subscribe to store changes for session management
 useAuthStore.subscribe(
-  (state) => state.lastActivity,
-  (lastActivity) => {
+  state => state.lastActivity,
+  lastActivity => {
     const now = Date.now();
     const timeSinceActivity = now - lastActivity;
-    
+
     // Auto-logout if session has been inactive for too long
-    if (timeSinceActivity > SESSION_TIMEOUT && useAuthStore.getState().isAuthenticated) {
+    if (
+      timeSinceActivity > SESSION_TIMEOUT &&
+      useAuthStore.getState().isAuthenticated
+    ) {
       console.warn('Session timed out due to inactivity');
       useAuthStore.getState().clearAuth();
       // You might want to show a toast notification here
@@ -207,8 +211,8 @@ useAuthStore.subscribe(
 
 // Auto-logout when token expires
 useAuthStore.subscribe(
-  (state) => state.token,
-  (token) => {
+  state => state.token,
+  token => {
     if (token && isTokenExpired(token)) {
       console.warn('Token expired, logging out');
       useAuthStore.getState().clearAuth();

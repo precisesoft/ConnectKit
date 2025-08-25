@@ -41,21 +41,21 @@ export abstract class BaseRepository<T> {
     client?: PoolClient
   ): Promise<any> {
     const startTime = Date.now();
-    
+
     try {
       const executor = client || this.pool;
       const result = await executor.query(query, params);
-      
+
       const duration = Date.now() - startTime;
       logger.logDatabase(query, duration);
-      
+
       return result;
     } catch (error) {
       const duration = Date.now() - startTime;
       logger.logDatabase(query, duration, error as Error);
-      throw new DatabaseError('Database query failed', { 
+      throw new DatabaseError('Database query failed', {
         query: query.substring(0, 200),
-        error: (error as Error).message 
+        error: (error as Error).message,
       });
     }
   }
@@ -67,7 +67,7 @@ export abstract class BaseRepository<T> {
     callback: (client: PoolClient) => Promise<R>
   ): Promise<R> {
     const client = await this.pool.connect();
-    
+
     try {
       await client.query('BEGIN');
       const result = await callback(client);
@@ -95,10 +95,12 @@ export abstract class BaseRepository<T> {
     for (const [key, value] of Object.entries(filters)) {
       if (value !== undefined && value !== null) {
         paramCount++;
-        
+
         if (Array.isArray(value)) {
           // Handle IN clauses
-          const placeholders = value.map((_, index) => `$${paramCount + index}`).join(', ');
+          const placeholders = value
+            .map((_, index) => `$${paramCount + index}`)
+            .join(', ');
           conditions.push(`${key} IN (${placeholders})`);
           params.push(...value);
           paramCount += value.length - 1;
@@ -114,25 +116,29 @@ export abstract class BaseRepository<T> {
       }
     }
 
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-    
+    const whereClause =
+      conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
     return { whereClause, params, paramCount };
   }
 
   /**
    * Build ORDER BY clause
    */
-  protected buildOrderByClause(sort?: string, order: 'ASC' | 'DESC' = 'DESC'): string {
+  protected buildOrderByClause(
+    sort?: string,
+    order: 'ASC' | 'DESC' = 'DESC'
+  ): string {
     if (!sort) {
       return `ORDER BY created_at ${order}`;
     }
-    
+
     // Validate sort field to prevent SQL injection
     const allowedSortFields = this.getAllowedSortFields();
     if (!allowedSortFields.includes(sort)) {
       throw new Error(`Invalid sort field: ${sort}`);
     }
-    
+
     return `ORDER BY ${sort} ${order}`;
   }
 
@@ -159,13 +165,13 @@ export abstract class BaseRepository<T> {
       SELECT * FROM ${this.tableName} 
       WHERE ${this.primaryKey} = $1 AND deleted_at IS NULL
     `;
-    
+
     const result = await this.executeQuery(query, [id]);
-    
+
     if (result.rows.length === 0) {
       return null;
     }
-    
+
     return this.mapRowToEntity(result.rows[0]);
   }
 
@@ -174,11 +180,11 @@ export abstract class BaseRepository<T> {
    */
   async findByIdOrFail(id: string): Promise<T> {
     const entity = await this.findById(id);
-    
+
     if (!entity) {
       throw new NotFoundError(`${this.tableName} with id ${id} not found`);
     }
-    
+
     return entity;
   }
 
@@ -186,19 +192,25 @@ export abstract class BaseRepository<T> {
    * Find all with optional filters and pagination
    */
   async findAll(options: QueryOptions = {}): Promise<PaginationResult<T>> {
-    const { limit = 10, offset = 0, sort, order = 'DESC', filters = {} } = options;
-    
+    const {
+      limit = 10,
+      offset = 0,
+      sort,
+      order = 'DESC',
+      filters = {},
+    } = options;
+
     // Add deleted_at filter
     const allFilters = { ...filters, deleted_at: null };
-    
+
     const { whereClause, params } = this.buildWhereClause(allFilters);
     const orderByClause = this.buildOrderByClause(sort, order);
-    
+
     // Count query
     const countQuery = `SELECT COUNT(*) FROM ${this.tableName} ${whereClause}`;
     const countResult = await this.executeQuery(countQuery, params);
     const total = parseInt(countResult.rows[0].count, 10);
-    
+
     // Data query
     const dataQuery = `
       SELECT * FROM ${this.tableName}
@@ -206,14 +218,18 @@ export abstract class BaseRepository<T> {
       ${orderByClause}
       LIMIT $${params.length + 1} OFFSET $${params.length + 2}
     `;
-    
-    const dataResult = await this.executeQuery(dataQuery, [...params, limit, offset]);
+
+    const dataResult = await this.executeQuery(dataQuery, [
+      ...params,
+      limit,
+      offset,
+    ]);
     const items = dataResult.rows.map((row: any) => this.mapRowToEntity(row));
-    
+
     // Calculate pagination metadata
     const page = Math.floor(offset / limit) + 1;
     const totalPages = Math.ceil(total / limit);
-    
+
     return {
       items,
       total,
@@ -231,14 +247,14 @@ export abstract class BaseRepository<T> {
   async findOne(filters: Record<string, any>): Promise<T | null> {
     const allFilters = { ...filters, deleted_at: null };
     const { whereClause, params } = this.buildWhereClause(allFilters);
-    
+
     const query = `SELECT * FROM ${this.tableName} ${whereClause} LIMIT 1`;
     const result = await this.executeQuery(query, params);
-    
+
     if (result.rows.length === 0) {
       return null;
     }
-    
+
     return this.mapRowToEntity(result.rows[0]);
   }
 
@@ -248,10 +264,10 @@ export abstract class BaseRepository<T> {
   async exists(filters: Record<string, any>): Promise<boolean> {
     const allFilters = { ...filters, deleted_at: null };
     const { whereClause, params } = this.buildWhereClause(allFilters);
-    
+
     const query = `SELECT 1 FROM ${this.tableName} ${whereClause} LIMIT 1`;
     const result = await this.executeQuery(query, params);
-    
+
     return result.rows.length > 0;
   }
 
@@ -263,13 +279,13 @@ export abstract class BaseRepository<T> {
     const columns = Object.keys(row);
     const values = Object.values(row);
     const placeholders = values.map((_, index) => `$${index + 1}`).join(', ');
-    
+
     const query = `
       INSERT INTO ${this.tableName} (${columns.join(', ')})
       VALUES (${placeholders})
       RETURNING *
     `;
-    
+
     const result = await this.executeQuery(query, values);
     return this.mapRowToEntity(result.rows[0]);
   }
@@ -279,32 +295,34 @@ export abstract class BaseRepository<T> {
    */
   async update(id: string, updates: Partial<T>): Promise<T> {
     const row = this.mapEntityToRow(updates as T);
-    const entries = Object.entries(row).filter(([key, value]) => value !== undefined);
-    
+    const entries = Object.entries(row).filter(
+      ([key, value]) => value !== undefined
+    );
+
     if (entries.length === 0) {
       throw new Error('No fields to update');
     }
-    
+
     const setClause = entries
       .map(([key], index) => `${key} = $${index + 1}`)
       .join(', ');
-    
+
     const values = entries.map(([, value]) => value);
     values.push(id);
-    
+
     const query = `
       UPDATE ${this.tableName}
       SET ${setClause}, updated_at = NOW()
       WHERE ${this.primaryKey} = $${values.length} AND deleted_at IS NULL
       RETURNING *
     `;
-    
+
     const result = await this.executeQuery(query, values);
-    
+
     if (result.rows.length === 0) {
       throw new NotFoundError(`${this.tableName} with id ${id} not found`);
     }
-    
+
     return this.mapRowToEntity(result.rows[0]);
   }
 
@@ -317,9 +335,9 @@ export abstract class BaseRepository<T> {
       SET deleted_at = NOW(), updated_at = NOW()
       WHERE ${this.primaryKey} = $1 AND deleted_at IS NULL
     `;
-    
+
     const result = await this.executeQuery(query, [id]);
-    
+
     if (result.rowCount === 0) {
       throw new NotFoundError(`${this.tableName} with id ${id} not found`);
     }
@@ -335,13 +353,15 @@ export abstract class BaseRepository<T> {
       WHERE ${this.primaryKey} = $1 AND deleted_at IS NOT NULL
       RETURNING *
     `;
-    
+
     const result = await this.executeQuery(query, [id]);
-    
+
     if (result.rows.length === 0) {
-      throw new NotFoundError(`Deleted ${this.tableName} with id ${id} not found`);
+      throw new NotFoundError(
+        `Deleted ${this.tableName} with id ${id} not found`
+      );
     }
-    
+
     return this.mapRowToEntity(result.rows[0]);
   }
 
@@ -351,7 +371,7 @@ export abstract class BaseRepository<T> {
   async hardDelete(id: string): Promise<void> {
     const query = `DELETE FROM ${this.tableName} WHERE ${this.primaryKey} = $1`;
     const result = await this.executeQuery(query, [id]);
-    
+
     if (result.rowCount === 0) {
       throw new NotFoundError(`${this.tableName} with id ${id} not found`);
     }
@@ -363,10 +383,10 @@ export abstract class BaseRepository<T> {
   async count(filters: Record<string, any> = {}): Promise<number> {
     const allFilters = { ...filters, deleted_at: null };
     const { whereClause, params } = this.buildWhereClause(allFilters);
-    
+
     const query = `SELECT COUNT(*) FROM ${this.tableName} ${whereClause}`;
     const result = await this.executeQuery(query, params);
-    
+
     return parseInt(result.rows[0].count, 10);
   }
 
@@ -378,25 +398,27 @@ export abstract class BaseRepository<T> {
       return [];
     }
 
-    return await this.executeTransaction(async (client) => {
+    return await this.executeTransaction(async client => {
       const results: T[] = [];
-      
+
       for (const entity of entities) {
         const row = this.mapEntityToRow(entity);
         const columns = Object.keys(row);
         const values = Object.values(row);
-        const placeholders = values.map((_, index) => `$${index + 1}`).join(', ');
-        
+        const placeholders = values
+          .map((_, index) => `$${index + 1}`)
+          .join(', ');
+
         const query = `
           INSERT INTO ${this.tableName} (${columns.join(', ')})
           VALUES (${placeholders})
           RETURNING *
         `;
-        
+
         const result = await this.executeQuery(query, values, client);
         results.push(this.mapRowToEntity(result.rows[0]));
       }
-      
+
       return results;
     });
   }
@@ -404,41 +426,45 @@ export abstract class BaseRepository<T> {
   /**
    * Bulk update entities
    */
-  async bulkUpdate(updates: Array<{ id: string; data: Partial<T> }>): Promise<T[]> {
+  async bulkUpdate(
+    updates: Array<{ id: string; data: Partial<T> }>
+  ): Promise<T[]> {
     if (updates.length === 0) {
       return [];
     }
 
-    return await this.executeTransaction(async (client) => {
+    return await this.executeTransaction(async client => {
       const results: T[] = [];
-      
+
       for (const { id, data } of updates) {
         const row = this.mapEntityToRow(data as T);
-        const entries = Object.entries(row).filter(([key, value]) => value !== undefined);
-        
+        const entries = Object.entries(row).filter(
+          ([key, value]) => value !== undefined
+        );
+
         if (entries.length > 0) {
           const setClause = entries
             .map(([key], index) => `${key} = $${index + 1}`)
             .join(', ');
-          
+
           const values = entries.map(([, value]) => value);
           values.push(id);
-          
+
           const query = `
             UPDATE ${this.tableName}
             SET ${setClause}, updated_at = NOW()
             WHERE ${this.primaryKey} = $${values.length} AND deleted_at IS NULL
             RETURNING *
           `;
-          
+
           const result = await this.executeQuery(query, values, client);
-          
+
           if (result.rows.length > 0) {
             results.push(this.mapRowToEntity(result.rows[0]));
           }
         }
       }
-      
+
       return results;
     });
   }
@@ -451,33 +477,40 @@ export abstract class BaseRepository<T> {
     searchFields: string[],
     options: QueryOptions = {}
   ): Promise<PaginationResult<T>> {
-    const { limit = 10, offset = 0, sort, order = 'DESC', filters = {} } = options;
-    
+    const {
+      limit = 10,
+      offset = 0,
+      sort,
+      order = 'DESC',
+      filters = {},
+    } = options;
+
     // Build search conditions
-    const searchConditions = searchFields.map(
-      (field, index) => `${field} ILIKE $${index + 1}`
-    ).join(' OR ');
-    
+    const searchConditions = searchFields
+      .map((field, index) => `${field} ILIKE $${index + 1}`)
+      .join(' OR ');
+
     const searchParams = searchFields.map(() => `%${searchTerm}%`);
-    
+
     // Add additional filters
-    const { whereClause: filterClause, params: filterParams } = this.buildWhereClause(
-      { ...filters, deleted_at: null },
-      searchParams.length
-    );
-    
-    const whereClause = filterClause 
+    const { whereClause: filterClause, params: filterParams } =
+      this.buildWhereClause(
+        { ...filters, deleted_at: null },
+        searchParams.length
+      );
+
+    const whereClause = filterClause
       ? `WHERE (${searchConditions}) AND ${filterClause.substring(6)}` // Remove 'WHERE '
       : `WHERE (${searchConditions})`;
-    
+
     const allParams = [...searchParams, ...filterParams];
     const orderByClause = this.buildOrderByClause(sort, order);
-    
+
     // Count query
     const countQuery = `SELECT COUNT(*) FROM ${this.tableName} ${whereClause}`;
     const countResult = await this.executeQuery(countQuery, allParams);
     const total = parseInt(countResult.rows[0].count, 10);
-    
+
     // Data query
     const dataQuery = `
       SELECT * FROM ${this.tableName}
@@ -485,14 +518,18 @@ export abstract class BaseRepository<T> {
       ${orderByClause}
       LIMIT $${allParams.length + 1} OFFSET $${allParams.length + 2}
     `;
-    
-    const dataResult = await this.executeQuery(dataQuery, [...allParams, limit, offset]);
+
+    const dataResult = await this.executeQuery(dataQuery, [
+      ...allParams,
+      limit,
+      offset,
+    ]);
     const items = dataResult.rows.map((row: any) => this.mapRowToEntity(row));
-    
+
     // Calculate pagination metadata
     const page = Math.floor(offset / limit) + 1;
     const totalPages = Math.ceil(total / limit);
-    
+
     return {
       items,
       total,

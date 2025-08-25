@@ -40,14 +40,17 @@ describe('User Model', () => {
 
       expect(user.passwordHash).toBeDefined();
       expect(user.passwordHash).not.toBe(userData.password);
-      
-      const isValid = await bcrypt.compare(userData.password, user.passwordHash!);
+
+      const isValid = await bcrypt.compare(
+        userData.password,
+        user.passwordHash!
+      );
       expect(isValid).toBe(true);
     });
 
     it('should validate email format', () => {
       const invalidEmails = ['invalid', 'test@', '@example.com', 'test@.com'];
-      
+
       invalidEmails.forEach(email => {
         expect(() => {
           new User({
@@ -63,7 +66,7 @@ describe('User Model', () => {
 
     it('should validate password strength', () => {
       const weakPasswords = ['weak', '12345678', 'password', 'Password1'];
-      
+
       weakPasswords.forEach(password => {
         expect(() => {
           new User({
@@ -73,7 +76,9 @@ describe('User Model', () => {
             firstName: 'John',
             lastName: 'Doe',
           });
-        }).toThrow('Password must be at least 8 characters with uppercase, lowercase, number, and special character');
+        }).toThrow(
+          'Password must be at least 8 characters with uppercase, lowercase, number, and special character'
+        );
       });
     });
   });
@@ -106,11 +111,11 @@ describe('User Model', () => {
     it('should handle failed login attempts', () => {
       user.incrementFailedLoginAttempts();
       expect(user.failedLoginAttempts).toBe(1);
-      
+
       for (let i = 0; i < 4; i++) {
         user.incrementFailedLoginAttempts();
       }
-      
+
       expect(user.failedLoginAttempts).toBe(5);
       expect(user.isLocked()).toBe(true);
       expect(user.lockedUntil).toBeInstanceOf(Date);
@@ -119,7 +124,7 @@ describe('User Model', () => {
     it('should reset failed login attempts on successful login', () => {
       user.failedLoginAttempts = 3;
       user.resetFailedLoginAttempts();
-      
+
       expect(user.failedLoginAttempts).toBe(0);
       expect(user.lockedUntil).toBeNull();
     });
@@ -182,7 +187,7 @@ describe('User Model', () => {
 
     it('should generate verification token', () => {
       const token = user.generateVerificationToken();
-      
+
       expect(token).toBeDefined();
       expect(token.length).toBeGreaterThan(32);
       expect(user.verificationToken).toBe(token);
@@ -191,7 +196,7 @@ describe('User Model', () => {
     it('should verify user with correct token', () => {
       const token = user.generateVerificationToken();
       const result = user.verifyEmail(token);
-      
+
       expect(result).toBe(true);
       expect(user.isVerified).toBe(true);
       expect(user.verificationToken).toBeNull();
@@ -200,7 +205,7 @@ describe('User Model', () => {
     it('should not verify user with incorrect token', () => {
       user.generateVerificationToken();
       const result = user.verifyEmail('wrong-token');
-      
+
       expect(result).toBe(false);
       expect(user.isVerified).toBe(false);
     });
@@ -221,12 +226,12 @@ describe('User Model', () => {
 
     it('should generate password reset token', () => {
       const token = user.generatePasswordResetToken();
-      
+
       expect(token).toBeDefined();
       expect(token.length).toBeGreaterThan(32);
       expect(user.resetPasswordToken).toBe(token);
       expect(user.resetPasswordExpires).toBeInstanceOf(Date);
-      
+
       const expiresIn = user.resetPasswordExpires!.getTime() - Date.now();
       expect(expiresIn).toBeWithinRange(3500000, 3700000); // ~1 hour
     });
@@ -234,13 +239,13 @@ describe('User Model', () => {
     it('should reset password with valid token', async () => {
       const token = user.generatePasswordResetToken();
       const newPassword = 'NewSecurePass123!';
-      
+
       const result = await user.resetPassword(token, newPassword);
-      
+
       expect(result).toBe(true);
       expect(user.resetPasswordToken).toBeNull();
       expect(user.resetPasswordExpires).toBeNull();
-      
+
       const isValid = await user.verifyPassword(newPassword);
       expect(isValid).toBe(true);
     });
@@ -248,7 +253,7 @@ describe('User Model', () => {
     it('should not reset password with invalid token', async () => {
       user.generatePasswordResetToken();
       const result = await user.resetPassword('wrong-token', 'NewPass123!');
-      
+
       expect(result).toBe(false);
       expect(user.resetPasswordToken).not.toBeNull();
     });
@@ -256,9 +261,9 @@ describe('User Model', () => {
     it('should not reset password with expired token', async () => {
       const token = user.generatePasswordResetToken();
       user.resetPasswordExpires = new Date(Date.now() - 1000); // Expired
-      
+
       const result = await user.resetPassword(token, 'NewPass123!');
-      
+
       expect(result).toBe(false);
     });
   });
@@ -274,7 +279,7 @@ describe('User Model', () => {
       });
 
       user.softDelete();
-      
+
       expect(user.deletedAt).toBeInstanceOf(Date);
       expect(user.isDeleted()).toBe(true);
     });
@@ -290,7 +295,7 @@ describe('User Model', () => {
 
       user.softDelete();
       expect(user.isDeleted()).toBe(true);
-      
+
       user.restore();
       expect(user.deletedAt).toBeNull();
       expect(user.isDeleted()).toBe(false);
@@ -313,7 +318,7 @@ describe('User Model', () => {
       user.mfaSecret = 'mfa-secret';
 
       const serialized = user.toJSON();
-      
+
       expect(serialized.email).toBe('test@example.com');
       expect(serialized.username).toBe('testuser');
       expect(serialized.firstName).toBe('John');

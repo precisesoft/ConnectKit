@@ -4,9 +4,7 @@ import { CONTACT_CONSTANTS } from '../utils/constants';
 
 export const contactValidators = {
   // Contact ID parameter validation
-  contactId: [
-    commonValidations.uuid('id'),
-  ],
+  contactId: [commonValidations.uuid('id')],
 
   // Create contact validation
   createContact: [
@@ -14,10 +12,26 @@ export const contactValidators = {
     commonValidations.name('lastName'),
     commonValidations.email('email', true),
     commonValidations.phone('phone', true),
-    commonValidations.text('company', CONTACT_CONSTANTS.MAX_COMPANY_LENGTH, true),
-    commonValidations.text('jobTitle', CONTACT_CONSTANTS.MAX_JOB_TITLE_LENGTH, true),
-    commonValidations.text('addressLine1', CONTACT_CONSTANTS.MAX_ADDRESS_LENGTH, true),
-    commonValidations.text('addressLine2', CONTACT_CONSTANTS.MAX_ADDRESS_LENGTH, true),
+    commonValidations.text(
+      'company',
+      CONTACT_CONSTANTS.MAX_COMPANY_LENGTH,
+      true
+    ),
+    commonValidations.text(
+      'jobTitle',
+      CONTACT_CONSTANTS.MAX_JOB_TITLE_LENGTH,
+      true
+    ),
+    commonValidations.text(
+      'addressLine1',
+      CONTACT_CONSTANTS.MAX_ADDRESS_LENGTH,
+      true
+    ),
+    commonValidations.text(
+      'addressLine2',
+      CONTACT_CONSTANTS.MAX_ADDRESS_LENGTH,
+      true
+    ),
     commonValidations.text('city', CONTACT_CONSTANTS.MAX_CITY_LENGTH, true),
     commonValidations.text('state', CONTACT_CONSTANTS.MAX_STATE_LENGTH, true),
     body('postalCode')
@@ -25,19 +39,29 @@ export const contactValidators = {
       .trim()
       .matches(/^[A-Za-z0-9\s-]{3,20}$/)
       .withMessage('Invalid postal code format'),
-    commonValidations.text('country', CONTACT_CONSTANTS.MAX_COUNTRY_LENGTH, true),
+    commonValidations.text(
+      'country',
+      CONTACT_CONSTANTS.MAX_COUNTRY_LENGTH,
+      true
+    ),
     commonValidations.text('notes', CONTACT_CONSTANTS.MAX_NOTES_LENGTH, true),
     body('tags')
       .optional()
       .isArray({ max: CONTACT_CONSTANTS.MAX_TAGS_COUNT })
       .withMessage(`Maximum ${CONTACT_CONSTANTS.MAX_TAGS_COUNT} tags allowed`)
-      .custom((tags) => {
-        if (tags && tags.some((tag: string) => 
-          typeof tag !== 'string' || 
-          tag.length > CONTACT_CONSTANTS.MAX_TAG_LENGTH ||
-          tag.trim().length === 0
-        )) {
-          throw new Error(`Each tag must be a non-empty string with max ${CONTACT_CONSTANTS.MAX_TAG_LENGTH} characters`);
+      .custom(tags => {
+        if (
+          tags &&
+          tags.some(
+            (tag: string) =>
+              typeof tag !== 'string' ||
+              tag.length > CONTACT_CONSTANTS.MAX_TAG_LENGTH ||
+              tag.trim().length === 0
+          )
+        ) {
+          throw new Error(
+            `Each tag must be a non-empty string with max ${CONTACT_CONSTANTS.MAX_TAG_LENGTH} characters`
+          );
         }
         return true;
       }),
@@ -54,10 +78,26 @@ export const contactValidators = {
     commonValidations.name('lastName', true),
     commonValidations.email('email', true),
     commonValidations.phone('phone', true),
-    commonValidations.text('company', CONTACT_CONSTANTS.MAX_COMPANY_LENGTH, true),
-    commonValidations.text('jobTitle', CONTACT_CONSTANTS.MAX_JOB_TITLE_LENGTH, true),
-    commonValidations.text('addressLine1', CONTACT_CONSTANTS.MAX_ADDRESS_LENGTH, true),
-    commonValidations.text('addressLine2', CONTACT_CONSTANTS.MAX_ADDRESS_LENGTH, true),
+    commonValidations.text(
+      'company',
+      CONTACT_CONSTANTS.MAX_COMPANY_LENGTH,
+      true
+    ),
+    commonValidations.text(
+      'jobTitle',
+      CONTACT_CONSTANTS.MAX_JOB_TITLE_LENGTH,
+      true
+    ),
+    commonValidations.text(
+      'addressLine1',
+      CONTACT_CONSTANTS.MAX_ADDRESS_LENGTH,
+      true
+    ),
+    commonValidations.text(
+      'addressLine2',
+      CONTACT_CONSTANTS.MAX_ADDRESS_LENGTH,
+      true
+    ),
     commonValidations.text('city', CONTACT_CONSTANTS.MAX_CITY_LENGTH, true),
     commonValidations.text('state', CONTACT_CONSTANTS.MAX_STATE_LENGTH, true),
     body('postalCode')
@@ -65,19 +105,29 @@ export const contactValidators = {
       .trim()
       .matches(/^[A-Za-z0-9\s-]{3,20}$/)
       .withMessage('Invalid postal code format'),
-    commonValidations.text('country', CONTACT_CONSTANTS.MAX_COUNTRY_LENGTH, true),
+    commonValidations.text(
+      'country',
+      CONTACT_CONSTANTS.MAX_COUNTRY_LENGTH,
+      true
+    ),
     commonValidations.text('notes', CONTACT_CONSTANTS.MAX_NOTES_LENGTH, true),
     body('tags')
       .optional()
       .isArray({ max: CONTACT_CONSTANTS.MAX_TAGS_COUNT })
       .withMessage(`Maximum ${CONTACT_CONSTANTS.MAX_TAGS_COUNT} tags allowed`)
-      .custom((tags) => {
-        if (tags && tags.some((tag: string) => 
-          typeof tag !== 'string' || 
-          tag.length > CONTACT_CONSTANTS.MAX_TAG_LENGTH ||
-          tag.trim().length === 0
-        )) {
-          throw new Error(`Each tag must be a non-empty string with max ${CONTACT_CONSTANTS.MAX_TAG_LENGTH} characters`);
+      .custom(tags => {
+        if (
+          tags &&
+          tags.some(
+            (tag: string) =>
+              typeof tag !== 'string' ||
+              tag.length > CONTACT_CONSTANTS.MAX_TAG_LENGTH ||
+              tag.trim().length === 0
+          )
+        ) {
+          throw new Error(
+            `Each tag must be a non-empty string with max ${CONTACT_CONSTANTS.MAX_TAG_LENGTH} characters`
+          );
         }
         return true;
       }),
@@ -93,9 +143,19 @@ export const contactValidators = {
     commonValidations.page(),
     commonValidations.limit(),
     commonValidations.sort('sort', [
-      'firstName', 'lastName', 'email', 'phone', 'company', 
-      'jobTitle', 'city', 'state', 'country', 'status', 
-      'isFavorite', 'createdAt', 'updatedAt'
+      'firstName',
+      'lastName',
+      'email',
+      'phone',
+      'company',
+      'jobTitle',
+      'city',
+      'state',
+      'country',
+      'status',
+      'isFavorite',
+      'createdAt',
+      'updatedAt',
     ]),
     commonValidations.order(),
     commonValidations.search(),
@@ -112,15 +172,23 @@ export const contactValidators = {
       .optional()
       .trim()
       .isLength({ max: CONTACT_CONSTANTS.MAX_COMPANY_LENGTH })
-      .withMessage(`Company filter must not exceed ${CONTACT_CONSTANTS.MAX_COMPANY_LENGTH} characters`),
+      .withMessage(
+        `Company filter must not exceed ${CONTACT_CONSTANTS.MAX_COMPANY_LENGTH} characters`
+      ),
     query('tags')
       .optional()
       .isString()
       .withMessage('Tags filter must be a comma-separated string')
-      .custom((value) => {
+      .custom(value => {
         const tags = value.split(',').map((tag: string) => tag.trim());
-        if (tags.some((tag: string) => tag.length > CONTACT_CONSTANTS.MAX_TAG_LENGTH)) {
-          throw new Error(`Each tag must not exceed ${CONTACT_CONSTANTS.MAX_TAG_LENGTH} characters`);
+        if (
+          tags.some(
+            (tag: string) => tag.length > CONTACT_CONSTANTS.MAX_TAG_LENGTH
+          )
+        ) {
+          throw new Error(
+            `Each tag must not exceed ${CONTACT_CONSTANTS.MAX_TAG_LENGTH} characters`
+          );
         }
         return true;
       }),
@@ -138,17 +206,23 @@ export const contactValidators = {
       .optional()
       .trim()
       .isLength({ max: CONTACT_CONSTANTS.MAX_CITY_LENGTH })
-      .withMessage(`City filter must not exceed ${CONTACT_CONSTANTS.MAX_CITY_LENGTH} characters`),
+      .withMessage(
+        `City filter must not exceed ${CONTACT_CONSTANTS.MAX_CITY_LENGTH} characters`
+      ),
     query('state')
       .optional()
       .trim()
       .isLength({ max: CONTACT_CONSTANTS.MAX_STATE_LENGTH })
-      .withMessage(`State filter must not exceed ${CONTACT_CONSTANTS.MAX_STATE_LENGTH} characters`),
+      .withMessage(
+        `State filter must not exceed ${CONTACT_CONSTANTS.MAX_STATE_LENGTH} characters`
+      ),
     query('country')
       .optional()
       .trim()
       .isLength({ max: CONTACT_CONSTANTS.MAX_COUNTRY_LENGTH })
-      .withMessage(`Country filter must not exceed ${CONTACT_CONSTANTS.MAX_COUNTRY_LENGTH} characters`),
+      .withMessage(
+        `Country filter must not exceed ${CONTACT_CONSTANTS.MAX_COUNTRY_LENGTH} characters`
+      ),
   ],
 
   // Search contacts validation
@@ -181,9 +255,13 @@ export const contactValidators = {
       .withMessage('Tag is required')
       .trim()
       .isLength({ min: 1, max: CONTACT_CONSTANTS.MAX_TAG_LENGTH })
-      .withMessage(`Tag must be between 1 and ${CONTACT_CONSTANTS.MAX_TAG_LENGTH} characters`)
+      .withMessage(
+        `Tag must be between 1 and ${CONTACT_CONSTANTS.MAX_TAG_LENGTH} characters`
+      )
       .matches(/^[a-zA-Z0-9\s\-_]+$/)
-      .withMessage('Tag can only contain letters, numbers, spaces, hyphens, and underscores'),
+      .withMessage(
+        'Tag can only contain letters, numbers, spaces, hyphens, and underscores'
+      ),
   ],
 
   // Bulk update contacts validation
@@ -191,8 +269,16 @@ export const contactValidators = {
     body('contactIds')
       .isArray({ min: 1, max: 100 })
       .withMessage('Contact IDs array is required (1-100 items)')
-      .custom((ids) => {
-        if (ids.some((id: string) => typeof id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id))) {
+      .custom(ids => {
+        if (
+          ids.some(
+            (id: string) =>
+              typeof id !== 'string' ||
+              !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+                id
+              )
+          )
+        ) {
           throw new Error('All contact IDs must be valid UUIDs');
         }
         return true;
@@ -200,17 +286,26 @@ export const contactValidators = {
     body('updates')
       .isObject()
       .withMessage('Updates must be an object')
-      .custom((updates) => {
+      .custom(updates => {
         const allowedFields = [
-          'status', 'isFavorite', 'tags', 'company', 
-          'jobTitle', 'notes', 'city', 'state', 'country'
+          'status',
+          'isFavorite',
+          'tags',
+          'company',
+          'jobTitle',
+          'notes',
+          'city',
+          'state',
+          'country',
         ];
         const updateKeys = Object.keys(updates);
         if (updateKeys.length === 0) {
           throw new Error('At least one update field is required');
         }
         if (updateKeys.some(key => !allowedFields.includes(key))) {
-          throw new Error(`Only these fields can be bulk updated: ${allowedFields.join(', ')}`);
+          throw new Error(
+            `Only these fields can be bulk updated: ${allowedFields.join(', ')}`
+          );
         }
         return true;
       }),
@@ -238,16 +333,34 @@ export const contactValidators = {
       .optional()
       .isString()
       .withMessage('Fields must be a comma-separated string')
-      .custom((value) => {
+      .custom(value => {
         const validFields = [
-          'firstName', 'lastName', 'email', 'phone', 'company', 
-          'jobTitle', 'addressLine1', 'addressLine2', 'city', 
-          'state', 'postalCode', 'country', 'notes', 'tags', 
-          'status', 'isFavorite', 'createdAt', 'updatedAt'
+          'firstName',
+          'lastName',
+          'email',
+          'phone',
+          'company',
+          'jobTitle',
+          'addressLine1',
+          'addressLine2',
+          'city',
+          'state',
+          'postalCode',
+          'country',
+          'notes',
+          'tags',
+          'status',
+          'isFavorite',
+          'createdAt',
+          'updatedAt',
         ];
         const requestedFields = value.split(',').map((f: string) => f.trim());
-        if (requestedFields.some((field: string) => !validFields.includes(field))) {
-          throw new Error(`Invalid field(s). Valid fields: ${validFields.join(', ')}`);
+        if (
+          requestedFields.some((field: string) => !validFields.includes(field))
+        ) {
+          throw new Error(
+            `Invalid field(s). Valid fields: ${validFields.join(', ')}`
+          );
         }
         return true;
       }),
@@ -281,8 +394,16 @@ export const contactValidators = {
     body('duplicateContactIds')
       .isArray({ min: 1, max: 10 })
       .withMessage('Duplicate contact IDs array is required (1-10 items)')
-      .custom((ids) => {
-        if (ids.some((id: string) => typeof id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id))) {
+      .custom(ids => {
+        if (
+          ids.some(
+            (id: string) =>
+              typeof id !== 'string' ||
+              !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+                id
+              )
+          )
+        ) {
           throw new Error('All duplicate contact IDs must be valid UUIDs');
         }
         return true;
@@ -319,7 +440,9 @@ export const contactValidators = {
       .optional()
       .trim()
       .isLength({ max: CONTACT_CONSTANTS.MAX_COMPANY_LENGTH })
-      .withMessage(`Company must not exceed ${CONTACT_CONSTANTS.MAX_COMPANY_LENGTH} characters`),
+      .withMessage(
+        `Company must not exceed ${CONTACT_CONSTANTS.MAX_COMPANY_LENGTH} characters`
+      ),
   ],
 };
 

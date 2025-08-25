@@ -99,7 +99,9 @@ describe('UserRepository', () => {
       };
 
       // Act & Assert
-      await expect(repository.createUser(duplicateUserData)).rejects.toThrow(ConflictError);
+      await expect(repository.createUser(duplicateUserData)).rejects.toThrow(
+        ConflictError
+      );
     });
 
     it('should throw ConflictError for duplicate username', async () => {
@@ -120,7 +122,9 @@ describe('UserRepository', () => {
       };
 
       // Act & Assert
-      await expect(repository.createUser(duplicateUserData)).rejects.toThrow(ConflictError);
+      await expect(repository.createUser(duplicateUserData)).rejects.toThrow(
+        ConflictError
+      );
     });
   });
 
@@ -188,7 +192,9 @@ describe('UserRepository', () => {
 
     it('should throw NotFoundError when user not found', async () => {
       // Act & Assert
-      await expect(repository.findByIdOrFail('non-existent-id')).rejects.toThrow(NotFoundError);
+      await expect(
+        repository.findByIdOrFail('non-existent-id')
+      ).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -272,7 +278,9 @@ describe('UserRepository', () => {
       expect(result.updatedAt).not.toEqual(testUser.updatedAt);
 
       // Verify in database
-      const updatedUser = await testDb.getRecord('users', 'id = $1', [testUser.id]);
+      const updatedUser = await testDb.getRecord('users', 'id = $1', [
+        testUser.id,
+      ]);
       expect(updatedUser?.first_name).toBe(updateData.firstName);
       expect(updatedUser?.last_name).toBe(updateData.lastName);
     });
@@ -346,14 +354,16 @@ describe('UserRepository', () => {
       // Arrange
       const seedData = createSeedData({ usersCount: 5, includeAdmin: false });
       // Add a user with specific name
-      seedData.users.push(createUser({
-        id: 'search-user',
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john.doe@example.com',
-        username: 'johndoe',
-        passwordHash: seedData.users[0].passwordHash,
-      }));
+      seedData.users.push(
+        createUser({
+          id: 'search-user',
+          firstName: 'John',
+          lastName: 'Doe',
+          email: 'john.doe@example.com',
+          username: 'johndoe',
+          passwordHash: seedData.users[0].passwordHash,
+        })
+      );
       await testDb.seed(seedData);
 
       const options = {
@@ -369,11 +379,12 @@ describe('UserRepository', () => {
       // Assert
       expect(result.data.length).toBeGreaterThan(0);
       expect(
-        result.data.some(user => 
-          user.firstName?.toLowerCase().includes('john') ||
-          user.lastName?.toLowerCase().includes('john') ||
-          user.email.toLowerCase().includes('john') ||
-          user.username.toLowerCase().includes('john')
+        result.data.some(
+          user =>
+            user.firstName?.toLowerCase().includes('john') ||
+            user.lastName?.toLowerCase().includes('john') ||
+            user.email.toLowerCase().includes('john') ||
+            user.username.toLowerCase().includes('john')
         )
       ).toBe(true);
     });
@@ -390,7 +401,9 @@ describe('UserRepository', () => {
       await repository.updateLoginInfo(testUser.id, true);
 
       // Assert
-      const updatedUser = await testDb.getRecord('users', 'id = $1', [testUser.id]);
+      const updatedUser = await testDb.getRecord('users', 'id = $1', [
+        testUser.id,
+      ]);
       expect(updatedUser?.failed_login_attempts).toBe(0);
       expect(updatedUser?.last_login_at).toBeDefined();
       expect(updatedUser?.locked_until).toBeNull();
@@ -406,7 +419,9 @@ describe('UserRepository', () => {
       await repository.updateLoginInfo(testUser.id, false);
 
       // Assert
-      const updatedUser = await testDb.getRecord('users', 'id = $1', [testUser.id]);
+      const updatedUser = await testDb.getRecord('users', 'id = $1', [
+        testUser.id,
+      ]);
       expect(updatedUser?.failed_login_attempts).toBe(1);
       expect(updatedUser?.last_login_at).toBeNull();
     });
@@ -423,7 +438,9 @@ describe('UserRepository', () => {
       await repository.updateLoginInfo(testUser.id, false);
 
       // Assert
-      const updatedUser = await testDb.getRecord('users', 'id = $1', [testUser.id]);
+      const updatedUser = await testDb.getRecord('users', 'id = $1', [
+        testUser.id,
+      ]);
       expect(updatedUser?.failed_login_attempts).toBe(5);
       expect(updatedUser?.locked_until).not.toBeNull();
     });
@@ -464,7 +481,9 @@ describe('UserRepository', () => {
       await repository.softDelete(testUser.id);
 
       // Assert
-      const deletedUser = await testDb.getRecord('users', 'id = $1', [testUser.id]);
+      const deletedUser = await testDb.getRecord('users', 'id = $1', [
+        testUser.id,
+      ]);
       expect(deletedUser?.deleted_at).not.toBeNull();
 
       // Verify user is not found by normal queries
@@ -481,15 +500,18 @@ describe('UserRepository', () => {
       const testUser = seedData.users[0];
 
       // Add expired token
-      await testDb.query(`
+      await testDb.query(
+        `
         INSERT INTO password_reset_tokens (user_id, token, expires_at, created_at)
         VALUES ($1, $2, $3, $4)
-      `, [
-        testUser.id,
-        'expired-token',
-        new Date(Date.now() - 60 * 60 * 1000), // 1 hour ago
-        new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-      ]);
+      `,
+        [
+          testUser.id,
+          'expired-token',
+          new Date(Date.now() - 60 * 60 * 1000), // 1 hour ago
+          new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+        ]
+      );
 
       // Act
       await repository.cleanupExpiredTokens();
@@ -517,7 +539,9 @@ describe('UserRepository', () => {
       await repository.unlockExpiredAccounts();
 
       // Assert
-      const unlockedUser = await testDb.getRecord('users', 'id = $1', [testUser.id]);
+      const unlockedUser = await testDb.getRecord('users', 'id = $1', [
+        testUser.id,
+      ]);
       expect(unlockedUser?.locked_until).toBeNull();
       expect(unlockedUser?.failed_login_attempts).toBe(0);
     });
@@ -526,7 +550,7 @@ describe('UserRepository', () => {
   describe('transaction handling', () => {
     it('should rollback transaction on error', async () => {
       // This test verifies that database transactions are properly handled
-      await testDb.withTransaction(async (client) => {
+      await testDb.withTransaction(async client => {
         const userData = {
           username: 'testuser',
           email: 'test@example.com',
@@ -539,14 +563,18 @@ describe('UserRepository', () => {
         await repository.createUser(userData);
 
         // Verify user exists within transaction
-        const userCount = await testDb.getCount('users', 'email = $1', ['test@example.com']);
+        const userCount = await testDb.getCount('users', 'email = $1', [
+          'test@example.com',
+        ]);
         expect(userCount).toBe(1);
 
         // Transaction will be rolled back by withTransaction
       });
 
       // Verify user was rolled back
-      const userCount = await testDb.getCount('users', 'email = $1', ['test@example.com']);
+      const userCount = await testDb.getCount('users', 'email = $1', [
+        'test@example.com',
+      ]);
       expect(userCount).toBe(0);
     });
   });
