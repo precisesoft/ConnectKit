@@ -40,8 +40,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install dependencies
-        working-directory: ./frontend
-        run: npm ci
+        run: npm ci --workspace=frontend
 
       - name: Build frontend
         working-directory: ./frontend
@@ -206,8 +205,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install backend dependencies
-        working-directory: ./backend
-        run: npm ci
+        run: npm ci --workspace=backend
 
       - name: Run database migrations
         working-directory: ./backend
@@ -262,8 +260,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install frontend dependencies
-        working-directory: ./frontend
-        run: npm ci
+        run: npm ci --workspace=frontend
 
       - name: Build frontend
         working-directory: ./frontend
