@@ -1,5 +1,5 @@
 import Redis, { RedisOptions } from 'ioredis';
-import { logger } from '../utils/logger';
+import logger from '../utils/logger';
 
 interface RedisConfig {
   host: string;
@@ -7,7 +7,7 @@ interface RedisConfig {
   password?: string;
   db: number;
   keyPrefix: string;
-  retryDelayOnFailover: number;
+  retryDelayOnFailover?: number;
   maxRetriesPerRequest: number;
   lazyConnect: boolean;
   connectTimeout: number;
@@ -29,10 +29,16 @@ class RedisConnection {
       password: process.env.REDIS_PASSWORD,
       db: parseInt(process.env.REDIS_DB || '0', 10),
       keyPrefix: process.env.REDIS_KEY_PREFIX || 'connectkit:',
-      retryDelayOnFailover: parseInt(process.env.REDIS_RETRY_DELAY || '100', 10),
+      retryDelayOnFailover: parseInt(
+        process.env.REDIS_RETRY_DELAY || '100',
+        10
+      ),
       maxRetriesPerRequest: parseInt(process.env.REDIS_MAX_RETRIES || '3', 10),
       lazyConnect: true,
-      connectTimeout: parseInt(process.env.REDIS_CONNECT_TIMEOUT || '10000', 10),
+      connectTimeout: parseInt(
+        process.env.REDIS_CONNECT_TIMEOUT || '10000',
+        10
+      ),
       commandTimeout: parseInt(process.env.REDIS_COMMAND_TIMEOUT || '5000', 10),
     };
   }
@@ -43,7 +49,7 @@ class RedisConnection {
       port: this.config.port,
       db: this.config.db,
       keyPrefix: this.config.keyPrefix,
-      retryDelayOnFailover: this.config.retryDelayOnFailover,
+      // retryDelayOnFailover: this.config.retryDelayOnFailover, // Not a valid ioredis option
       maxRetriesPerRequest: this.config.maxRetriesPerRequest,
       lazyConnect: this.config.lazyConnect,
       connectTimeout: this.config.connectTimeout,
@@ -79,7 +85,7 @@ class RedisConnection {
         logger.info('Redis client ready');
       });
 
-      this.client.on('error', (error) => {
+      this.client.on('error', error => {
         logger.error('Redis connection error:', error);
       });
 
@@ -87,7 +93,7 @@ class RedisConnection {
         logger.warn('Redis connection closed');
       });
 
-      this.client.on('reconnecting', (time) => {
+      this.client.on('reconnecting', time => {
         logger.info(`Redis reconnecting in ${time}ms`);
       });
 
@@ -126,7 +132,7 @@ class RedisConnection {
   async set(key: string, value: any, ttl?: number): Promise<void> {
     const client = this.getClient();
     const serializedValue = JSON.stringify(value);
-    
+
     if (ttl) {
       await client.setex(key, ttl, serializedValue);
     } else {
@@ -137,11 +143,11 @@ class RedisConnection {
   async get<T = any>(key: string): Promise<T | null> {
     const client = this.getClient();
     const value = await client.get(key);
-    
+
     if (!value) {
       return null;
     }
-    
+
     try {
       return JSON.parse(value) as T;
     } catch (error) {
@@ -183,7 +189,11 @@ class RedisConnection {
   }
 
   // Session operations
-  async setSession(sessionId: string, data: any, ttl: number = 3600): Promise<void> {
+  async setSession(
+    sessionId: string,
+    data: any,
+    ttl: number = 3600
+  ): Promise<void> {
     await this.set(`session:${sessionId}`, data, ttl);
   }
 
@@ -202,11 +212,11 @@ class RedisConnection {
     multi.incr(`ratelimit:${key}`);
     multi.expire(`ratelimit:${key}`, ttl);
     const results = await multi.exec();
-    
+
     if (!results || !results[0] || results[0][0]) {
       throw new Error('Failed to increment rate limit');
     }
-    
+
     return results[0][1] as number;
   }
 

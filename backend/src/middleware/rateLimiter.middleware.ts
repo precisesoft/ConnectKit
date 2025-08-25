@@ -3,40 +3,45 @@ import rateLimit from 'express-rate-limit';
 import { redisConnection } from '../config/redis.config';
 import { RateLimitExceededError } from '../utils/errors';
 import { RATE_LIMIT_CONSTANTS } from '../utils/constants';
-import { logger } from '../utils/logger';
+import logger from '../utils/logger';
 import appConfig from '../config/app.config';
 
 // Rate limit store using Redis
 class RedisRateLimitStore implements rateLimit.Store {
   private prefix: string;
-  
+
   constructor(prefix: string = 'ratelimit:') {
     this.prefix = prefix;
   }
 
-  async increment(key: string): Promise<{ totalHits: number; timeToExpire: number | undefined }> {
+  async increment(
+    key: string
+  ): Promise<{ totalHits: number; timeToExpire: number | undefined }> {
     try {
       const redis = redisConnection.getClient();
       const fullKey = `${this.prefix}${key}`;
-      
+
       const multi = redis.multi();
       multi.incr(fullKey);
       multi.ttl(fullKey);
-      
+
       const results = await multi.exec();
-      
+
       if (!results || results.some(result => result[0])) {
         throw new Error('Redis rate limit operation failed');
       }
-      
+
       const totalHits = results[0][1] as number;
       const ttl = results[1][1] as number;
-      
+
       // Set expiration if this is the first hit
       if (totalHits === 1) {
-        await redis.expire(fullKey, Math.ceil(RATE_LIMIT_CONSTANTS.GENERAL.WINDOW_MS / 1000));
+        await redis.expire(
+          fullKey,
+          Math.ceil(RATE_LIMIT_CONSTANTS.GENERAL.WINDOW_MS / 1000)
+        );
       }
-      
+
       return {
         totalHits,
         timeToExpire: ttl > 0 ? ttl * 1000 : undefined,
@@ -86,11 +91,11 @@ const createKeyGenerator = (prefix: string) => {
   return (req: Request): string => {
     const userId = (req as any).user?.id;
     const ip = req.ip || req.connection?.remoteAddress || 'unknown';
-    
+
     if (userId) {
       return `${prefix}:user:${userId}`;
     }
-    
+
     return `${prefix}:ip:${ip}`;
   };
 };
@@ -98,7 +103,7 @@ const createKeyGenerator = (prefix: string) => {
 // Rate limit handler
 const rateLimitHandler = (req: Request, res: Response) => {
   const retryAfter = Math.ceil(RATE_LIMIT_CONSTANTS.GENERAL.WINDOW_MS / 1000);
-  
+
   logger.logSecurity('rate_limit_exceeded', {
     ip: req.ip,
     userAgent: req.get('User-Agent'),
@@ -106,7 +111,7 @@ const rateLimitHandler = (req: Request, res: Response) => {
     method: req.method,
     userId: (req as any).user?.id,
   });
-  
+
   throw new RateLimitExceededError(
     RATE_LIMIT_CONSTANTS.GENERAL.MAX_REQUESTS,
     '15 minutes',
@@ -120,18 +125,18 @@ const skipRateLimit = (req: Request): boolean => {
   if (appConfig.isTest()) {
     return true;
   }
-  
+
   // Skip for health check endpoints
   if (req.path === '/health' || req.path === '/api/health') {
     return true;
   }
-  
+
   // Skip for admins (optional)
   const user = (req as any).user;
   if (user && user.role === 'admin') {
     return true;
   }
-  
+
   return false;
 };
 
@@ -226,7 +231,8 @@ export const createRateLimit = (options: {
     message: {
       error: {
         type: 'CustomRateLimitError',
-        message: options.message || `Too many requests, please try again later.`,
+        message:
+          options.message || `Too many requests, please try again later.`,
         statusCode: 429,
       },
     },
@@ -241,21 +247,29 @@ export const createRateLimit = (options: {
 };
 
 // Rate limit info middleware - adds rate limit headers
-export const rateLimitInfo = (req: Request, res: Response, next: NextFunction): void => {
+export const rateLimitInfo = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
   // Add custom rate limit headers
   res.set({
     'X-RateLimit-Policy': 'ConnectKit-Standard',
     'X-RateLimit-Service': 'ConnectKit-API',
   });
-  
+
   next();
 };
 
 // Dynamic rate limiter based on user tier
-export const dynamicRateLimit = (req: Request, res: Response, next: NextFunction): void => {
+export const dynamicRateLimit = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
   const user = (req as any).user;
   let maxRequests = RATE_LIMIT_CONSTANTS.GENERAL.MAX_REQUESTS;
-  
+
   // Adjust limits based on user role
   if (user) {
     switch (user.role) {
@@ -270,7 +284,7 @@ export const dynamicRateLimit = (req: Request, res: Response, next: NextFunction
         break;
     }
   }
-  
+
   // Apply dynamic rate limit
   const dynamicLimiter = rateLimit({
     windowMs: RATE_LIMIT_CONSTANTS.GENERAL.WINDOW_MS,
@@ -280,7 +294,7 @@ export const dynamicRateLimit = (req: Request, res: Response, next: NextFunction
     handler: rateLimitHandler,
     skip: skipRateLimit,
   });
-  
+
   dynamicLimiter(req, res, next);
 };
 

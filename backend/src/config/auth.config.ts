@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { logger } from '../utils/logger';
+import logger from '../utils/logger';
 
 export interface JWTConfig {
   secret: string;
@@ -58,7 +58,7 @@ class AuthConfiguration {
 
   private loadConfig(): AuthConfig {
     const isProduction = process.env.NODE_ENV === 'production';
-    
+
     return {
       jwt: {
         secret: this.getJWTSecret(),
@@ -68,7 +68,7 @@ class AuthConfiguration {
         audience: process.env.JWT_AUDIENCE || 'connectkit-app',
         algorithm: 'HS256',
       },
-      
+
       session: {
         secret: this.getSessionSecret(),
         name: process.env.SESSION_NAME || 'connectkit.sid',
@@ -77,16 +77,25 @@ class AuthConfiguration {
         httpOnly: true,
         sameSite: isProduction ? 'strict' : 'lax',
       },
-      
+
       security: {
         bcryptRounds: parseInt(process.env.BCRYPT_ROUNDS || '12', 10),
         maxLoginAttempts: parseInt(process.env.MAX_LOGIN_ATTEMPTS || '5', 10),
-        lockoutDuration: parseInt(process.env.LOCKOUT_DURATION || '1800000', 10), // 30 minutes
-        passwordResetExpiry: parseInt(process.env.PASSWORD_RESET_EXPIRY || '3600000', 10), // 1 hour
-        emailVerificationExpiry: parseInt(process.env.EMAIL_VERIFICATION_EXPIRY || '86400000', 10), // 24 hours
+        lockoutDuration: parseInt(
+          process.env.LOCKOUT_DURATION || '1800000',
+          10
+        ), // 30 minutes
+        passwordResetExpiry: parseInt(
+          process.env.PASSWORD_RESET_EXPIRY || '3600000',
+          10
+        ), // 1 hour
+        emailVerificationExpiry: parseInt(
+          process.env.EMAIL_VERIFICATION_EXPIRY || '86400000',
+          10
+        ), // 24 hours
         mfaIssuer: process.env.MFA_ISSUER || 'ConnectKit',
       },
-      
+
       oauth2: {
         google: {
           clientId: process.env.GOOGLE_CLIENT_ID || '',
@@ -104,35 +113,39 @@ class AuthConfiguration {
 
   private getJWTSecret(): string {
     const secret = process.env.JWT_SECRET;
-    
+
     if (!secret) {
       if (process.env.NODE_ENV === 'production') {
         throw new Error('JWT_SECRET is required in production');
       }
-      
+
       // Generate a random secret for development
       const generatedSecret = crypto.randomBytes(64).toString('hex');
-      logger.warn('Using generated JWT secret for development. Set JWT_SECRET environment variable.');
+      logger.warn(
+        'Using generated JWT secret for development. Set JWT_SECRET environment variable.'
+      );
       return generatedSecret;
     }
-    
+
     return secret;
   }
 
   private getSessionSecret(): string {
     const secret = process.env.SESSION_SECRET;
-    
+
     if (!secret) {
       if (process.env.NODE_ENV === 'production') {
         throw new Error('SESSION_SECRET is required in production');
       }
-      
+
       // Generate a random secret for development
       const generatedSecret = crypto.randomBytes(64).toString('hex');
-      logger.warn('Using generated session secret for development. Set SESSION_SECRET environment variable.');
+      logger.warn(
+        'Using generated session secret for development. Set SESSION_SECRET environment variable.'
+      );
       return generatedSecret;
     }
-    
+
     return secret;
   }
 
@@ -157,12 +170,16 @@ class AuthConfiguration {
       errors.push('Session secret must be at least 32 characters long');
     }
 
-    if (this.config.session.maxAge < 60000) { // Less than 1 minute
+    if (this.config.session.maxAge < 60000) {
+      // Less than 1 minute
       errors.push('Session max age must be at least 60000ms (1 minute)');
     }
 
     // Validate security configuration
-    if (this.config.security.bcryptRounds < 10 || this.config.security.bcryptRounds > 15) {
+    if (
+      this.config.security.bcryptRounds < 10 ||
+      this.config.security.bcryptRounds > 15
+    ) {
       errors.push('Bcrypt rounds must be between 10 and 15');
     }
 
@@ -170,24 +187,37 @@ class AuthConfiguration {
       errors.push('Max login attempts must be at least 1');
     }
 
-    if (this.config.security.lockoutDuration < 60000) { // Less than 1 minute
+    if (this.config.security.lockoutDuration < 60000) {
+      // Less than 1 minute
       errors.push('Lockout duration must be at least 60000ms (1 minute)');
     }
 
     // Validate OAuth2 configuration for production
     if (process.env.NODE_ENV === 'production') {
-      if (this.config.oauth2.google.clientId && !this.config.oauth2.google.clientSecret) {
-        errors.push('Google OAuth client secret is required when client ID is provided');
+      if (
+        this.config.oauth2.google.clientId &&
+        !this.config.oauth2.google.clientSecret
+      ) {
+        errors.push(
+          'Google OAuth client secret is required when client ID is provided'
+        );
       }
-      
-      if (this.config.oauth2.github.clientId && !this.config.oauth2.github.clientSecret) {
-        errors.push('GitHub OAuth client secret is required when client ID is provided');
+
+      if (
+        this.config.oauth2.github.clientId &&
+        !this.config.oauth2.github.clientSecret
+      ) {
+        errors.push(
+          'GitHub OAuth client secret is required when client ID is provided'
+        );
       }
     }
 
     if (errors.length > 0) {
       logger.error('Auth configuration validation failed:', { errors });
-      throw new Error(`Auth configuration validation failed: ${errors.join(', ')}`);
+      throw new Error(
+        `Auth configuration validation failed: ${errors.join(', ')}`
+      );
     }
 
     logger.info('Auth configuration loaded successfully', {
