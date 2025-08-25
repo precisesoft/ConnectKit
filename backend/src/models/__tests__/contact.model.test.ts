@@ -89,7 +89,7 @@ describe('Contact Model', () => {
     });
 
     it('should validate phone format if provided', () => {
-      const invalidPhones = ['123', 'abc', '++1234567890'];
+      const invalidPhones = ['abc', '++1234567890', '0123456789', ''];
 
       invalidPhones.forEach(phone => {
         expect(() => {
@@ -116,7 +116,7 @@ describe('Contact Model', () => {
       });
     });
 
-    it('should update contact fields', () => {
+    it('should update contact fields', async () => {
       const updateData: UpdateContactDTO = {
         firstName: 'Janet',
         lastName: 'Johnson',
@@ -125,6 +125,8 @@ describe('Contact Model', () => {
         isFavorite: true,
       };
 
+      // Wait 1ms to ensure different timestamp
+      await new Promise(resolve => setTimeout(resolve, 1));
       contact.update(updateData);
 
       expect(contact.firstName).toBe('Janet');
@@ -171,7 +173,9 @@ describe('Contact Model', () => {
       });
     });
 
-    it('should archive contact', () => {
+    it('should archive contact', async () => {
+      // Wait 1ms to ensure different timestamp
+      await new Promise(resolve => setTimeout(resolve, 1));
       contact.archive();
 
       expect(contact.status).toBe(ContactStatus.ARCHIVED);

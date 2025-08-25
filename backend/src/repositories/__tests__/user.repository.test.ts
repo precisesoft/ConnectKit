@@ -313,7 +313,7 @@ describe('UserRepository', () => {
       };
 
       // Act
-      const result = await repository.findMany(options);
+      const result = await repository.findAll(options);
 
       // Assert
       expect(result.data).toHaveLength(10);
@@ -339,10 +339,12 @@ describe('UserRepository', () => {
       };
 
       // Act
-      const result = await repository.findMany(options);
+      const result = await repository.findAll(options);
 
       // Assert
-      expect(result.data.every(user => user.role === UserRole.USER)).toBe(true);
+      expect(
+        result.data.every((user: User) => user.role === UserRole.USER)
+      ).toBe(true);
       expect(result.data.length).toBe(5); // Exclude admin user
     });
 
@@ -370,7 +372,7 @@ describe('UserRepository', () => {
       };
 
       // Act
-      const result = await repository.findMany(options);
+      const result = await repository.findAll(options);
 
       // Assert
       expect(result.data.length).toBeGreaterThan(0);

@@ -1,11 +1,7 @@
 import { StatusCodes } from 'http-status-codes';
 import { testServer, TestRequest, TestSession } from '../utils/testServer';
 import { testDb } from '../utils/testDb';
-import {
-  createUser,
-  createRegistrationData,
-  createLoginCredentials,
-} from '../utils/fixtures';
+import { createRegistrationData } from '../utils/fixtures';
 import { UserRole } from '../../models/user.model';
 
 describe('Auth Integration Tests', () => {
