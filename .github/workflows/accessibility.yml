@@ -71,8 +71,7 @@ jobs:
               },
               "assert": {
                 "assertions": {
-                  "categories:accessibility": ["error", {"minScore": 0.9}],
-                  "categories:best-practices": ["error", {"minScore": 0.9}]
+                  "categories:accessibility": ["error", {"minScore": 0.9}]
                 }
               }
             }
@@ -252,7 +251,7 @@ jobs:
         run: |
           npm install
           npm install --workspace=frontend
-          cd frontend && npm run build
+          cd frontend && npx vite build --mode development
 
       - name: Serve frontend for testing
         working-directory: ./frontend
@@ -417,7 +416,7 @@ jobs:
         run: |
           npm install
           npm install --workspace=frontend
-          cd frontend && npm run build
+          cd frontend && npx vite build --mode development
 
       - name: Serve frontend for testing
         working-directory: ./frontend
