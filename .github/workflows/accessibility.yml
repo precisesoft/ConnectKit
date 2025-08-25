@@ -36,15 +36,15 @@ jobs:
         working-directory: ./frontend
         run: npm run build
 
-      - name: Start services
+      - name: Serve frontend for testing
+        working-directory: ./frontend
         run: |
-          cp .env.example .env
-          docker compose up -d
-          sleep 30
+          npm install -g serve
+          serve -s dist -p 3000 &
+          sleep 10
 
-      - name: Wait for services
+      - name: Wait for frontend
         run: |
-          timeout 60 bash -c 'until curl -f http://localhost:3001/api/health; do sleep 2; done'
           timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
 
       - name: Install Lighthouse CI
@@ -111,9 +111,10 @@ jobs:
           name: lighthouse-accessibility-results
           path: .lighthouseci/
 
-      - name: Stop services
+      - name: Stop frontend server
         if: always()
-        run: docker compose down -v
+        run: |
+          pkill -f "serve -s dist -p 3000" || true
 
   # Axe-core automated accessibility testing
   axe-core-tests:
@@ -138,13 +139,15 @@ jobs:
           npm install --save-dev @playwright/test axe-playwright
           npx playwright install
 
-      - name: Start services
+      - name: Build and serve frontend
+        working-directory: ./frontend
         run: |
-          cp .env.example .env
-          docker compose up -d
-          sleep 30
+          npm run build
+          npm install -g serve
+          serve -s dist -p 3000 &
+          sleep 10
 
-      - name: Wait for services
+      - name: Wait for frontend
         run: |
           timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
 
@@ -228,9 +231,10 @@ jobs:
             frontend/accessibility-results/
             frontend/test-results/
 
-      - name: Stop services
+      - name: Stop frontend server
         if: always()
-        run: docker compose down -v
+        run: |
+          pkill -f "serve -s dist -p 3000" || true
 
   # WAVE (Web Accessibility Evaluation Tool) testing
   wave-testing:
@@ -244,13 +248,20 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Start services
+      - name: Install dependencies and build frontend
         run: |
-          cp .env.example .env
-          docker compose up -d
-          sleep 30
+          npm install
+          npm install --workspace=frontend
+          cd frontend && npm run build
 
-      - name: Wait for services
+      - name: Serve frontend for testing
+        working-directory: ./frontend
+        run: |
+          npm install -g serve
+          serve -s dist -p 3000 &
+          sleep 10
+
+      - name: Wait for frontend
         run: |
           timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
 
@@ -385,9 +396,10 @@ jobs:
           name: wave-accessibility-results
           path: wave-results.json
 
-      - name: Stop services
+      - name: Stop frontend server
         if: always()
-        run: docker compose down -v
+        run: |
+          pkill -f "serve -s dist -p 3000" || true
 
   # Color contrast and visual accessibility testing
   color-contrast:
@@ -401,18 +413,20 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Install dependencies
+      - name: Install dependencies and build frontend
         run: |
           npm install
           npm install --workspace=frontend
+          cd frontend && npm run build
 
-      - name: Start services
+      - name: Serve frontend for testing
+        working-directory: ./frontend
         run: |
-          cp .env.example .env
-          docker compose up -d
-          sleep 30
+          npm install -g serve
+          serve -s dist -p 3000 &
+          sleep 10
 
-      - name: Wait for services
+      - name: Wait for frontend
         run: |
           timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
 
@@ -533,9 +547,10 @@ jobs:
           name: color-contrast-results
           path: color-contrast-results.json
 
-      - name: Stop services
+      - name: Stop frontend server
         if: always()
-        run: docker compose down -v
+        run: |
+          pkill -f "serve -s dist -p 3000" || true
 
   # Keyboard navigation testing
   keyboard-navigation:
@@ -560,13 +575,15 @@ jobs:
           npm install --save-dev @playwright/test
           npx playwright install
 
-      - name: Start services
+      - name: Build and serve frontend
+        working-directory: ./frontend
         run: |
-          cp .env.example .env
-          docker compose up -d
-          sleep 30
+          npm run build
+          npm install -g serve
+          serve -s dist -p 3000 &
+          sleep 10
 
-      - name: Wait for services
+      - name: Wait for frontend
         run: |
           timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
 
@@ -726,9 +743,10 @@ jobs:
             frontend/keyboard-test-results/
             frontend/test-results/
 
-      - name: Stop services
+      - name: Stop frontend server
         if: always()
-        run: docker compose down -v
+        run: |
+          pkill -f "serve -s dist -p 3000" || true
 
   # Accessibility report consolidation
   accessibility-report:
