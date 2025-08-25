@@ -18,7 +18,6 @@ import {
 } from '@mui/material';
 import {
   Menu as MenuIcon,
-  AccountCircle,
   Settings,
   ExitToApp,
   Notifications,
@@ -40,14 +39,17 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  
+
   const { user } = useAuthStore();
   const { toggle: toggleSidebar } = useSidebar();
   const { notifications } = useNotifications();
   const { logout } = useAuth();
-  
-  const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
-  const [notificationMenuAnchor, setNotificationMenuAnchor] = useState<null | HTMLElement>(null);
+
+  const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(
+    null
+  );
+  const [notificationMenuAnchor, setNotificationMenuAnchor] =
+    useState<null | HTMLElement>(null);
 
   // Handle user menu
   const handleUserMenuClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -86,21 +88,19 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   };
 
   // Get user display name and avatar
-  const userDisplayName = user 
-    ? `${user.firstName} ${user.lastName}` 
-    : 'User';
-  
-  const userInitials = user 
+  const userDisplayName = user ? `${user.firstName} ${user.lastName}` : 'User';
+
+  const userInitials = user
     ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase()
     : 'U';
 
   const unreadNotifications = notifications.filter(n => !n.read).length;
 
   return (
-    <AppBar 
-      position="sticky" 
+    <AppBar
+      position='sticky'
       elevation={1}
-      sx={{ 
+      sx={{
         zIndex: theme.zIndex.drawer + 1,
         backgroundColor: 'primary.main',
         backgroundImage: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
@@ -110,9 +110,9 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         {/* Menu button for mobile/tablet */}
         {isMobile && (
           <IconButton
-            edge="start"
-            color="inherit"
-            aria-label="open drawer"
+            edge='start'
+            color='inherit'
+            aria-label='open drawer'
             onClick={onMenuClick || toggleSidebar}
             sx={{ mr: 1 }}
           >
@@ -121,11 +121,11 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         )}
 
         {/* Logo and title */}
-        <Typography 
-          variant="h6" 
-          noWrap 
-          component="div"
-          sx={{ 
+        <Typography
+          variant='h6'
+          noWrap
+          component='div'
+          sx={{
             flexGrow: { xs: 1, sm: 0 },
             mr: { xs: 0, sm: 4 },
             fontWeight: 600,
@@ -138,9 +138,9 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         {/* Search bar - hidden on mobile */}
         {!isMobile && (
           <Box sx={{ flexGrow: 1, maxWidth: 400, mx: 2 }}>
-            <SearchBar 
-              placeholder="Search contacts..."
-              size="small"
+            <SearchBar
+              placeholder='Search contacts...'
+              size='small'
               fullWidth
               sx={{
                 backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -173,39 +173,39 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 
         {/* Search icon for mobile */}
         {isMobile && (
-          <Tooltip title="Search">
-            <IconButton color="inherit" size="small">
+          <Tooltip title='Search'>
+            <IconButton color='inherit' size='small'>
               <Search />
             </IconButton>
           </Tooltip>
         )}
 
         {/* Notifications */}
-        <Tooltip title="Notifications">
+        <Tooltip title='Notifications'>
           <IconButton
-            color="inherit"
+            color='inherit'
             onClick={handleNotificationClick}
             sx={{ mx: 0.5 }}
           >
-            <Badge badgeContent={unreadNotifications} color="error">
+            <Badge badgeContent={unreadNotifications} color='error'>
               <Notifications />
             </Badge>
           </IconButton>
         </Tooltip>
 
         {/* User menu */}
-        <Tooltip title="Account">
+        <Tooltip title='Account'>
           <IconButton
-            edge="end"
-            color="inherit"
+            edge='end'
+            color='inherit'
             onClick={handleUserMenuClick}
             sx={{ ml: 1 }}
           >
             <Avatar
               alt={userDisplayName}
               src={user?.avatar}
-              sx={{ 
-                width: 32, 
+              sx={{
+                width: 32,
                 height: 32,
                 backgroundColor: 'secondary.main',
                 fontSize: '0.875rem',
@@ -247,7 +247,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         }}
       >
         <MenuItem disabled>
-          <ListItemText 
+          <ListItemText
             primary={userDisplayName}
             secondary={user?.email}
             primaryTypographyProps={{
@@ -262,22 +262,22 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         <Divider />
         <MenuItem onClick={handleProfile}>
           <ListItemIcon>
-            <Person fontSize="small" />
+            <Person fontSize='small' />
           </ListItemIcon>
-          <ListItemText primary="Profile" />
+          <ListItemText primary='Profile' />
         </MenuItem>
         <MenuItem onClick={handleSettings}>
           <ListItemIcon>
-            <Settings fontSize="small" />
+            <Settings fontSize='small' />
           </ListItemIcon>
-          <ListItemText primary="Settings" />
+          <ListItemText primary='Settings' />
         </MenuItem>
         <Divider />
         <MenuItem onClick={handleLogout}>
           <ListItemIcon>
-            <ExitToApp fontSize="small" />
+            <ExitToApp fontSize='small' />
           </ListItemIcon>
-          <ListItemText primary="Sign Out" />
+          <ListItemText primary='Sign Out' />
         </MenuItem>
       </Menu>
 
@@ -299,8 +299,8 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
       >
         {notifications.length === 0 ? (
           <MenuItem disabled>
-            <ListItemText 
-              primary="No notifications"
+            <ListItemText
+              primary='No notifications'
               primaryTypographyProps={{
                 fontSize: '0.875rem',
                 textAlign: 'center',
@@ -308,11 +308,13 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             />
           </MenuItem>
         ) : (
-          notifications.slice(0, 5).map((notification) => (
+          notifications.slice(0, 5).map(notification => (
             <MenuItem key={notification.id} onClick={handleNotificationClose}>
               <ListItemText
                 primary={notification.title || notification.message}
-                secondary={notification.title ? notification.message : undefined}
+                secondary={
+                  notification.title ? notification.message : undefined
+                }
                 primaryTypographyProps={{
                   fontSize: '0.875rem',
                   fontWeight: notification.read ? 400 : 600,
@@ -326,7 +328,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         )}
         {notifications.length > 5 && (
           <MenuItem onClick={handleNotificationClose}>
-            <ListItemText 
+            <ListItemText
               primary={`+${notifications.length - 5} more notifications`}
               primaryTypographyProps={{
                 fontSize: '0.75rem',

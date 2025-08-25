@@ -1,13 +1,13 @@
 import { useState, useCallback } from 'react';
 import { useAuthStore } from '@store/authStore';
 import { AuthService } from '@services/auth.service';
-import { 
-  LoginRequest, 
-  RegisterRequest, 
+import {
+  LoginRequest,
+  RegisterRequest,
   ForgotPasswordRequest,
   ResetPasswordRequest,
   ChangePasswordRequest,
-  AuthResponse 
+  AuthResponse,
 } from '@services/types';
 import { showErrorNotification, showSuccessNotification } from '@store/uiStore';
 
@@ -19,7 +19,7 @@ export const useAuth = () => {
   const {
     user,
     token,
-    refreshToken,
+    refreshToken: refreshTokenValue,
     isAuthenticated,
     isLoading,
     setUser,
@@ -31,6 +31,14 @@ export const useAuth = () => {
   } = useAuthStore();
 
   const [isInitializing, setIsInitializing] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  /**
+   * Clear the current error state
+   */
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
 
   /**
    * Initialize authentication state from stored tokens
@@ -38,7 +46,7 @@ export const useAuth = () => {
   const initializeAuth = useCallback(async () => {
     try {
       setIsInitializing(true);
-      
+
       // Check if we have a valid token
       if (token && !isTokenExpired()) {
         try {
@@ -48,11 +56,12 @@ export const useAuth = () => {
         } catch (error) {
           console.error('Token verification failed:', error);
           // If token verification fails, try to refresh
-          if (refreshToken) {
+          if (refreshTokenValue) {
             try {
-              const refreshResponse = await AuthService.refreshToken(refreshToken);
+              const refreshResponse =
+                await AuthService.refreshToken(refreshTokenValue);
               setTokens(refreshResponse.token, refreshResponse.refreshToken);
-              
+
               // Get user data with new token
               const userData = await AuthService.getCurrentUser();
               setUser(userData);
@@ -64,12 +73,13 @@ export const useAuth = () => {
             clearAuth();
           }
         }
-      } else if (refreshToken) {
+      } else if (refreshTokenValue) {
         try {
           // Try to refresh the token
-          const refreshResponse = await AuthService.refreshToken(refreshToken);
+          const refreshResponse =
+            await AuthService.refreshToken(refreshTokenValue);
           setTokens(refreshResponse.token, refreshResponse.refreshToken);
-          
+
           // Get user data with new token
           const userData = await AuthService.getCurrentUser();
           setUser(userData);
@@ -87,61 +97,75 @@ export const useAuth = () => {
     } finally {
       setIsInitializing(false);
     }
-  }, [token, refreshToken, isTokenExpired, setUser, setTokens, clearAuth]);
+  }, [token, refreshTokenValue, isTokenExpired, setUser, setTokens, clearAuth]);
 
   /**
    * Login user with email and password
    */
-  const login = useCallback(async (credentials: LoginRequest): Promise<AuthResponse> => {
-    try {
-      setLoading(true);
-      
-      const response = await AuthService.login(credentials);
-      
-      // Store tokens and user data
-      setTokens(response.token, response.refreshToken);
-      setUser(response.user);
-      
-      showSuccessNotification(
-        `Welcome back, ${response.user.firstName}!`,
-        'Login Successful'
-      );
-      
-      return response;
-    } catch (error) {
-      console.error('Login error:', error);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  }, [setLoading, setTokens, setUser]);
+  const login = useCallback(
+    async (credentials: LoginRequest): Promise<AuthResponse> => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await AuthService.login(credentials);
+
+        // Store tokens and user data
+        setTokens(response.token, response.refreshToken);
+        setUser(response.user);
+
+        showSuccessNotification(
+          `Welcome back, ${response.user.firstName}!`,
+          'Login Successful'
+        );
+
+        return response;
+      } catch (error) {
+        console.error('Login error:', error);
+        const errorMessage =
+          error instanceof Error ? error.message : 'Login failed';
+        setError(errorMessage);
+        throw error;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [setLoading, setTokens, setUser]
+  );
 
   /**
    * Register new user account
    */
-  const register = useCallback(async (userData: RegisterRequest): Promise<AuthResponse> => {
-    try {
-      setLoading(true);
-      
-      const response = await AuthService.register(userData);
-      
-      // Store tokens and user data
-      setTokens(response.token, response.refreshToken);
-      setUser(response.user);
-      
-      showSuccessNotification(
-        `Welcome to ConnectKit, ${response.user.firstName}!`,
-        'Registration Successful'
-      );
-      
-      return response;
-    } catch (error) {
-      console.error('Registration error:', error);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  }, [setLoading, setTokens, setUser]);
+  const register = useCallback(
+    async (userData: RegisterRequest): Promise<AuthResponse> => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await AuthService.register(userData);
+
+        // Store tokens and user data
+        setTokens(response.token, response.refreshToken);
+        setUser(response.user);
+
+        showSuccessNotification(
+          `Welcome to ConnectKit, ${response.user.firstName}!`,
+          'Registration Successful'
+        );
+
+        return response;
+      } catch (error) {
+        console.error('Registration error:', error);
+        const errorMessage =
+          error instanceof Error ? error.message : 'Registration failed';
+        setError(errorMessage);
+        throw error;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [setLoading, setTokens, setUser]
+  );
 
   /**
    * Logout user and clear auth state
@@ -149,10 +173,10 @@ export const useAuth = () => {
   const logout = useCallback(async (): Promise<void> => {
     try {
       setLoading(true);
-      
+
       // Call logout API to invalidate token on server
       await AuthService.logout();
-      
+
       showSuccessNotification('You have been signed out successfully.');
     } catch (error) {
       console.error('Logout error:', error);
@@ -167,92 +191,104 @@ export const useAuth = () => {
   /**
    * Send forgot password email
    */
-  const forgotPassword = useCallback(async (request: ForgotPasswordRequest): Promise<void> => {
-    try {
-      setLoading(true);
-      
-      await AuthService.forgotPassword(request);
-      
-      showSuccessNotification(
-        'Password reset instructions have been sent to your email.',
-        'Email Sent'
-      );
-    } catch (error) {
-      console.error('Forgot password error:', error);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  }, [setLoading]);
+  const forgotPassword = useCallback(
+    async (request: ForgotPasswordRequest): Promise<void> => {
+      try {
+        setLoading(true);
+
+        await AuthService.forgotPassword(request);
+
+        showSuccessNotification(
+          'Password reset instructions have been sent to your email.',
+          'Email Sent'
+        );
+      } catch (error) {
+        console.error('Forgot password error:', error);
+        throw error;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [setLoading]
+  );
 
   /**
    * Reset password using token from email
    */
-  const resetPassword = useCallback(async (request: ResetPasswordRequest): Promise<void> => {
-    try {
-      setLoading(true);
-      
-      await AuthService.resetPassword(request);
-      
-      showSuccessNotification(
-        'Your password has been reset successfully. Please sign in with your new password.',
-        'Password Reset'
-      );
-    } catch (error) {
-      console.error('Reset password error:', error);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  }, [setLoading]);
+  const resetPassword = useCallback(
+    async (request: ResetPasswordRequest): Promise<void> => {
+      try {
+        setLoading(true);
+
+        await AuthService.resetPassword(request);
+
+        showSuccessNotification(
+          'Your password has been reset successfully. Please sign in with your new password.',
+          'Password Reset'
+        );
+      } catch (error) {
+        console.error('Reset password error:', error);
+        throw error;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [setLoading]
+  );
 
   /**
    * Change user password (requires current password)
    */
-  const changePassword = useCallback(async (request: ChangePasswordRequest): Promise<void> => {
-    try {
-      setLoading(true);
-      
-      await AuthService.changePassword(request);
-      
-      showSuccessNotification(
-        'Your password has been changed successfully.',
-        'Password Changed'
-      );
-    } catch (error) {
-      console.error('Change password error:', error);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  }, [setLoading]);
+  const changePassword = useCallback(
+    async (request: ChangePasswordRequest): Promise<void> => {
+      try {
+        setLoading(true);
+
+        await AuthService.changePassword(request);
+
+        showSuccessNotification(
+          'Your password has been changed successfully.',
+          'Password Changed'
+        );
+      } catch (error) {
+        console.error('Change password error:', error);
+        throw error;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [setLoading]
+  );
 
   /**
    * Verify email address using token
    */
-  const verifyEmail = useCallback(async (token: string): Promise<void> => {
-    try {
-      setLoading(true);
-      
-      await AuthService.verifyEmail(token);
-      
-      // Refresh user data to reflect verified status
-      if (isAuthenticated) {
-        const userData = await AuthService.getCurrentUser();
-        setUser(userData);
+  const verifyEmail = useCallback(
+    async (token: string): Promise<void> => {
+      try {
+        setLoading(true);
+
+        await AuthService.verifyEmail(token);
+
+        // Refresh user data to reflect verified status
+        if (isAuthenticated) {
+          const userData = await AuthService.getCurrentUser();
+          setUser(userData);
+        }
+
+        showSuccessNotification(
+          'Your email has been verified successfully!',
+          'Email Verified'
+        );
+      } catch (error) {
+        console.error('Email verification error:', error);
+        throw error;
+      } finally {
+        setLoading(false);
       }
-      
-      showSuccessNotification(
-        'Your email has been verified successfully!',
-        'Email Verified'
-      );
-    } catch (error) {
-      console.error('Email verification error:', error);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  }, [setLoading, isAuthenticated, setUser]);
+    },
+    [setLoading, isAuthenticated, setUser]
+  );
 
   /**
    * Resend email verification
@@ -260,9 +296,9 @@ export const useAuth = () => {
   const resendVerificationEmail = useCallback(async (): Promise<void> => {
     try {
       setLoading(true);
-      
+
       await AuthService.resendVerificationEmail();
-      
+
       showSuccessNotification(
         'Verification email has been sent to your email address.',
         'Email Sent'
@@ -279,14 +315,14 @@ export const useAuth = () => {
    * Refresh authentication token
    */
   const refreshAuthToken = useCallback(async (): Promise<void> => {
-    if (!refreshToken) {
+    if (!refreshTokenValue) {
       throw new Error('No refresh token available');
     }
 
     try {
       setLoading(true);
-      
-      const response = await AuthService.refreshToken(refreshToken);
+
+      const response = await AuthService.refreshToken(refreshTokenValue);
       setTokens(response.token, response.refreshToken);
     } catch (error) {
       console.error('Token refresh error:', error);
@@ -295,21 +331,24 @@ export const useAuth = () => {
     } finally {
       setLoading(false);
     }
-  }, [refreshToken, setLoading, setTokens, clearAuth]);
+  }, [refreshTokenValue, setLoading, setTokens, clearAuth]);
 
   /**
    * Check if current user has specific permission
    */
-  const hasPermission = useCallback((permission: string): boolean => {
-    if (!user) return false;
-    
-    // Admin users have all permissions
-    if (user.role === 'admin') return true;
-    
-    // Add your permission logic here
-    // This would typically check against user permissions/roles
-    return true; // Placeholder - implement based on your auth system
-  }, [user]);
+  const hasPermission = useCallback(
+    (permission: string): boolean => {
+      if (!user) return false;
+
+      // Admin users have all permissions
+      if (user.role === 'admin') return true;
+
+      // Add your permission logic here
+      // This would typically check against user permissions/roles
+      return true; // Placeholder - implement based on your auth system
+    },
+    [user]
+  );
 
   /**
    * Check if user email is verified
@@ -330,11 +369,12 @@ export const useAuth = () => {
     // State
     user,
     token,
-    refreshToken,
+    refreshTokenValue,
     isAuthenticated,
     isLoading,
     isInitializing,
-    
+    error,
+
     // Actions
     initializeAuth,
     login,
@@ -346,7 +386,10 @@ export const useAuth = () => {
     verifyEmail,
     resendVerificationEmail,
     refreshAuthToken,
-    
+    refreshToken: refreshAuthToken, // Method for tests
+    clearError,
+    setError,
+
     // Utilities
     hasPermission,
     isEmailVerified,

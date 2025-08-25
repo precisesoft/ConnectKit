@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+// Removed unused imports - Routes and Route not used in this component
 import { Box } from '@mui/material';
 
 import { useAuthStore } from '@store/authStore';
@@ -9,7 +9,6 @@ import AppRoutes from '@routes/index';
 
 const App: React.FC = () => {
   const { initializeAuth, isInitializing } = useAuth();
-  const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
     // Initialize authentication state from localStorage/tokens
@@ -20,12 +19,12 @@ const App: React.FC = () => {
   if (isInitializing) {
     return (
       <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="100vh"
+        display='flex'
+        justifyContent='center'
+        alignItems='center'
+        minHeight='100vh'
       >
-        <LoadingSpinner size={60} message="Loading application..." />
+        <LoadingSpinner size={60} message='Loading application...' />
       </Box>
     );
   }

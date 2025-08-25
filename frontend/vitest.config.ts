@@ -71,16 +71,15 @@ export default defineConfig({
       },
     },
     // Test file patterns
-    include: [
-      '**/__tests__/**/*.{ts,tsx}',
-      '**/*.{test,spec}.{ts,tsx}',
-    ],
+    include: ['**/__tests__/**/*.{ts,tsx}', '**/*.{test,spec}.{ts,tsx}'],
     exclude: [
       'node_modules/**',
       'dist/**',
       'build/**',
       'e2e/**',
       '**/*.e2e.*',
+      'tests/**',
+      '**/*.spec.ts',
     ],
     // Test timeout
     testTimeout: 10000,
@@ -92,12 +91,14 @@ export default defineConfig({
     maxThreads: 4,
     minThreads: 1,
     // Mock configuration
-    deps: {
-      inline: [
-        '@testing-library/react',
-        '@testing-library/jest-dom',
-        '@testing-library/user-event',
-      ],
+    server: {
+      deps: {
+        inline: [
+          '@testing-library/react',
+          '@testing-library/jest-dom',
+          '@testing-library/user-event',
+        ],
+      },
     },
     // Environment variables for tests
     env: {

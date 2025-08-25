@@ -177,7 +177,7 @@ jobs:
     name: SBOM Generation & Analysis
     runs-on: ubuntu-latest
     if: ${{ github.event.inputs.compliance_suite == 'all' || github.event.inputs.compliance_suite == 'sbom' || github.event_name == 'schedule' }}
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v4
@@ -186,186 +186,252 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
 
-      - name: Install Syft for SBOM generation
+      - name: Install dependencies
         run: |
+          npm ci
+          npm ci --workspace=backend
+          npm ci --workspace=frontend
+
+      - name: Install SBOM and security tools
+        run: |
+          # Install Syft for SBOM generation
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
 
-      - name: Install Grype for vulnerability scanning
-        run: |
+          # Install Grype for vulnerability scanning
           curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
 
-      - name: Generate SBOM for entire project
+      - name: Build Docker images for scanning
+        run: |
+          echo "## Building Docker Images for SBOM Analysis" >> $GITHUB_STEP_SUMMARY
+
+          # Build backend image
+          docker build -f docker/backend/Dockerfile --target production -t connectkit-backend:latest ./backend
+
+          # Build frontend image  
+          docker build -f docker/frontend/Dockerfile --target production -t connectkit-frontend:latest ./frontend
+
+          echo "✅ **Docker Images Built Successfully**" >> $GITHUB_STEP_SUMMARY
+
+      - name: Generate comprehensive SBOM
         run: |
           echo "## Software Bill of Materials (SBOM)" >> $GITHUB_STEP_SUMMARY
 
-          # Generate SBOM in multiple formats
-          syft . -o cyclonedx-json=sbom-cyclonedx.json
-          syft . -o spdx-json=sbom-spdx.json
-          syft . -o syft-table=sbom-table.txt
+          # Run our enhanced SBOM generator
+          SEVERITY_THRESHOLD="${{ github.event.inputs.severity_threshold || 'medium' }}" npm run sbom:generate
 
-          echo "✅ **SBOM Generated Successfully**" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Enhanced SBOM Generated Successfully**" >> $GITHUB_STEP_SUMMARY
 
-      - name: Generate component inventory
+      - name: Generate component inventory and analysis
         run: |
           echo "### Component Inventory" >> $GITHUB_STEP_SUMMARY
 
-          # Count components by type
-          TOTAL_COMPONENTS=$(syft . -o json | jq '.artifacts | length')
-          NPM_COMPONENTS=$(syft . -o json | jq '[.artifacts[] | select(.type == "npm")] | length')
-          OS_COMPONENTS=$(syft . -o json | jq '[.artifacts[] | select(.type == "deb")] | length')
+          # Check if syft JSON exists
+          if [ -f "sbom-output/sbom-syft.json" ]; then
+            # Count components by type
+            TOTAL_COMPONENTS=$(jq '.artifacts | length' sbom-output/sbom-syft.json)
+            NPM_COMPONENTS=$(jq '[.artifacts[] | select(.type == "npm")] | length' sbom-output/sbom-syft.json)
+            OS_COMPONENTS=$(jq '[.artifacts[] | select(.type == "deb")] | length' sbom-output/sbom-syft.json)
+            DOCKER_COMPONENTS=$(jq '[.artifacts[] | select(.type == "apk")] | length' sbom-output/sbom-syft.json)
 
-          echo "- **Total Components**: $TOTAL_COMPONENTS" >> $GITHUB_STEP_SUMMARY
-          echo "- **NPM Packages**: $NPM_COMPONENTS" >> $GITHUB_STEP_SUMMARY
-          echo "- **OS Packages**: $OS_COMPONENTS" >> $GITHUB_STEP_SUMMARY
+            echo "- **Total Components**: $TOTAL_COMPONENTS" >> $GITHUB_STEP_SUMMARY
+            echo "- **NPM Packages**: $NPM_COMPONENTS" >> $GITHUB_STEP_SUMMARY
+            echo "- **OS Packages (Debian)**: $OS_COMPONENTS" >> $GITHUB_STEP_SUMMARY
+            echo "- **Alpine Packages**: $DOCKER_COMPONENTS" >> $GITHUB_STEP_SUMMARY
 
-      - name: Scan SBOM for vulnerabilities
-        run: |
-          echo "### Vulnerability Analysis" >> $GITHUB_STEP_SUMMARY
-
-          # Scan using Grype
-          grype sbom-cyclonedx.json -o json > vulnerabilities-sbom.json
-          grype sbom-cyclonedx.json -o table > vulnerabilities-sbom.txt
-
-          # Count vulnerabilities by severity
-          CRITICAL=$(jq '[.matches[] | select(.vulnerability.severity == "Critical")] | length' vulnerabilities-sbom.json)
-          HIGH=$(jq '[.matches[] | select(.vulnerability.severity == "High")] | length' vulnerabilities-sbom.json)
-          MEDIUM=$(jq '[.matches[] | select(.vulnerability.severity == "Medium")] | length' vulnerabilities-sbom.json)
-          LOW=$(jq '[.matches[] | select(.vulnerability.severity == "Low")] | length' vulnerabilities-sbom.json)
-
-          echo "- **Critical**: $CRITICAL vulnerabilities" >> $GITHUB_STEP_SUMMARY
-          echo "- **High**: $HIGH vulnerabilities" >> $GITHUB_STEP_SUMMARY
-          echo "- **Medium**: $MEDIUM vulnerabilities" >> $GITHUB_STEP_SUMMARY
-          echo "- **Low**: $LOW vulnerabilities" >> $GITHUB_STEP_SUMMARY
-
-          # Fail if critical or high vulnerabilities found
-          if [ "$CRITICAL" -gt 0 ] || [ "$HIGH" -gt 0 ]; then
-            echo "❌ **CRITICAL OR HIGH VULNERABILITIES FOUND**" >> $GITHUB_STEP_SUMMARY
-            exit 1
+            # License analysis
+            UNIQUE_LICENSES=$(jq '[.artifacts[].licenses[]?.value // .artifacts[].licenses[]? // empty] | unique | length' sbom-output/sbom-syft.json)
+            echo "- **Unique Licenses**: $UNIQUE_LICENSES" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **SBOM file not found, using basic inventory**" >> $GITHUB_STEP_SUMMARY
           fi
 
-      - name: Verify SBOM completeness
+      - name: Advanced vulnerability analysis
         run: |
-          echo "### SBOM Completeness Check" >> $GITHUB_STEP_SUMMARY
+          echo "### Enhanced Vulnerability Analysis" >> $GITHUB_STEP_SUMMARY
 
-          # Check for required SBOM fields
-          cat > verify-sbom.js << 'EOF'
+          # Run our enhanced vulnerability checker with configurable thresholds
+          SEVERITY_THRESHOLD="${{ github.event.inputs.severity_threshold || 'medium' }}" npm run sbom:check
+
+      - name: Generate Docker image SBOMs
+        run: |
+          echo "### Docker Image Analysis" >> $GITHUB_STEP_SUMMARY
+
+          # Scan backend Docker image
+          echo "**Backend Container:**" >> $GITHUB_STEP_SUMMARY
+          syft connectkit-backend:latest -o json > sbom-output/sbom-backend-docker.json
+
+          BACKEND_COMPONENTS=$(jq '.artifacts | length' sbom-output/sbom-backend-docker.json)
+          echo "- Backend container components: $BACKEND_COMPONENTS" >> $GITHUB_STEP_SUMMARY
+
+          # Scan frontend Docker image
+          echo "**Frontend Container:**" >> $GITHUB_STEP_SUMMARY
+          syft connectkit-frontend:latest -o json > sbom-output/sbom-frontend-docker.json
+
+          FRONTEND_COMPONENTS=$(jq '.artifacts | length' sbom-output/sbom-frontend-docker.json)
+          echo "- Frontend container components: $FRONTEND_COMPONENTS" >> $GITHUB_STEP_SUMMARY
+
+      - name: License compliance validation
+        run: |
+          echo "### License Compliance Analysis" >> $GITHUB_STEP_SUMMARY
+
+          # Check license compliance using our policy
+          if [ -f "sbom-output/sbom-syft.json" ]; then
+            cat > check-licenses.js << 'EOF'
+            const fs = require('fs');
+            
+            const sbom = JSON.parse(fs.readFileSync('sbom-output/sbom-syft.json', 'utf8'));
+            const policy = JSON.parse(fs.readFileSync('.sbom/license-policy.json', 'utf8'));
+            
+            const licenses = new Set();
+            const prohibited = [];
+            const needsReview = [];
+            
+            if (sbom.artifacts) {
+              sbom.artifacts.forEach(artifact => {
+                if (artifact.licenses) {
+                  artifact.licenses.forEach(license => {
+                    const licenseKey = license.value || license;
+                    licenses.add(licenseKey);
+                    
+                    if (policy.license_policy.prohibited.includes(licenseKey)) {
+                      prohibited.push({ component: artifact.name, license: licenseKey });
+                    } else if (!policy.license_policy.approved.includes(licenseKey)) {
+                      needsReview.push({ component: artifact.name, license: licenseKey });
+                    }
+                  });
+                }
+              });
+            }
+            
+            console.log(`📊 License Analysis Results:`);
+            console.log(`   Total unique licenses: ${licenses.size}`);
+            console.log(`   Prohibited licenses: ${prohibited.length}`);
+            console.log(`   Licenses needing review: ${needsReview.length}`);
+            
+            if (prohibited.length > 0) {
+              console.log(`\n❌ PROHIBITED LICENSES FOUND:`);
+              prohibited.forEach(item => {
+                console.log(`   ${item.component}: ${item.license}`);
+              });
+              process.exit(1);
+            } else {
+              console.log(`\n✅ No prohibited licenses detected`);
+            }
+            EOF
+            
+            node check-licenses.js
+          else
+            echo "⚠️ **SBOM not available for license analysis**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Verify SBOM completeness and generate federal compliance report
+        run: |
+          echo "### SBOM Completeness & Federal Compliance Check" >> $GITHUB_STEP_SUMMARY
+
+          # Check for required SBOM fields and federal compliance
+          cat > verify-federal-compliance.js << 'EOF'
           const fs = require('fs');
-          const sbom = JSON.parse(fs.readFileSync('sbom-cyclonedx.json', 'utf8'));
 
-          console.log('🔍 Verifying SBOM completeness...');
+          console.log('🔍 Verifying SBOM federal compliance...');
 
-          let score = 0;
-          let maxScore = 10;
+          // Check if compliance report exists
+          if (!fs.existsSync('sbom-output/compliance-report.json')) {
+            console.log('❌ Compliance report not found');
+            process.exit(1);
+          }
 
-          // Check metadata
-          if (sbom.metadata && sbom.metadata.component) {
-            console.log('✅ Root component metadata present');
-            score++;
+          const complianceReport = JSON.parse(fs.readFileSync('sbom-output/compliance-report.json', 'utf8'));
+
+          console.log('📊 Federal Compliance Assessment:');
+
+          // Check NTIA minimum elements
+          const ntiaCompliant = complianceReport.ntia_minimum_elements.compliant;
+          console.log(`   NTIA Minimum Elements: ${ntiaCompliant ? '✅ COMPLIANT' : '❌ NON-COMPLIANT'}`);
+
+          // Check Executive Order 14028
+          const eoCompliant = complianceReport.executive_order_14028.compliant;
+          console.log(`   Executive Order 14028: ${eoCompliant ? '✅ COMPLIANT' : '❌ NON-COMPLIANT'}`);
+
+          // Check license compliance
+          const licenseCompliant = complianceReport.license_compliance.compliant;
+          console.log(`   License Compliance: ${licenseCompliant ? '✅ COMPLIANT' : '❌ NON-COMPLIANT'}`);
+
+          // Check vulnerability assessment
+          const vulnPassed = complianceReport.vulnerability_assessment.passed;
+          console.log(`   Vulnerability Assessment: ${vulnPassed ? '✅ PASSED' : '❌ FAILED'}`);
+
+          // Overall compliance
+          const overallCompliant = ntiaCompliant && eoCompliant && licenseCompliant && vulnPassed;
+          console.log(`\n📋 Overall Federal Compliance: ${overallCompliant ? '✅ COMPLIANT' : '❌ NON-COMPLIANT'}`);
+
+          if (!overallCompliant) {
+            console.log('\n❌ Federal compliance requirements not met');
+            if (complianceReport.recommendations && complianceReport.recommendations.length > 0) {
+              console.log('\n📝 Recommendations:');
+              complianceReport.recommendations.forEach((rec, index) => {
+                console.log(`   ${index + 1}. [${rec.priority}] ${rec.action}`);
+              });
+            }
+            process.exit(1);
           } else {
-            console.log('❌ Missing root component metadata');
-          }
-
-          if (sbom.metadata && sbom.metadata.timestamp) {
-            console.log('✅ Generation timestamp present');
-            score++;
-          } else {
-            console.log('❌ Missing generation timestamp');
-          }
-
-          if (sbom.metadata && sbom.metadata.tools) {
-            console.log('✅ Tool information present');
-            score++;
-          } else {
-            console.log('❌ Missing tool information');
-          }
-
-          // Check components
-          if (sbom.components && sbom.components.length > 0) {
-            console.log(`✅ ${sbom.components.length} components documented`);
-            score++;
-          } else {
-            console.log('❌ No components documented');
-          }
-
-          // Check for licenses
-          let componentsWithLicenses = 0;
-          if (sbom.components) {
-            sbom.components.forEach(comp => {
-              if (comp.licenses && comp.licenses.length > 0) {
-                componentsWithLicenses++;
-              }
-            });
-          }
-
-          const licenseCompliance = (componentsWithLicenses / sbom.components.length) * 100;
-          if (licenseCompliance > 80) {
-            console.log(`✅ License information: ${licenseCompliance.toFixed(1)}% coverage`);
-            score += 2;
-          } else {
-            console.log(`⚠️ License information: ${licenseCompliance.toFixed(1)}% coverage (needs improvement)`);
-            score += 1;
-          }
-
-          // Check for version information
-          let componentsWithVersions = 0;
-          if (sbom.components) {
-            sbom.components.forEach(comp => {
-              if (comp.version) {
-                componentsWithVersions++;
-              }
-            });
-          }
-
-          const versionCompliance = (componentsWithVersions / sbom.components.length) * 100;
-          if (versionCompliance > 95) {
-            console.log(`✅ Version information: ${versionCompliance.toFixed(1)}% coverage`);
-            score += 2;
-          } else {
-            console.log(`⚠️ Version information: ${versionCompliance.toFixed(1)}% coverage`);
-            score += 1;
-          }
-
-          // Check for supplier information
-          let componentsWithSuppliers = 0;
-          if (sbom.components) {
-            sbom.components.forEach(comp => {
-              if (comp.supplier || comp.author) {
-                componentsWithSuppliers++;
-              }
-            });
-          }
-
-          const supplierCompliance = (componentsWithSuppliers / sbom.components.length) * 100;
-          if (supplierCompliance > 70) {
-            console.log(`✅ Supplier information: ${supplierCompliance.toFixed(1)}% coverage`);
-            score += 2;
-          } else {
-            console.log(`⚠️ Supplier information: ${supplierCompliance.toFixed(1)}% coverage`);
-            score += 1;
-          }
-
-          console.log(`\n📊 SBOM Completeness Score: ${score}/${maxScore} (${(score/maxScore*100).toFixed(1)}%)`);
-
-          if (score >= 8) {
-            console.log('✅ SBOM meets federal compliance requirements');
-          } else {
-            console.log('⚠️ SBOM needs improvement for federal compliance');
+            console.log('\n✅ All federal compliance requirements met');
           }
           EOF
 
-          node verify-sbom.js
+          node verify-federal-compliance.js
 
-      - name: Upload SBOM artifacts
+      - name: Generate attestation documents
+        run: |
+          echo "### Attestation Documents" >> $GITHUB_STEP_SUMMARY
+
+          # Create SBOM attestation
+          cat > sbom-attestation.json << 'EOF'
+          {
+            "_type": "https://in-toto.io/Statement/v0.1",
+            "predicateType": "https://spdx.dev/spdxdocs/spdx-v2.3",
+            "subject": [
+              {
+                "name": "pkg:npm/connectkit@1.0.0",
+                "digest": {
+                  "sha256": "placeholder-digest-would-be-actual-hash"
+                }
+              }
+            ],
+            "predicate": {
+              "spdxVersion": "SPDX-2.3",
+              "dataLicense": "CC0-1.0",
+              "SPDXID": "SPDXRef-DOCUMENT",
+              "name": "ConnectKit-SBOM",
+              "documentNamespace": "https://connectkit.com/spdx/connectkit-1.0.0",
+              "creator": "Tool: ConnectKit-CI/CD-Pipeline",
+              "created": "TIMESTAMP_PLACEHOLDER",
+              "packageVerificationCode": {
+                "packageVerificationCodeValue": "placeholder-verification-code"
+              },
+              "licenseConcluded": "NOASSERTION",
+              "licenseInfoFromFiles": "NOASSERTION",
+              "downloadLocation": "NOASSERTION",
+              "filesAnalyzed": false
+            }
+          }
+          EOF
+
+          # Replace timestamp
+          sed -i "s/TIMESTAMP_PLACEHOLDER/$(date -u +%Y-%m-%dT%H:%M:%SZ)/" sbom-attestation.json
+          mv sbom-attestation.json sbom-output/
+
+          echo "✅ **Attestation documents generated**" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload enhanced SBOM artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: sbom-artifacts
+          name: enhanced-sbom-artifacts
           path: |
-            sbom-*.json
-            sbom-*.txt
-            vulnerabilities-*.json
-            vulnerabilities-*.txt
+            sbom-output/
+            .sbom/
 
   # Enhanced Static Application Security Testing (SAST)
   sast-enhanced:

@@ -1,20 +1,46 @@
 # Dependencies
-node_modules
+node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
 .pnpm-debug.log*
 
 # Production build (excluded since we need it for multi-stage builds)
-# dist
+# dist/
+
+# Vite build outputs and cache
+.vite/
+dist/
 
 # Testing
-coverage
+coverage/
 .nyc_output
+test-results/
+playwright-report/
+tests/
+e2e/
+**/__tests__/
+**/*.test.js
+**/*.test.ts
+**/*.test.jsx
+**/*.test.tsx
+**/*.spec.js
+**/*.spec.ts
+**/*.spec.jsx
+**/*.spec.tsx
+
+# Vitest
+vitest.config.ts.timestamp-*
+
+# Playwright
+playwright.config.ts
+global-setup.ts
+global-teardown.ts
 
 # IDE and editor files
-.idea
-.vscode
+.vscode/
+.idea/
 *.swp
 *.swo
 *~
@@ -38,8 +64,9 @@ pids
 *.seed
 *.pid.lock
 
-# TypeScript cache
+# TypeScript cache and build info
 *.tsbuildinfo
+.tsbuild/
 
 # Optional npm cache directory
 .npm
@@ -49,9 +76,10 @@ pids
 
 # Environment variables
 .env
-.env.test
-.env.production
 .env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
 # Yarn
 .yarn/cache
@@ -59,29 +87,29 @@ pids
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+yarn.lock
 
-# Test files
-**/*.test.js
-**/*.test.ts
-**/*.test.jsx
-**/*.test.tsx
-**/*.spec.js
-**/*.spec.ts
-**/*.spec.jsx
-**/*.spec.tsx
-test-results/
-playwright-report/
+# Package manager lock files (keep package.json)
+package-lock.json
+pnpm-lock.yaml
+
+# Parcel cache
+.cache/
+.parcel-cache/
 
 # Storybook build outputs
 storybook-static
+.out
+.storybook-out
 
-# Documentation
-docs
+# Development files
 *.md
-README*
+claude.md
+README.md
+CHANGELOG.md
 
 # Git
-.git
+.git/
 .gitignore
 .gitattributes
 
@@ -91,24 +119,45 @@ Dockerfile*
 docker-compose*
 
 # CI/CD files
-.github
+.github/
 .gitlab-ci.yml
 .travis.yml
-.circleci
+.circleci/
 
-# Security files
-.secrets
-.env.example
+# Nginx configuration (development)
+nginx.conf
 
 # Temporary files
-tmp
-temp
+tmp/
+temp/
 *.tmp
 *.temp
 
-# Vite
-vite.config.ts.timestamp-*
+# Build artifacts
+lib/
+build/
+out/
 
-# Build tools
-.vite
-.rollup.cache
+# Local development
+.local/
+
+# Documentation
+docs/
+documentation/
+
+# Scripts (development only)
+scripts/
+
+# Source maps (if not needed in production)
+*.map
+
+# Hot reload
+.hot-update.*
+
+# Webpack
+.webpack/
+
+# Backup files
+*.bak
+*.backup
+*.old

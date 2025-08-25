@@ -17,16 +17,23 @@ export class TestDatabase {
     }
 
     try {
-      this.pool = new Pool({
-        host: process.env.TEST_DB_HOST || 'localhost',
-        port: parseInt(process.env.TEST_DB_PORT || '5432', 10),
-        database: process.env.TEST_DB_NAME || 'connectkit_test',
-        user: process.env.TEST_DB_USER || 'postgres',
-        password: process.env.TEST_DB_PASSWORD || 'postgres',
+      const dbConfig = {
+        host: process.env.DB_HOST || process.env.TEST_DB_HOST || 'localhost',
+        port: parseInt(
+          process.env.DB_PORT || process.env.TEST_DB_PORT || '5432',
+          10
+        ),
+        database:
+          process.env.DB_NAME || process.env.TEST_DB_NAME || 'connectkit_test',
+        user: process.env.DB_USER || process.env.TEST_DB_USER || 'postgres',
+        password:
+          process.env.DB_PASSWORD || process.env.TEST_DB_PASSWORD || 'postgres',
         max: 10,
         idleTimeoutMillis: 30000,
         connectionTimeoutMillis: 2000,
-      });
+      };
+
+      this.pool = new Pool(dbConfig);
 
       // Test connection
       const client = await this.pool.connect();
@@ -325,11 +332,13 @@ export class TestDatabase {
 
 // Helper function to create test database configuration
 export const createTestDbConfig = () => ({
-  host: process.env.TEST_DB_HOST || 'localhost',
-  port: parseInt(process.env.TEST_DB_PORT || '5432', 10),
-  database: process.env.TEST_DB_NAME || 'connectkit_test',
-  user: process.env.TEST_DB_USER || 'postgres',
-  password: process.env.TEST_DB_PASSWORD || 'postgres',
+  host: process.env.DB_HOST || process.env.TEST_DB_HOST || 'localhost',
+  port: parseInt(process.env.DB_PORT || process.env.TEST_DB_PORT || '5432', 10),
+  database:
+    process.env.DB_NAME || process.env.TEST_DB_NAME || 'connectkit_test',
+  user: process.env.DB_USER || process.env.TEST_DB_USER || 'postgres',
+  password:
+    process.env.DB_PASSWORD || process.env.TEST_DB_PASSWORD || 'postgres',
   ssl: process.env.TEST_DB_SSL === 'true',
 });
 

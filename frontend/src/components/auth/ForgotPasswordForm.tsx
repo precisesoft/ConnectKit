@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -10,17 +10,11 @@ import {
   TextField,
   Button,
   Typography,
-  Link,
   Alert,
   InputAdornment,
   CircularProgress,
 } from '@mui/material';
-import {
-  Email,
-  Send,
-  ArrowBack,
-  CheckCircle,
-} from '@mui/icons-material';
+import { Email, Send, ArrowBack, CheckCircle } from '@mui/icons-material';
 
 import { AuthService } from '@services/auth.service';
 import { ForgotPasswordRequest } from '@services/types';
@@ -48,7 +42,7 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
   showTitle = true,
 }) => {
   const navigate = useNavigate();
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -75,10 +69,10 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
       clearErrors();
 
       await AuthService.forgotPassword(data);
-      
+
       setSubmittedEmail(data.email);
       setIsSubmitted(true);
-      
+
       showSuccessNotification(
         'Password reset instructions have been sent to your email.',
         'Email Sent'
@@ -89,18 +83,19 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
       }
     } catch (error: any) {
       console.error('Forgot password error:', error);
-      
-      const errorMessage = error.message || 'Failed to send reset email. Please try again.';
+
+      const errorMessage =
+        error.message || 'Failed to send reset email. Please try again.';
       setSubmitError(errorMessage);
-      
+
       // Handle specific error types
       if (error.status === 404) {
-        setError('email', { 
-          message: 'No account found with this email address' 
+        setError('email', {
+          message: 'No account found with this email address',
         });
       } else if (error.status === 429) {
-        setError('email', { 
-          message: 'Too many requests. Please try again later.' 
+        setError('email', {
+          message: 'Too many requests. Please try again later.',
         });
       } else if (error.status === 422) {
         // Handle validation errors from server
@@ -140,28 +135,28 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
   // Success state
   if (isSubmitted) {
     return (
-      <Card 
+      <Card
         elevation={3}
-        sx={{ 
-          maxWidth: 400, 
+        sx={{
+          maxWidth: 400,
           width: '100%',
           mx: 'auto',
         }}
       >
         <CardContent sx={{ p: 4, textAlign: 'center' }}>
-          <CheckCircle 
-            color="success" 
-            sx={{ 
-              fontSize: 64, 
-              mb: 2 
-            }} 
+          <CheckCircle
+            color='success'
+            sx={{
+              fontSize: 64,
+              mb: 2,
+            }}
           />
-          
-          <Typography 
-            variant="h5" 
-            component="h1"
+
+          <Typography
+            variant='h5'
+            component='h1'
             gutterBottom
-            sx={{ 
+            sx={{
               fontWeight: 600,
               color: 'text.primary',
               mb: 2,
@@ -169,18 +164,14 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
           >
             Check Your Email
           </Typography>
-          
-          <Typography 
-            variant="body1" 
-            color="text.secondary"
-            sx={{ mb: 3 }}
-          >
+
+          <Typography variant='body1' color='text.secondary' sx={{ mb: 3 }}>
             We've sent password reset instructions to:
           </Typography>
-          
-          <Typography 
-            variant="body1" 
-            sx={{ 
+
+          <Typography
+            variant='body1'
+            sx={{
               fontWeight: 600,
               color: 'primary.main',
               mb: 3,
@@ -189,27 +180,23 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
           >
             {submittedEmail}
           </Typography>
-          
-          <Typography 
-            variant="body2" 
-            color="text.secondary"
-            sx={{ mb: 4 }}
-          >
-            Please check your email and follow the instructions to reset your password. 
-            The link will expire in 1 hour.
+
+          <Typography variant='body2' color='text.secondary' sx={{ mb: 4 }}>
+            Please check your email and follow the instructions to reset your
+            password. The link will expire in 1 hour.
           </Typography>
-          
+
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Button
-              variant="outlined"
+              variant='outlined'
               onClick={handleTryAgain}
               sx={{ textTransform: 'none' }}
             >
               Try Different Email
             </Button>
-            
+
             <Button
-              variant="text"
+              variant='text'
               onClick={handleBack}
               startIcon={<ArrowBack />}
               sx={{ textTransform: 'none' }}
@@ -224,10 +211,10 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
 
   // Form state
   return (
-    <Card 
+    <Card
       elevation={3}
-      sx={{ 
-        maxWidth: 400, 
+      sx={{
+        maxWidth: 400,
         width: '100%',
         mx: 'auto',
       }}
@@ -235,11 +222,11 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
       <CardContent sx={{ p: 4 }}>
         {showTitle && (
           <Box sx={{ textAlign: 'center', mb: 3 }}>
-            <Typography 
-              variant="h4" 
-              component="h1"
+            <Typography
+              variant='h4'
+              component='h1'
               gutterBottom
-              sx={{ 
+              sx={{
                 fontWeight: 700,
                 color: 'primary.main',
                 mb: 1,
@@ -247,20 +234,17 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
             >
               Forgot Password
             </Typography>
-            <Typography 
-              variant="body2" 
-              color="text.secondary"
-              sx={{ mb: 2 }}
-            >
-              Enter your email address and we'll send you instructions to reset your password.
+            <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
+              Enter your email address and we'll send you instructions to reset
+              your password.
             </Typography>
           </Box>
         )}
 
         {/* Error Alert */}
         {submitError && (
-          <Alert 
-            severity="error" 
+          <Alert
+            severity='error'
             sx={{ mb: 3 }}
             onClose={() => setSubmitError(null)}
           >
@@ -269,30 +253,26 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
         )}
 
         {/* Forgot Password Form */}
-        <Box
-          component="form"
-          onSubmit={handleSubmit(onSubmit)}
-          noValidate
-        >
+        <Box component='form' onSubmit={handleSubmit(onSubmit)} noValidate>
           {/* Email Field */}
           <Controller
-            name="email"
+            name='email'
             control={control}
             render={({ field }) => (
               <TextField
                 {...field}
                 fullWidth
-                label="Email Address"
-                type="email"
-                autoComplete="email"
+                label='Email Address'
+                type='email'
+                autoComplete='email'
                 autoFocus
                 error={!!errors.email}
                 helperText={errors.email?.message}
                 disabled={isLoading || isSubmitting}
                 InputProps={{
                   startAdornment: (
-                    <InputAdornment position="start">
-                      <Email color="action" />
+                    <InputAdornment position='start'>
+                      <Email color='action' />
                     </InputAdornment>
                   ),
                 }}
@@ -303,36 +283,38 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
 
           {/* Submit Button */}
           <Button
-            type="submit"
+            type='submit'
             fullWidth
-            variant="contained"
-            size="large"
+            variant='contained'
+            size='large'
             disabled={isLoading || isSubmitting}
             startIcon={
-              (isLoading || isSubmitting) ? (
+              isLoading || isSubmitting ? (
                 <CircularProgress size={20} />
               ) : (
                 <Send />
               )
             }
-            sx={{ 
+            sx={{
               mb: 3,
               py: 1.5,
               fontWeight: 600,
               textTransform: 'none',
             }}
           >
-            {(isLoading || isSubmitting) ? 'Sending...' : 'Send Reset Instructions'}
+            {isLoading || isSubmitting
+              ? 'Sending...'
+              : 'Send Reset Instructions'}
           </Button>
 
           {/* Back to Login */}
           <Box sx={{ textAlign: 'center' }}>
             <Button
-              variant="text"
+              variant='text'
               onClick={handleBack}
               startIcon={<ArrowBack />}
               disabled={isLoading || isSubmitting}
-              sx={{ 
+              sx={{
                 textTransform: 'none',
                 fontWeight: 600,
               }}

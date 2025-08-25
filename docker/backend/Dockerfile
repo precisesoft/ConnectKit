@@ -1,7 +1,7 @@
 # Multi-stage Dockerfile for Backend
 
 # Stage 1: Dependencies (using workspace root)
-FROM node:18-alpine3.19 AS dependencies
+FROM node:18-alpine3.20 AS dependencies
 WORKDIR /app
 
 # Install security updates and remove unnecessary packages
@@ -9,12 +9,17 @@ RUN apk update && apk upgrade && \
     apk add --no-cache curl && \
     rm -rf /var/cache/apk/*
 
+# Copy workspace configuration and package files
 COPY package*.json ./
-RUN npm ci --workspace=backend --only=production && \
+COPY backend/package*.json ./backend/
+# Install all dependencies first (to establish workspace structure)
+RUN npm ci && npm cache clean --force
+# Install production dependencies for the workspace (skip prepare scripts)
+RUN npm ci --workspace=backend --omit=dev --ignore-scripts && \
     npm cache clean --force
 
 # Stage 2: Build (using workspace root)  
-FROM node:18-alpine3.19 AS build
+FROM node:18-alpine3.20 AS build
 WORKDIR /app
 
 # Install security updates
@@ -22,12 +27,13 @@ RUN apk update && apk upgrade && \
     rm -rf /var/cache/apk/*
 
 COPY package*.json ./
+COPY backend/package*.json ./backend/
 RUN npm ci && npm cache clean --force
 COPY backend/ ./backend/
 RUN npm run build --workspace=backend
 
 # Stage 3: Development (using workspace root)
-FROM node:18-alpine3.19 AS development
+FROM node:18-alpine3.20 AS development
 WORKDIR /app
 
 # Install security updates and minimal dependencies
@@ -36,6 +42,7 @@ RUN apk update && apk upgrade && \
     rm -rf /var/cache/apk/*
 
 COPY package*.json ./
+COPY backend/package*.json ./backend/
 RUN npm install && npm cache clean --force
 COPY backend/ ./backend/
 
@@ -47,7 +54,7 @@ EXPOSE 3001
 CMD ["npm", "run", "dev", "--workspace=backend"]
 
 # Stage 4: Production (using workspace root)
-FROM node:18-alpine3.19 AS production
+FROM node:18-alpine3.20 AS production
 
 # Security labels
 LABEL security.scan="enabled" \

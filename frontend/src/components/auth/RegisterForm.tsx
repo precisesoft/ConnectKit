@@ -32,7 +32,9 @@ import { RegisterRequest } from '@services/types';
 import { showErrorNotification, showSuccessNotification } from '@store/uiStore';
 
 // Password strength checker
-const checkPasswordStrength = (password: string): {
+const checkPasswordStrength = (
+  password: string
+): {
   score: number;
   feedback: string[];
   color: 'error' | 'warning' | 'info' | 'success';
@@ -124,11 +126,15 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 }) => {
   const navigate = useNavigate();
   const { register, isLoading } = useAuth();
-  
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [registerError, setRegisterError] = useState<string | null>(null);
-  const [passwordStrength, setPasswordStrength] = useState({ score: 0, feedback: [], color: 'error' as const });
+  const [passwordStrength, setPasswordStrength] = useState<{
+    score: number;
+    feedback: string[];
+    color: 'error' | 'warning' | 'info' | 'success';
+  }>({ score: 0, feedback: [], color: 'error' });
 
   const {
     control,
@@ -150,7 +156,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 
   // Watch password for strength checking
   const password = watch('password');
-  
+
   React.useEffect(() => {
     if (password) {
       setPasswordStrength(checkPasswordStrength(password));
@@ -166,7 +172,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       clearErrors();
 
       await register(data);
-      
+
       showSuccessNotification(
         'Account created successfully! Please check your email to verify your account.',
         'Registration Successful'
@@ -175,23 +181,25 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       if (onSuccess) {
         onSuccess();
       } else {
-        navigate('/login', { 
-          state: { 
-            message: 'Registration successful! Please check your email to verify your account.' 
-          } 
+        navigate('/login', {
+          state: {
+            message:
+              'Registration successful! Please check your email to verify your account.',
+          },
         });
       }
     } catch (error: any) {
       console.error('Registration error:', error);
-      
-      const errorMessage = error.message || 'Registration failed. Please try again.';
+
+      const errorMessage =
+        error.message || 'Registration failed. Please try again.';
       setRegisterError(errorMessage);
-      
+
       // Handle specific error types
       if (error.status === 409) {
         // Email already exists
-        setError('email', { 
-          message: 'This email is already registered' 
+        setError('email', {
+          message: 'This email is already registered',
         });
       } else if (error.status === 422) {
         // Handle validation errors from server
@@ -220,10 +228,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   };
 
   return (
-    <Card 
+    <Card
       elevation={3}
-      sx={{ 
-        maxWidth: 480, 
+      sx={{
+        maxWidth: 480,
         width: '100%',
         mx: 'auto',
       }}
@@ -231,11 +239,11 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       <CardContent sx={{ p: 4 }}>
         {showTitle && (
           <Box sx={{ textAlign: 'center', mb: 3 }}>
-            <Typography 
-              variant="h4" 
-              component="h1"
+            <Typography
+              variant='h4'
+              component='h1'
               gutterBottom
-              sx={{ 
+              sx={{
                 fontWeight: 700,
                 color: 'primary.main',
                 mb: 1,
@@ -243,11 +251,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
             >
               Create Account
             </Typography>
-            <Typography 
-              variant="body2" 
-              color="text.secondary"
-              sx={{ mb: 2 }}
-            >
+            <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
               Join ConnectKit to manage your contacts
             </Typography>
           </Box>
@@ -255,8 +259,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 
         {/* Error Alert */}
         {registerError && (
-          <Alert 
-            severity="error" 
+          <Alert
+            severity='error'
             sx={{ mb: 3 }}
             onClose={() => setRegisterError(null)}
           >
@@ -265,29 +269,25 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         )}
 
         {/* Registration Form */}
-        <Box
-          component="form"
-          onSubmit={handleSubmit(onSubmit)}
-          noValidate
-        >
+        <Box component='form' onSubmit={handleSubmit(onSubmit)} noValidate>
           {/* Name Fields */}
           <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
             <Controller
-              name="firstName"
+              name='firstName'
               control={control}
               render={({ field }) => (
                 <TextField
                   {...field}
                   fullWidth
-                  label="First Name"
-                  autoComplete="given-name"
+                  label='First Name'
+                  autoComplete='given-name'
                   error={!!errors.firstName}
                   helperText={errors.firstName?.message}
                   disabled={isLoading || isSubmitting}
                   InputProps={{
                     startAdornment: (
-                      <InputAdornment position="start">
-                        <Person color="action" />
+                      <InputAdornment position='start'>
+                        <Person color='action' />
                       </InputAdornment>
                     ),
                   }}
@@ -296,14 +296,14 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
             />
 
             <Controller
-              name="lastName"
+              name='lastName'
               control={control}
               render={({ field }) => (
                 <TextField
                   {...field}
                   fullWidth
-                  label="Last Name"
-                  autoComplete="family-name"
+                  label='Last Name'
+                  autoComplete='family-name'
                   error={!!errors.lastName}
                   helperText={errors.lastName?.message}
                   disabled={isLoading || isSubmitting}
@@ -314,22 +314,22 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 
           {/* Email Field */}
           <Controller
-            name="email"
+            name='email'
             control={control}
             render={({ field }) => (
               <TextField
                 {...field}
                 fullWidth
-                label="Email Address"
-                type="email"
-                autoComplete="email"
+                label='Email Address'
+                type='email'
+                autoComplete='email'
                 error={!!errors.email}
                 helperText={errors.email?.message}
                 disabled={isLoading || isSubmitting}
                 InputProps={{
                   startAdornment: (
-                    <InputAdornment position="start">
-                      <Email color="action" />
+                    <InputAdornment position='start'>
+                      <Email color='action' />
                     </InputAdornment>
                   ),
                 }}
@@ -340,31 +340,31 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 
           {/* Password Field */}
           <Controller
-            name="password"
+            name='password'
             control={control}
             render={({ field }) => (
               <>
                 <TextField
                   {...field}
                   fullWidth
-                  label="Password"
+                  label='Password'
                   type={showPassword ? 'text' : 'password'}
-                  autoComplete="new-password"
+                  autoComplete='new-password'
                   error={!!errors.password}
                   helperText={errors.password?.message}
                   disabled={isLoading || isSubmitting}
                   InputProps={{
                     startAdornment: (
-                      <InputAdornment position="start">
-                        <Lock color="action" />
+                      <InputAdornment position='start'>
+                        <Lock color='action' />
                       </InputAdornment>
                     ),
                     endAdornment: (
-                      <InputAdornment position="end">
+                      <InputAdornment position='end'>
                         <IconButton
-                          aria-label="toggle password visibility"
+                          aria-label='toggle password visibility'
                           onClick={handleTogglePassword}
-                          edge="end"
+                          edge='end'
                           disabled={isLoading || isSubmitting}
                         >
                           {showPassword ? <VisibilityOff /> : <Visibility />}
@@ -373,18 +373,18 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
                     ),
                   }}
                 />
-                
+
                 {/* Password Strength Indicator */}
                 {password && (
                   <Box sx={{ mt: 1, mb: 1 }}>
                     <LinearProgress
-                      variant="determinate"
+                      variant='determinate'
                       value={(passwordStrength.score / 5) * 100}
                       color={passwordStrength.color}
                       sx={{ mb: 1 }}
                     />
                     {passwordStrength.feedback.length > 0 && (
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography variant='caption' color='text.secondary'>
                         Password needs: {passwordStrength.feedback.join(', ')}
                       </Typography>
                     )}
@@ -396,33 +396,37 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 
           {/* Confirm Password Field */}
           <Controller
-            name="confirmPassword"
+            name='confirmPassword'
             control={control}
             render={({ field }) => (
               <TextField
                 {...field}
                 fullWidth
-                label="Confirm Password"
+                label='Confirm Password'
                 type={showConfirmPassword ? 'text' : 'password'}
-                autoComplete="new-password"
+                autoComplete='new-password'
                 error={!!errors.confirmPassword}
                 helperText={errors.confirmPassword?.message}
                 disabled={isLoading || isSubmitting}
                 InputProps={{
                   startAdornment: (
-                    <InputAdornment position="start">
-                      <Lock color="action" />
+                    <InputAdornment position='start'>
+                      <Lock color='action' />
                     </InputAdornment>
                   ),
                   endAdornment: (
-                    <InputAdornment position="end">
+                    <InputAdornment position='end'>
                       <IconButton
-                        aria-label="toggle password visibility"
+                        aria-label='toggle password visibility'
                         onClick={handleToggleConfirmPassword}
-                        edge="end"
+                        edge='end'
                         disabled={isLoading || isSubmitting}
                       >
-                        {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                        {showConfirmPassword ? (
+                          <VisibilityOff />
+                        ) : (
+                          <Visibility />
+                        )}
                       </IconButton>
                     </InputAdornment>
                   ),
@@ -434,43 +438,45 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 
           {/* Submit Button */}
           <Button
-            type="submit"
+            type='submit'
             fullWidth
-            variant="contained"
-            size="large"
+            variant='contained'
+            size='large'
             disabled={isLoading || isSubmitting}
             startIcon={
-              (isLoading || isSubmitting) ? (
+              isLoading || isSubmitting ? (
                 <CircularProgress size={20} />
               ) : (
                 <PersonAdd />
               )
             }
-            sx={{ 
+            sx={{
               mb: 3,
               py: 1.5,
               fontWeight: 600,
               textTransform: 'none',
             }}
           >
-            {(isLoading || isSubmitting) ? 'Creating Account...' : 'Create Account'}
+            {isLoading || isSubmitting
+              ? 'Creating Account...'
+              : 'Create Account'}
           </Button>
 
           {/* Login Link */}
           {showLoginLink && (
             <>
               <Divider sx={{ mb: 3 }}>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant='body2' color='text.secondary'>
                   or
                 </Typography>
               </Divider>
-              
+
               <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant='body2' color='text.secondary'>
                   Already have an account?{' '}
                   <Link
                     component={RouterLink}
-                    to="/login"
+                    to='/login'
                     sx={{
                       fontWeight: 600,
                       textDecoration: 'none',

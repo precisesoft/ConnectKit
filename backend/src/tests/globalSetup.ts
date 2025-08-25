@@ -17,11 +17,17 @@ export default async function globalSetup() {
     process.env.LOG_LEVEL = 'error'; // Reduce log noise during tests
 
     // Test database configuration
-    process.env.DB_NAME = process.env.TEST_DB_NAME || 'connectkit_test';
-    process.env.DB_HOST = process.env.TEST_DB_HOST || 'localhost';
-    process.env.DB_PORT = process.env.TEST_DB_PORT || '5432';
-    process.env.DB_USER = process.env.TEST_DB_USER || 'postgres';
-    process.env.DB_PASSWORD = process.env.TEST_DB_PASSWORD || 'postgres';
+    // Priority: DB_* (CI) > TEST_DB_* (local) > defaults
+    process.env.DB_NAME =
+      process.env.DB_NAME || process.env.TEST_DB_NAME || 'connectkit_test';
+    process.env.DB_HOST =
+      process.env.DB_HOST || process.env.TEST_DB_HOST || 'localhost';
+    process.env.DB_PORT =
+      process.env.DB_PORT || process.env.TEST_DB_PORT || '5432';
+    process.env.DB_USER =
+      process.env.DB_USER || process.env.TEST_DB_USER || 'postgres';
+    process.env.DB_PASSWORD =
+      process.env.DB_PASSWORD || process.env.TEST_DB_PASSWORD || 'postgres';
 
     // Redis test configuration
     process.env.REDIS_HOST = process.env.TEST_REDIS_HOST || 'localhost';
@@ -40,6 +46,10 @@ export default async function globalSetup() {
     // Initialize test database
     console.log('📊 Initializing test database...');
     await testDb.initialize();
+
+    // Create test database schema
+    console.log('🗄️ Creating test database schema...');
+    await setupTestSchema();
 
     // Initialize Redis connection
     console.log('🔴 Connecting to test Redis...');

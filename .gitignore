@@ -90,6 +90,12 @@ env/
 grafana-storage/
 prometheus-data/
 
+# SBOM Generation Output
+sbom-output/
+*.sbom
+vulnerabilities-*.json
+vulnerabilities-*.txt
+
 # Claude documentation files (internal reference only)
 **/claude.md
 claude.md
