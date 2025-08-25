@@ -1,0 +1,28 @@
+{
+  "timestamp": "2025-08-25T21:03:22.956Z",
+  "tests": [
+    {
+      "url": "http://localhost:3200/",
+      "status": "passed",
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "url": "http://localhost:3200/login",
+      "status": "passed",
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "url": "http://localhost:3200/register",
+      "status": "passed",
+      "errors": [],
+      "warnings": []
+    }
+  ],
+  "summary": {
+    "errors": 0,
+    "warnings": 0,
+    "passed": 3
+  }
+}

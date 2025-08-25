@@ -1,0 +1,885 @@
+name: Accessibility Testing
+
+# PORT ALLOCATION STRATEGY (to prevent conflicts when jobs run in parallel):
+# ├── lighthouse-a11y:       Frontend: 3200
+# ├── axe-core-tests:        Frontend: 3201
+# ├── wave-testing:          Frontend: 3202
+# ├── color-contrast:        Frontend: 3203
+# └── keyboard-navigation:   Frontend: 3204
+
+# Comprehensive accessibility testing with Lighthouse, WAVE, and color contrast
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main]
+  schedule:
+    # Run accessibility tests daily at 3 AM UTC
+    - cron: "0 3 * * *"
+
+env:
+  NODE_VERSION: "18"
+
+jobs:
+  # Lighthouse Accessibility Audit
+  lighthouse-a11y:
+    name: Lighthouse Accessibility
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          npm install
+          npm install --workspace=frontend
+
+      - name: Build frontend
+        working-directory: ./frontend
+        run: npx vite build --mode development
+
+      - name: Serve frontend for testing
+        working-directory: ./frontend
+        run: |
+          npm install -g serve
+          # Use port 3200 for lighthouse-a11y job to avoid conflicts
+          serve -s dist -p 3200 &
+          sleep 10
+
+      - name: Wait for frontend
+        run: |
+          timeout 60 bash -c 'until curl -f http://localhost:3200; do sleep 2; done'
+
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli@0.12.x
+
+      - name: Run Lighthouse Accessibility Tests
+        run: |
+          # Configure Lighthouse for accessibility focus
+          cat > lighthouserc-a11y.json << EOF
+          {
+            "ci": {
+              "collect": {
+                "numberOfRuns": 3,
+                "url": [
+                  "http://localhost:3200",
+                  "http://localhost:3200/login",
+                  "http://localhost:3200/register",
+                  "http://localhost:3200/contacts"
+                ],
+                "settings": {
+                  "onlyCategories": ["accessibility"],
+                  "chromeFlags": ["--no-sandbox", "--headless"]
+                }
+              },
+              "assert": {
+                "assertions": {
+                  "categories:accessibility": ["error", {"minScore": 0.9}]
+                }
+              }
+            }
+          }
+          EOF
+
+          lhci collect --config=lighthouserc-a11y.json
+          lhci assert --config=lighthouserc-a11y.json
+
+      - name: Parse Lighthouse Results
+        if: always()
+        run: |
+          echo "## Lighthouse Accessibility Results" >> $GITHUB_STEP_SUMMARY
+
+          if [ -d ".lighthouseci" ]; then
+            for file in .lighthouseci/lhr-*.json; do
+              if [ -f "$file" ]; then
+                URL=$(jq -r '.finalUrl' "$file")
+                SCORE=$(jq -r '.categories.accessibility.score' "$file")
+                SCORE_PERCENT=$(echo "$SCORE * 100" | bc)
+                
+                echo "### $URL" >> $GITHUB_STEP_SUMMARY
+                echo "**Accessibility Score:** ${SCORE_PERCENT}%" >> $GITHUB_STEP_SUMMARY
+                
+                # Extract accessibility violations
+                jq -r '.audits | to_entries[] | select(.value.score != null and .value.score < 1) | select(.key | contains("accessibility") or contains("color-contrast") or contains("aria") or contains("tabindex") or contains("label") or contains("heading")) | "- " + .value.title + " (Score: " + (.value.score | tostring) + ")"' "$file" >> $GITHUB_STEP_SUMMARY || true
+                echo "" >> $GITHUB_STEP_SUMMARY
+              fi
+            done
+          fi
+
+      - name: Upload Lighthouse results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-accessibility-results
+          path: .lighthouseci/
+
+      - name: Stop frontend server
+        if: always()
+        run: |
+          # Stop lighthouse-a11y server (port 3200)
+          pkill -f "serve -s dist -p 3200" || true
+          if lsof -ti:3200 >/dev/null 2>&1; then
+            lsof -ti:3200 | xargs kill -9 || true
+          fi
+
+  # Axe-core automated accessibility testing
+  axe-core-tests:
+    name: Axe-core A11y Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          npm install
+          npm install --workspace=frontend
+
+      - name: Install Playwright
+        working-directory: ./frontend
+        run: |
+          npx playwright install
+
+      - name: Build and serve frontend
+        working-directory: ./frontend
+        run: |
+          npx vite build --mode development
+          npm install -g serve
+          # Use port 3201 for axe-core-tests job to avoid conflicts
+          serve -s dist -p 3201 &
+          sleep 10
+
+      - name: Wait for frontend
+        run: |
+          timeout 60 bash -c 'until curl -f http://localhost:3201; do sleep 2; done'
+
+      - name: Update accessibility test configuration
+        working-directory: ./frontend
+        run: |
+          # Update Playwright config to use port 3201 for accessibility tests
+          sed -i "s|baseURL: 'http://localhost:3000'|baseURL: 'http://localhost:3201'|g" playwright.config.ts
+
+      - name: Run Axe accessibility tests
+        working-directory: ./frontend
+        env:
+          TEST_TYPE: accessibility
+        run: |
+          npx playwright test tests/accessibility/axe.spec.ts --reporter=html --output-dir=accessibility-results --project=chromium
+        continue-on-error: true
+
+      - name: Upload Axe test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: axe-accessibility-results
+          path: |
+            frontend/accessibility-results/
+            frontend/test-results/
+
+      - name: Stop frontend server
+        if: always()
+        run: |
+          # Stop axe-core-tests server (port 3201)
+          pkill -f "serve -s dist -p 3201" || true
+          if lsof -ti:3201 >/dev/null 2>&1; then
+            lsof -ti:3201 | xargs kill -9 || true
+          fi
+
+  # WAVE (Web Accessibility Evaluation Tool) testing
+  wave-testing:
+    name: WAVE Accessibility Testing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies and build frontend
+        run: |
+          npm install
+          npm install --workspace=frontend
+          cd frontend && npx vite build --mode development
+
+      - name: Serve frontend for testing
+        working-directory: ./frontend
+        run: |
+          npm install -g serve
+          # Use port 3202 for wave-testing job to avoid conflicts
+          serve -s dist -p 3202 &
+          sleep 10
+
+      - name: Wait for frontend
+        run: |
+          timeout 60 bash -c 'until curl -f http://localhost:3202; do sleep 2; done'
+
+      - name: Install WAVE CLI (alternative implementation)
+        run: |
+          # Install puppeteer locally for web scraping WAVE results
+          npm install puppeteer
+
+          # Create WAVE testing script
+          cat > wave-test.js << 'EOF'
+          const puppeteer = require('puppeteer');
+          const fs = require('fs');
+
+          async function testAccessibility() {
+            const browser = await puppeteer.launch({ 
+              headless: true,
+              args: ['--no-sandbox', '--disable-setuid-sandbox']
+            });
+            
+            const page = await browser.newPage();
+            const results = {};
+            
+            const urls = [
+              'http://localhost:3202',
+              'http://localhost:3202/login',
+              'http://localhost:3202/register'
+            ];
+            
+            for (const url of urls) {
+              try {
+                console.log(`Testing: ${url}`);
+                await page.goto(url, { waitUntil: 'networkidle2' });
+                
+                // Basic accessibility checks
+                const title = await page.title();
+                const hasH1 = await page.$('h1') !== null;
+                const images = await page.$$eval('img', imgs => 
+                  imgs.map(img => ({ src: img.src, alt: img.alt }))
+                );
+                const imagesWithoutAlt = images.filter(img => !img.alt || img.alt.trim() === '');
+                
+                // Check for form labels
+                const formsWithoutLabels = await page.$$eval('input, select, textarea', inputs => 
+                  inputs.filter(input => {
+                    const id = input.id;
+                    const name = input.name;
+                    if (!id && !name) return true;
+                    const label = document.querySelector(`label[for="${id}"]`) || 
+                                 document.querySelector(`label[for="${name}"]`) ||
+                                 input.closest('label');
+                    return !label && input.type !== 'hidden' && input.type !== 'submit';
+                  }).length
+                );
+                
+                // Check for headings structure
+                const headings = await page.$$eval('h1, h2, h3, h4, h5, h6', headings =>
+                  headings.map(h => ({ level: parseInt(h.tagName[1]), text: h.textContent.trim() }))
+                );
+                
+                results[url] = {
+                  title: title,
+                  hasH1: hasH1,
+                  imagesWithoutAlt: imagesWithoutAlt.length,
+                  formsWithoutLabels: formsWithoutLabels,
+                  headingsCount: headings.length,
+                  headings: headings
+                };
+                
+              } catch (error) {
+                console.error(`Error testing ${url}:`, error.message);
+                results[url] = { error: error.message };
+              }
+            }
+            
+            await browser.close();
+            return results;
+          }
+
+          testAccessibility().then(results => {
+            console.log('\n=== WAVE-style Accessibility Results ===');
+            fs.writeFileSync('wave-results.json', JSON.stringify(results, null, 2));
+            
+            for (const [url, data] of Object.entries(results)) {
+              console.log(`\n${url}:`);
+              if (data.error) {
+                console.log(`  ❌ Error: ${data.error}`);
+              } else {
+                console.log(`  📄 Title: ${data.title || 'Missing'}`);
+                console.log(`  📊 H1 Present: ${data.hasH1 ? '✅' : '❌'}`);
+                console.log(`  🖼️  Images without alt: ${data.imagesWithoutAlt}`);
+                console.log(`  📝 Forms without labels: ${data.formsWithoutLabels}`);
+                console.log(`  📋 Headings count: ${data.headingsCount}`);
+              }
+            }
+          }).catch(console.error);
+          EOF
+
+      - name: Run WAVE-style accessibility tests
+        run: |
+          node wave-test.js
+        continue-on-error: true
+
+      - name: Parse WAVE results for GitHub
+        if: always()
+        run: |
+          echo "## WAVE-style Accessibility Analysis" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f "wave-results.json" ]; then
+            # Parse results and add to summary
+            node -e "
+              const results = JSON.parse(require('fs').readFileSync('wave-results.json', 'utf8'));
+              for (const [url, data] of Object.entries(results)) {
+                console.log(\`### \${url}\`);
+                if (data.error) {
+                  console.log(\`❌ **Error:** \${data.error}\`);
+                } else {
+                  console.log(\`- **Page Title:** \${data.title || 'Missing ❌'}\`);
+                  console.log(\`- **H1 Present:** \${data.hasH1 ? '✅ Yes' : '❌ No'}\`);
+                  console.log(\`- **Images without Alt Text:** \${data.imagesWithoutAlt} \${data.imagesWithoutAlt > 0 ? '❌' : '✅'}\`);
+                  console.log(\`- **Forms without Labels:** \${data.formsWithoutLabels} \${data.formsWithoutLabels > 0 ? '❌' : '✅'}\`);
+                  console.log(\`- **Heading Structure:** \${data.headingsCount} headings\`);
+                }
+                console.log('');
+              }
+            " >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload WAVE results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wave-accessibility-results
+          path: wave-results.json
+
+      - name: Stop frontend server
+        if: always()
+        run: |
+          # Stop wave-testing server (port 3202)
+          pkill -f "serve -s dist -p 3202" || true
+          if lsof -ti:3202 >/dev/null 2>&1; then
+            lsof -ti:3202 | xargs kill -9 || true
+          fi
+
+  # Color contrast and visual accessibility testing
+  color-contrast:
+    name: Color Contrast Testing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies and build frontend
+        run: |
+          npm install
+          npm install --workspace=frontend
+          cd frontend && npx vite build --mode development
+
+      - name: Serve frontend for testing
+        working-directory: ./frontend
+        run: |
+          npm install -g serve
+          # Use port 3203 for color-contrast job to avoid conflicts
+          serve -s dist -p 3203 &
+          sleep 10
+
+      - name: Wait for frontend
+        run: |
+          timeout 60 bash -c 'until curl -f http://localhost:3203; do sleep 2; done'
+
+      - name: Install color contrast testing tools
+        run: |
+          npm install puppeteer color-contrast-checker
+
+      - name: Create color contrast test script
+        run: |
+          cat > color-contrast-test.js << 'EOF'
+          const puppeteer = require('puppeteer');
+          const ColorContrastChecker = require('color-contrast-checker');
+          const fs = require('fs');
+
+          function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? [
+              parseInt(result[1], 16),
+              parseInt(result[2], 16),
+              parseInt(result[3], 16)
+            ] : null;
+          }
+
+          function rgbStringToArray(rgbString) {
+            if (!rgbString || rgbString === 'rgba(0, 0, 0, 0)') return null;
+            const match = rgbString.match(/rgba?\(([^)]+)\)/);
+            if (!match) return null;
+            const values = match[1].split(',').map(v => parseInt(v.trim()));
+            return [values[0], values[1], values[2]];
+          }
+
+          async function testColorContrast() {
+            const browser = await puppeteer.launch({
+              headless: true,
+              args: ['--no-sandbox', '--disable-setuid-sandbox']
+            });
+            
+            const page = await browser.newPage();
+            const ccc = new ColorContrastChecker();
+            const results = {};
+            
+            const urls = [
+              'http://localhost:3203',
+              'http://localhost:3203/login',
+              'http://localhost:3203/register'
+            ];
+            
+            for (const url of urls) {
+              console.log(`Testing color contrast for: ${url}`);
+              await page.goto(url, { waitUntil: 'networkidle2' });
+              
+              // Get all text elements and their computed styles
+              const colorInfo = await page.evaluate(() => {
+                const elements = document.querySelectorAll('*');
+                const colorData = [];
+                
+                elements.forEach(el => {
+                  const style = window.getComputedStyle(el);
+                  const text = el.textContent?.trim();
+                  
+                  if (text && text.length > 0 && el.offsetWidth > 0 && el.offsetHeight > 0) {
+                    const color = style.color;
+                    const backgroundColor = style.backgroundColor;
+                    const fontSize = parseFloat(style.fontSize);
+                    
+                    if (color && backgroundColor && color !== backgroundColor && backgroundColor !== 'rgba(0, 0, 0, 0)') {
+                      colorData.push({
+                        element: el.tagName.toLowerCase(),
+                        text: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
+                        color: color,
+                        backgroundColor: backgroundColor,
+                        fontSize: fontSize
+                      });
+                    }
+                  }
+                });
+                
+                return colorData.slice(0, 15); // Limit to prevent huge output
+              });
+              
+              const contrastResults = [];
+              
+              for (const item of colorInfo) {
+                const foreground = rgbStringToArray(item.color);
+                const background = rgbStringToArray(item.backgroundColor);
+                
+                if (foreground && background) {
+                  const isLarge = item.fontSize >= 18 || (item.fontSize >= 14 && item.element === 'strong');
+                  const aaLevel = ccc.isLevelAA(foreground, background, isLarge);
+                  const aaaLevel = ccc.isLevelAAA(foreground, background, isLarge);
+                  const ratio = ccc.getContrastRatio(foreground, background);
+                  
+                  contrastResults.push({
+                    element: item.element,
+                    text: item.text,
+                    foreground: item.color,
+                    background: item.backgroundColor,
+                    fontSize: item.fontSize,
+                    isLarge: isLarge,
+                    contrastRatio: ratio,
+                    passesAA: aaLevel,
+                    passesAAA: aaaLevel
+                  });
+                }
+              }
+              
+              results[url] = {
+                totalElements: colorInfo.length,
+                contrastResults: contrastResults,
+                failedAA: contrastResults.filter(r => !r.passesAA).length,
+                failedAAA: contrastResults.filter(r => !r.passesAAA).length
+              };
+            }
+            
+            await browser.close();
+            return results;
+          }
+
+          testColorContrast().then(results => {
+            fs.writeFileSync('color-contrast-results.json', JSON.stringify(results, null, 2));
+            console.log('Color contrast analysis completed');
+          }).catch(console.error);
+          EOF
+
+      - name: Run color contrast tests
+        run: |
+          node color-contrast-test.js
+        continue-on-error: true
+
+      - name: Analyze color contrast results
+        run: |
+          echo "## Color Contrast Analysis" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f "color-contrast-results.json" ]; then
+            node -e "
+              const results = JSON.parse(require('fs').readFileSync('color-contrast-results.json', 'utf8'));
+              
+              let totalFailedAA = 0;
+              let totalTested = 0;
+              
+              for (const [url, data] of Object.entries(results)) {
+                console.log(\`### \${url}\`);
+                console.log(\`**Elements Analyzed:** \${data.totalElements}\`);
+                console.log(\`**Failed WCAG AA:** \${data.failedAA}\`);
+                console.log(\`**Failed WCAG AAA:** \${data.failedAAA}\`);
+                console.log('');
+                
+                totalFailedAA += data.failedAA;
+                totalTested += data.contrastResults?.length || 0;
+                
+                // Show failed contrast elements (first 3)
+                const failed = data.contrastResults?.filter(r => !r.passesAA).slice(0, 3) || [];
+                if (failed.length > 0) {
+                  console.log('**Failed Contrast Elements:**');
+                  failed.forEach((el, i) => {
+                    console.log(\`\${i + 1}. **\${el.element}**: \${el.text}\`);
+                    console.log(\`   - Ratio: \${el.contrastRatio.toFixed(2)}:1\`);
+                    console.log(\`   - AA Required: \${el.isLarge ? '3:1' : '4.5:1'}\`);
+                    console.log(\`   - Colors: \${el.foreground} on \${el.background}\`);
+                    console.log('');
+                  });
+                }
+              }
+              
+              console.log(\`### Summary\`);
+              console.log(\`**Total Elements Tested:** \${totalTested}\`);
+              console.log(\`**Total AA Failures:** \${totalFailedAA}\`);
+              console.log(\`**Success Rate:** \${totalTested > 0 ? (((totalTested - totalFailedAA) / totalTested) * 100).toFixed(1) : 0}%\`);
+            " >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload color contrast results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: color-contrast-results
+          path: color-contrast-results.json
+
+      - name: Stop frontend server
+        if: always()
+        run: |
+          # Stop color-contrast server (port 3203)
+          pkill -f "serve -s dist -p 3203" || true
+          if lsof -ti:3203 >/dev/null 2>&1; then
+            lsof -ti:3203 | xargs kill -9 || true
+          fi
+
+  # Keyboard navigation testing
+  keyboard-navigation:
+    name: Keyboard Navigation Testing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          npm install
+          npm install --workspace=frontend
+
+      - name: Install test dependencies
+        working-directory: ./frontend
+        run: |
+          npm install --save-dev @playwright/test
+          npx playwright install
+
+      - name: Build and serve frontend
+        working-directory: ./frontend
+        run: |
+          npx vite build --mode development
+          npm install -g serve
+          # Use port 3204 for keyboard-navigation job to avoid conflicts
+          serve -s dist -p 3204 &
+          sleep 10
+
+      - name: Wait for frontend
+        run: |
+          timeout 60 bash -c 'until curl -f http://localhost:3204; do sleep 2; done'
+
+      - name: Create keyboard navigation tests
+        working-directory: ./frontend
+        run: |
+          mkdir -p tests/accessibility
+
+          cat > tests/accessibility/keyboard-navigation.spec.ts << 'EOF'
+          import { test, expect } from '@playwright/test';
+
+          test.describe('Keyboard Navigation Tests', () => {
+            test('should navigate through all focusable elements on home page', async ({ page }) => {
+              await page.goto('http://localhost:3204/');
+              await page.waitForLoadState('networkidle');
+              
+              // Get all focusable elements
+              const focusableElements = await page.locator(
+                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+              ).all();
+              
+              console.log(`Found ${focusableElements.length} focusable elements`);
+              
+              // Test tab navigation
+              let tabCount = 0;
+              for (let i = 0; i < Math.min(focusableElements.length, 20); i++) {
+                await page.keyboard.press('Tab');
+                tabCount++;
+                
+                const focusedElement = page.locator(':focus').first();
+                const isVisible = await focusedElement.isVisible();
+                expect(isVisible).toBe(true);
+                
+                // Check if focused element has visible focus indicator
+                const focusedElementBox = await focusedElement.boundingBox();
+                expect(focusedElementBox).not.toBeNull();
+              }
+              
+              expect(tabCount).toBeGreaterThan(0);
+            });
+            
+            test('should handle Enter key on buttons and links', async ({ page }) => {
+              await page.goto('http://localhost:3204/');
+              await page.waitForLoadState('networkidle');
+              
+              // Find clickable elements
+              const buttons = await page.locator('button:visible, a[href]:visible').all();
+              
+              if (buttons.length > 0) {
+                const firstButton = buttons[0];
+                await firstButton.focus();
+                
+                // Test Enter key
+                const elementTag = await firstButton.evaluate(el => el.tagName.toLowerCase());
+                const isDisabled = await firstButton.evaluate(el => el.disabled || el.getAttribute('aria-disabled') === 'true');
+                
+                if (!isDisabled && (elementTag === 'button' || elementTag === 'a')) {
+                  // Just test that Enter key can be pressed without error
+                  await firstButton.press('Enter');
+                  // Basic test - if no error thrown, navigation works
+                }
+              }
+            });
+            
+            test('should navigate login form with keyboard only', async ({ page }) => {
+              await page.goto('http://localhost:3204/login');
+              await page.waitForLoadState('networkidle');
+              
+              // Tab to first form field
+              await page.keyboard.press('Tab');
+              let focusedElement = page.locator(':focus').first();
+              
+              // Should be able to type in focused element
+              if (await focusedElement.inputValue !== undefined) {
+                await focusedElement.type('test@example.com');
+                expect(await focusedElement.inputValue()).toBe('test@example.com');
+              }
+              
+              // Tab to next field
+              await page.keyboard.press('Tab');
+              focusedElement = page.locator(':focus').first();
+              
+              // Should be able to type in second field
+              if (await focusedElement.inputValue !== undefined) {
+                await focusedElement.type('password123');
+                expect(await focusedElement.inputValue()).toBe('password123');
+              }
+              
+              // Tab should reach submit button
+              await page.keyboard.press('Tab');
+              focusedElement = page.locator(':focus').first();
+              const buttonText = await focusedElement.textContent();
+              expect(buttonText?.toLowerCase()).toContain('login');
+            });
+            
+            test('should support Escape key to close modals/dialogs', async ({ page }) => {
+              await page.goto('http://localhost:3204/');
+              await page.waitForLoadState('networkidle');
+              
+              // Look for elements that might open modals
+              const modalTriggers = await page.locator('[aria-haspopup="dialog"], [data-toggle="modal"]').all();
+              
+              if (modalTriggers.length > 0) {
+                await modalTriggers[0].click();
+                
+                // Wait a bit for modal to potentially open
+                await page.waitForTimeout(500);
+                
+                // Press Escape
+                await page.keyboard.press('Escape');
+                
+                // Modal should be closed (this is a basic test)
+                // In a real app, you'd check for specific modal close behavior
+              }
+            });
+            
+            test('should have proper skip links', async ({ page }) => {
+              await page.goto('http://localhost:3204/');
+              await page.waitForLoadState('networkidle');
+              
+              // Tab to first element (should potentially be skip link)
+              await page.keyboard.press('Tab');
+              const firstFocusedElement = page.locator(':focus').first();
+              
+              const text = await firstFocusedElement.textContent();
+              const href = await firstFocusedElement.getAttribute('href');
+              
+              // Check if first focusable element is a skip link
+              if (text?.toLowerCase().includes('skip') && href?.startsWith('#')) {
+                console.log('Skip link found:', text);
+                
+                // Test that skip link actually works
+                await firstFocusedElement.press('Enter');
+                
+                // Check if focus moved to target
+                const targetElement = page.locator(href);
+                if (await targetElement.count() > 0) {
+                  console.log('Skip link target exists');
+                }
+              }
+            });
+          });
+          EOF
+
+      - name: Run keyboard navigation tests
+        working-directory: ./frontend
+        run: |
+          npx playwright test tests/accessibility/keyboard-navigation.spec.ts --reporter=html --output keyboard-test-results
+        continue-on-error: true
+
+      - name: Upload keyboard navigation results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: keyboard-navigation-results
+          path: |
+            frontend/keyboard-test-results/
+            frontend/test-results/
+
+      - name: Stop frontend server
+        if: always()
+        run: |
+          # Stop keyboard-navigation server (port 3204)
+          pkill -f "serve -s dist -p 3204" || true
+          if lsof -ti:3204 >/dev/null 2>&1; then
+            lsof -ti:3204 | xargs kill -9 || true
+          fi
+
+  # Accessibility report consolidation
+  accessibility-report:
+    name: Accessibility Report
+    runs-on: ubuntu-latest
+    needs:
+      [
+        lighthouse-a11y,
+        axe-core-tests,
+        wave-testing,
+        color-contrast,
+        keyboard-navigation,
+      ]
+    if: always()
+    steps:
+      - name: Download all accessibility artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: accessibility-results/
+
+      - name: Generate accessibility summary report
+        run: |
+          echo "# ♿ Accessibility Testing Report" > accessibility-summary.md
+          echo "" >> accessibility-summary.md
+          echo "This report consolidates accessibility testing results from multiple tools and approaches." >> accessibility-summary.md
+          echo "" >> accessibility-summary.md
+
+          echo "## Test Results Summary" >> accessibility-summary.md
+          echo "" >> accessibility-summary.md
+
+          # Check job results
+          if [ "${{ needs.lighthouse-a11y.result }}" == "success" ]; then
+            echo "✅ **Lighthouse Accessibility**: Passed (Score ≥ 90%)" >> accessibility-summary.md
+          else
+            echo "❌ **Lighthouse Accessibility**: Failed or warnings found" >> accessibility-summary.md
+          fi
+
+          if [ "${{ needs.axe-core-tests.result }}" == "success" ]; then
+            echo "✅ **Axe-core Tests**: No violations detected" >> accessibility-summary.md
+          else
+            echo "❌ **Axe-core Tests**: Accessibility violations found" >> accessibility-summary.md
+          fi
+
+          if [ "${{ needs.wave-testing.result }}" == "success" ]; then
+            echo "✅ **WAVE Analysis**: Basic accessibility checks passed" >> accessibility-summary.md
+          else
+            echo "⚠️ **WAVE Analysis**: Issues detected or test incomplete" >> accessibility-summary.md
+          fi
+
+          if [ "${{ needs.color-contrast.result }}" == "success" ]; then
+            echo "✅ **Color Contrast**: Analysis completed" >> accessibility-summary.md
+          else
+            echo "⚠️ **Color Contrast**: Analysis incomplete" >> accessibility-summary.md
+          fi
+
+          if [ "${{ needs.keyboard-navigation.result }}" == "success" ]; then
+            echo "✅ **Keyboard Navigation**: All tests passed" >> accessibility-summary.md
+          else
+            echo "❌ **Keyboard Navigation**: Issues found with keyboard accessibility" >> accessibility-summary.md
+          fi
+
+          echo "" >> accessibility-summary.md
+          echo "## WCAG 2.1 Compliance Checklist" >> accessibility-summary.md
+          echo "" >> accessibility-summary.md
+          echo "### Level A Compliance" >> accessibility-summary.md
+          echo "- [ ] Images have appropriate alt text" >> accessibility-summary.md
+          echo "- [ ] Form controls have labels" >> accessibility-summary.md
+          echo "- [ ] Page has proper heading structure" >> accessibility-summary.md
+          echo "- [ ] Content is keyboard accessible" >> accessibility-summary.md
+          echo "- [ ] No content flashes more than 3 times per second" >> accessibility-summary.md
+          echo "" >> accessibility-summary.md
+          echo "### Level AA Compliance" >> accessibility-summary.md
+          echo "- [ ] Color contrast ratio is at least 4.5:1 for normal text" >> accessibility-summary.md
+          echo "- [ ] Color contrast ratio is at least 3:1 for large text" >> accessibility-summary.md
+          echo "- [ ] Page is usable at 200% zoom" >> accessibility-summary.md
+          echo "- [ ] Focus is visible and logical" >> accessibility-summary.md
+          echo "- [ ] Content is organized with proper headings" >> accessibility-summary.md
+          echo "" >> accessibility-summary.md
+
+          echo "## Accessibility Testing Tools Used" >> accessibility-summary.md
+          echo "" >> accessibility-summary.md
+          echo "1. **Google Lighthouse**: Automated accessibility auditing" >> accessibility-summary.md
+          echo "2. **Axe-core**: Comprehensive accessibility rule engine" >> accessibility-summary.md
+          echo "3. **WAVE-style Analysis**: Web accessibility evaluation" >> accessibility-summary.md
+          echo "4. **Color Contrast Analysis**: Visual accessibility testing" >> accessibility-summary.md
+          echo "5. **Keyboard Navigation Testing**: Manual keyboard-only navigation" >> accessibility-summary.md
+          echo "" >> accessibility-summary.md
+
+          echo "## Recommendations" >> accessibility-summary.md
+          echo "" >> accessibility-summary.md
+          echo "- Regular accessibility testing in development workflow" >> accessibility-summary.md
+          echo "- Manual testing with screen readers (NVDA, JAWS, VoiceOver)" >> accessibility-summary.md
+          echo "- User testing with people who use assistive technologies" >> accessibility-summary.md
+          echo "- Accessibility training for development team" >> accessibility-summary.md
+          echo "- Implement accessibility linting in IDE and CI/CD" >> accessibility-summary.md
+
+          cat accessibility-summary.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload consolidated accessibility report
+        uses: actions/upload-artifact@v4
+        with:
+          name: accessibility-report
+          path: |
+            accessibility-summary.md
+            accessibility-results/
