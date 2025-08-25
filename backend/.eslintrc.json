@@ -5,13 +5,15 @@
     "es2022": true,
     "jest": true
   },
-  "extends": ["eslint:recommended", "prettier"],
+  "extends": ["eslint:recommended"],
   "ignorePatterns": [
     "dist",
     "node_modules",
     "coverage",
     "*.config.js",
-    "*.config.ts"
+    "*.config.ts",
+    "**/*.ts",
+    "**/*.tsx"
   ],
   "parserOptions": {
     "ecmaVersion": 2022,

@@ -228,6 +228,7 @@ expect.extend({
 
 // Type augmentation for custom matchers
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Vi {
     interface AsymmetricMatchersContaining {
       toHaveBeenCalledWithMatch(expected: any): any;
