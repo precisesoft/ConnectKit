@@ -7,21 +7,21 @@ on:
     branches: [main]
   schedule:
     # Run performance tests daily at 2 AM UTC
-    - cron: '0 2 * * *'
+    - cron: "0 2 * * *"
   workflow_dispatch:
     inputs:
       test_duration:
-        description: 'Load test duration (default: 5m)'
-        default: '5m'
+        description: "Load test duration (default: 5m)"
+        default: "5m"
         type: string
       max_users:
-        description: 'Maximum concurrent users (default: 100)'
-        default: '100'
+        description: "Maximum concurrent users (default: 100)"
+        default: "100"
         type: string
 
 env:
-  NODE_VERSION: '18'
-  K6_VERSION: '0.47.0'
+  NODE_VERSION: "18"
+  K6_VERSION: "0.47.0"
 
 jobs:
   # Frontend Performance Testing with Lighthouse CI
@@ -38,7 +38,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: "npm"
 
       - name: Install dependencies
         working-directory: ./frontend
@@ -75,7 +75,7 @@ jobs:
 
       - name: Upload Lighthouse results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: lighthouse-results
           path: .lighthouseci/
@@ -168,7 +168,7 @@ jobs:
 
       - name: Upload k6 results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: k6-results
           path: |
@@ -205,7 +205,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: "npm"
 
       - name: Install backend dependencies
         working-directory: ./backend
@@ -262,7 +262,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: "npm"
 
       - name: Install frontend dependencies
         working-directory: ./frontend
@@ -279,8 +279,8 @@ jobs:
           build-script: |
             cd frontend
             npm run build
-          pattern: 'frontend/dist/**/*.{js,css}'
-          exclude: '{**/*.map,**/node_modules/**}'
+          pattern: "frontend/dist/**/*.{js,css}"
+          exclude: "{**/*.map,**/node_modules/**}"
           strip-hash: '\\.[a-f\\d]{8}\\.'
 
       - name: Check bundle size limits
@@ -288,9 +288,9 @@ jobs:
         run: |
           BUNDLE_SIZE=$(du -sk dist/ | cut -f1)
           THRESHOLD_KB=512
-          
+
           echo "Bundle size: ${BUNDLE_SIZE}KB (threshold: ${THRESHOLD_KB}KB)"
-          
+
           if [ $BUNDLE_SIZE -gt $THRESHOLD_KB ]; then
             echo "❌ Bundle size exceeds threshold: ${BUNDLE_SIZE}KB > ${THRESHOLD_KB}KB"
             exit 1
@@ -310,7 +310,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: "npm"
 
       - name: Start services with profiling
         run: |
@@ -323,16 +323,16 @@ jobs:
         run: |
           # Install profiling tools
           npm install -g clinic autocannon
-          
+
           # Profile the application
           timeout 60s autocannon -c 10 -d 30 http://localhost:3001/api/health || true
-          
+
           echo "## Memory Profiling Results" >> $GITHUB_STEP_SUMMARY
           echo "Memory profiling completed - check artifacts for detailed reports" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload profiling results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: profiling-results
           path: |
@@ -362,7 +362,7 @@ jobs:
         run: |
           echo "## Performance Comparison" >> $GITHUB_STEP_SUMMARY
           echo "Comparing performance metrics with base branch..." >> $GITHUB_STEP_SUMMARY
-          
+
           # This would typically compare metrics from current PR vs main branch
           # Implementation depends on where metrics are stored (e.g., database, files)
           echo "Performance comparison analysis would be implemented here" >> $GITHUB_STEP_SUMMARY

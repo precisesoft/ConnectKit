@@ -7,11 +7,11 @@ on:
     branches: [main]
   schedule:
     # Run accessibility tests daily at 3 AM UTC
-    - cron: '0 3 * * *'
+    - cron: "0 3 * * *"
   workflow_dispatch:
 
 env:
-  NODE_VERSION: '18'
+  NODE_VERSION: "18"
 
 jobs:
   # Lighthouse Accessibility Audit
@@ -20,35 +20,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      
+          cache: "npm"
+
       - name: Install frontend dependencies
         working-directory: ./frontend
         run: npm ci
-      
+
       - name: Build frontend
         working-directory: ./frontend
         run: npm run build
-      
+
       - name: Start services
         run: |
           cp .env.example .env
           docker-compose up -d
           sleep 30
-      
+
       - name: Wait for services
         run: |
           timeout 60 bash -c 'until curl -f http://localhost:3001/api/health; do sleep 2; done'
           timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
-      
+
       - name: Install Lighthouse CI
         run: npm install -g @lhci/cli@0.12.x
-      
+
       - name: Run Lighthouse Accessibility Tests
         run: |
           # Configure Lighthouse for accessibility focus
@@ -77,15 +77,15 @@ jobs:
             }
           }
           EOF
-          
+
           lhci collect --config=lighthouserc-a11y.json
           lhci assert --config=lighthouserc-a11y.json
-      
+
       - name: Parse Lighthouse Results
         if: always()
         run: |
           echo "## Lighthouse Accessibility Results" >> $GITHUB_STEP_SUMMARY
-          
+
           if [ -d ".lighthouseci" ]; then
             for file in .lighthouseci/lhr-*.json; do
               if [ -f "$file" ]; then
@@ -102,14 +102,14 @@ jobs:
               fi
             done
           fi
-      
+
       - name: Upload Lighthouse results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: lighthouse-accessibility-results
           path: .lighthouseci/
-      
+
       - name: Stop services
         if: always()
         run: docker-compose down -v
@@ -120,48 +120,48 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      
+          cache: "npm"
+
       - name: Install dependencies
         working-directory: ./frontend
         run: npm ci
-      
+
       - name: Install Playwright and axe-playwright
         working-directory: ./frontend
         run: |
           npm install --save-dev @playwright/test axe-playwright
           npx playwright install
-      
+
       - name: Start services
         run: |
           cp .env.example .env
           docker-compose up -d
           sleep 30
-      
+
       - name: Wait for services
         run: |
           timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
-      
+
       - name: Create Axe accessibility tests
         working-directory: ./frontend
         run: |
           mkdir -p tests/accessibility
-          
+
           cat > tests/accessibility/axe.spec.ts << 'EOF'
           import { test, expect } from '@playwright/test';
           import AxeBuilder from '@axe-core/playwright';
-          
+
           const pages = [
             { name: 'Home', url: '/' },
             { name: 'Login', url: '/login' },
             { name: 'Register', url: '/register' },
           ];
-          
+
           pages.forEach(({ name, url }) => {
             test(`${name} page should not have accessibility violations`, async ({ page }) => {
               await page.goto(`http://localhost:3000${url}`);
@@ -177,7 +177,7 @@ jobs:
               expect(accessibilityScanResults.violations).toEqual([]);
             });
           });
-          
+
           test('Contact form should be accessible', async ({ page }) => {
             await page.goto('http://localhost:3000/login');
             
@@ -192,7 +192,7 @@ jobs:
               
             expect(accessibilityScanResults.violations).toEqual([]);
           });
-          
+
           test('Navigation should be keyboard accessible', async ({ page }) => {
             await page.goto('http://localhost:3000/');
             await page.waitForLoadState('networkidle');
@@ -211,22 +211,22 @@ jobs:
             expect(accessibilityScanResults.violations).toEqual([]);
           });
           EOF
-      
+
       - name: Run Axe accessibility tests
         working-directory: ./frontend
         run: |
           npx playwright test tests/accessibility/axe.spec.ts --reporter=html --output-dir=accessibility-results
         continue-on-error: true
-      
+
       - name: Upload Axe test results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: axe-accessibility-results
           path: |
             frontend/accessibility-results/
             frontend/test-results/
-      
+
       - name: Stop services
         if: always()
         run: docker-compose down -v
@@ -237,33 +237,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      
+          cache: "npm"
+
       - name: Start services
         run: |
           cp .env.example .env
           docker-compose up -d
           sleep 30
-      
+
       - name: Wait for services
         run: |
           timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
-      
+
       - name: Install WAVE CLI (alternative implementation)
         run: |
           # Install puppeteer for web scraping WAVE results
           npm install -g puppeteer
-          
+
           # Create WAVE testing script
           cat > wave-test.js << 'EOF'
           const puppeteer = require('puppeteer');
           const fs = require('fs');
-          
+
           async function testAccessibility() {
             const browser = await puppeteer.launch({ 
               headless: true,
@@ -328,7 +328,7 @@ jobs:
             await browser.close();
             return results;
           }
-          
+
           testAccessibility().then(results => {
             console.log('\n=== WAVE-style Accessibility Results ===');
             fs.writeFileSync('wave-results.json', JSON.stringify(results, null, 2));
@@ -347,17 +347,17 @@ jobs:
             }
           }).catch(console.error);
           EOF
-      
+
       - name: Run WAVE-style accessibility tests
         run: |
           node wave-test.js
         continue-on-error: true
-      
+
       - name: Parse WAVE results for GitHub
         if: always()
         run: |
           echo "## WAVE-style Accessibility Analysis" >> $GITHUB_STEP_SUMMARY
-          
+
           if [ -f "wave-results.json" ]; then
             # Parse results and add to summary
             node -e "
@@ -377,14 +377,14 @@ jobs:
               }
             " >> $GITHUB_STEP_SUMMARY
           fi
-      
+
       - name: Upload WAVE results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: wave-accessibility-results
           path: wave-results.json
-      
+
       - name: Stop services
         if: always()
         run: docker-compose down -v
@@ -395,37 +395,37 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      
+          cache: "npm"
+
       - name: Install dependencies
         working-directory: ./frontend
         run: npm ci
-      
+
       - name: Start services
         run: |
           cp .env.example .env
           docker-compose up -d
           sleep 30
-      
+
       - name: Wait for services
         run: |
           timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
-      
+
       - name: Install color contrast testing tools
         run: |
           npm install -g puppeteer color-contrast-analyzer-cli
-      
+
       - name: Create color contrast test script
         run: |
           cat > color-contrast-test.js << 'EOF'
           const puppeteer = require('puppeteer');
           const fs = require('fs');
-          
+
           async function testColorContrast() {
             const browser = await puppeteer.launch({
               headless: true,
@@ -483,22 +483,22 @@ jobs:
             await browser.close();
             return results;
           }
-          
+
           testColorContrast().then(results => {
             fs.writeFileSync('color-contrast-results.json', JSON.stringify(results, null, 2));
             console.log('Color contrast analysis completed');
           }).catch(console.error);
           EOF
-      
+
       - name: Run color contrast tests
         run: |
           node color-contrast-test.js
         continue-on-error: true
-      
+
       - name: Analyze color contrast results
         run: |
           echo "## Color Contrast Analysis" >> $GITHUB_STEP_SUMMARY
-          
+
           if [ -f "color-contrast-results.json" ]; then
             node -e "
               const results = JSON.parse(require('fs').readFileSync('color-contrast-results.json', 'utf8'));
@@ -525,14 +525,14 @@ jobs:
               console.log('> **Note:** This is a basic color extraction. For detailed contrast ratio analysis, consider tools like axe-core or Lighthouse.');
             " >> $GITHUB_STEP_SUMMARY
           fi
-      
+
       - name: Upload color contrast results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: color-contrast-results
           path: color-contrast-results.json
-      
+
       - name: Stop services
         if: always()
         run: docker-compose down -v
@@ -543,38 +543,38 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      
+          cache: "npm"
+
       - name: Install dependencies
         working-directory: ./frontend
         run: |
           npm ci
           npm install --save-dev @playwright/test
           npx playwright install
-      
+
       - name: Start services
         run: |
           cp .env.example .env
           docker-compose up -d
           sleep 30
-      
+
       - name: Wait for services
         run: |
           timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
-      
+
       - name: Create keyboard navigation tests
         working-directory: ./frontend
         run: |
           mkdir -p tests/accessibility
-          
+
           cat > tests/accessibility/keyboard-navigation.spec.ts << 'EOF'
           import { test, expect } from '@playwright/test';
-          
+
           test.describe('Keyboard Navigation Tests', () => {
             test('should navigate through all focusable elements on home page', async ({ page }) => {
               await page.goto('http://localhost:3000/');
@@ -707,22 +707,22 @@ jobs:
             });
           });
           EOF
-      
+
       - name: Run keyboard navigation tests
         working-directory: ./frontend
         run: |
           npx playwright test tests/accessibility/keyboard-navigation.spec.ts --reporter=html --output-dir=keyboard-test-results
         continue-on-error: true
-      
+
       - name: Upload keyboard navigation results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: keyboard-navigation-results
           path: |
             frontend/keyboard-test-results/
             frontend/test-results/
-      
+
       - name: Stop services
         if: always()
         run: docker-compose down -v
@@ -731,55 +731,62 @@ jobs:
   accessibility-report:
     name: Accessibility Report
     runs-on: ubuntu-latest
-    needs: [lighthouse-a11y, axe-core-tests, wave-testing, color-contrast, keyboard-navigation]
+    needs:
+      [
+        lighthouse-a11y,
+        axe-core-tests,
+        wave-testing,
+        color-contrast,
+        keyboard-navigation,
+      ]
     if: always()
     steps:
       - name: Download all accessibility artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: accessibility-results/
-      
+
       - name: Generate accessibility summary report
         run: |
           echo "# ♿ Accessibility Testing Report" > accessibility-summary.md
           echo "" >> accessibility-summary.md
           echo "This report consolidates accessibility testing results from multiple tools and approaches." >> accessibility-summary.md
           echo "" >> accessibility-summary.md
-          
+
           echo "## Test Results Summary" >> accessibility-summary.md
           echo "" >> accessibility-summary.md
-          
+
           # Check job results
           if [ "${{ needs.lighthouse-a11y.result }}" == "success" ]; then
             echo "✅ **Lighthouse Accessibility**: Passed (Score ≥ 90%)" >> accessibility-summary.md
           else
             echo "❌ **Lighthouse Accessibility**: Failed or warnings found" >> accessibility-summary.md
           fi
-          
+
           if [ "${{ needs.axe-core-tests.result }}" == "success" ]; then
             echo "✅ **Axe-core Tests**: No violations detected" >> accessibility-summary.md
           else
             echo "❌ **Axe-core Tests**: Accessibility violations found" >> accessibility-summary.md
           fi
-          
+
           if [ "${{ needs.wave-testing.result }}" == "success" ]; then
             echo "✅ **WAVE Analysis**: Basic accessibility checks passed" >> accessibility-summary.md
           else
             echo "⚠️ **WAVE Analysis**: Issues detected or test incomplete" >> accessibility-summary.md
           fi
-          
+
           if [ "${{ needs.color-contrast.result }}" == "success" ]; then
             echo "✅ **Color Contrast**: Analysis completed" >> accessibility-summary.md
           else
             echo "⚠️ **Color Contrast**: Analysis incomplete" >> accessibility-summary.md
           fi
-          
+
           if [ "${{ needs.keyboard-navigation.result }}" == "success" ]; then
             echo "✅ **Keyboard Navigation**: All tests passed" >> accessibility-summary.md
           else
             echo "❌ **Keyboard Navigation**: Issues found with keyboard accessibility" >> accessibility-summary.md
           fi
-          
+
           echo "" >> accessibility-summary.md
           echo "## WCAG 2.1 Compliance Checklist" >> accessibility-summary.md
           echo "" >> accessibility-summary.md
@@ -797,7 +804,7 @@ jobs:
           echo "- [ ] Focus is visible and logical" >> accessibility-summary.md
           echo "- [ ] Content is organized with proper headings" >> accessibility-summary.md
           echo "" >> accessibility-summary.md
-          
+
           echo "## Accessibility Testing Tools Used" >> accessibility-summary.md
           echo "" >> accessibility-summary.md
           echo "1. **Google Lighthouse**: Automated accessibility auditing" >> accessibility-summary.md
@@ -806,7 +813,7 @@ jobs:
           echo "4. **Color Contrast Analysis**: Visual accessibility testing" >> accessibility-summary.md
           echo "5. **Keyboard Navigation Testing**: Manual keyboard-only navigation" >> accessibility-summary.md
           echo "" >> accessibility-summary.md
-          
+
           echo "## Recommendations" >> accessibility-summary.md
           echo "" >> accessibility-summary.md
           echo "- Regular accessibility testing in development workflow" >> accessibility-summary.md
@@ -814,11 +821,11 @@ jobs:
           echo "- User testing with people who use assistive technologies" >> accessibility-summary.md
           echo "- Accessibility training for development team" >> accessibility-summary.md
           echo "- Implement accessibility linting in IDE and CI/CD" >> accessibility-summary.md
-          
+
           cat accessibility-summary.md >> $GITHUB_STEP_SUMMARY
-      
+
       - name: Upload consolidated accessibility report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: accessibility-report
           path: |

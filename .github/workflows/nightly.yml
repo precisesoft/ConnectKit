@@ -3,29 +3,29 @@ name: Nightly Extended Tests
 on:
   schedule:
     # Run every night at 2 AM UTC
-    - cron: '0 2 * * *'
+    - cron: "0 2 * * *"
   workflow_dispatch:
     inputs:
       test_suite:
-        description: 'Test suite to run'
+        description: "Test suite to run"
         required: true
-        default: 'all'
+        default: "all"
         type: choice
         options:
-        - all
-        - performance
-        - security
-        - chaos
-        - data-integrity
-        - backup-restore
+          - all
+          - performance
+          - security
+          - chaos
+          - data-integrity
+          - backup-restore
       duration:
-        description: 'Test duration (for performance tests)'
-        default: '30m'
+        description: "Test duration (for performance tests)"
+        default: "30m"
         type: string
 
 env:
-  NODE_VERSION: '18'
-  EXTENDED_TEST_MODE: 'true'
+  NODE_VERSION: "18"
+  EXTENDED_TEST_MODE: "true"
 
 jobs:
   # Extended performance testing with longer duration
@@ -34,16 +34,16 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.inputs.test_suite == 'all' || github.event.inputs.test_suite == 'performance' || github.event_name == 'schedule' }}
     timeout-minutes: 120
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup k6
         run: |
           wget https://github.com/grafana/k6/releases/download/v0.47.0/k6-v0.47.0-linux-amd64.tar.gz
           tar -xzf k6-v0.47.0-linux-amd64.tar.gz
           sudo cp k6-v0.47.0-linux-amd64/k6 /usr/local/bin/
-      
+
       - name: Start services with production-like config
         run: |
           cp .env.example .env
@@ -52,18 +52,18 @@ jobs:
           echo "LOG_LEVEL=warn" >> .env
           docker-compose up -d
           sleep 60
-      
+
       - name: Wait for services to be ready
         run: |
           timeout 120 bash -c 'until curl -f http://localhost:3001/api/health; do sleep 5; done'
-      
+
       - name: Create extended performance test data
         run: |
           # Seed database with substantial test data for realistic testing
           cat > seed-large-dataset.js << 'EOF'
           const http = require('http');
           const https = require('https');
-          
+
           async function seedLargeDataset() {
             const baseUrl = 'http://localhost:3001';
             
@@ -133,28 +133,28 @@ jobs:
               console.error('Failed to create admin user');
             }
           }
-          
+
           seedLargeDataset().catch(console.error);
           EOF
-          
+
           node seed-large-dataset.js
-      
+
       - name: Run extended load test
         run: |
           DURATION="${{ github.event.inputs.duration || '30m' }}"
           echo "Running extended performance test for duration: $DURATION"
-          
+
           # Create extended load test configuration
           cat > extended-load-test.js << 'EOF'
           import http from 'k6/http';
           import { check, sleep } from 'k6';
           import { Rate, Trend, Counter } from 'k6/metrics';
-          
+
           // Extended test metrics
           const errorRate = new Rate('errors');
           const longRunningQueries = new Trend('long_running_queries');
           const memoryLeakIndicator = new Counter('potential_memory_leaks');
-          
+
           export const options = {
             stages: [
               { duration: '5m', target: 50 },   // Warm up
@@ -171,9 +171,9 @@ jobs:
               long_running_queries: ['p(90)<2000'], // 90% of complex queries under 2s
             },
           };
-          
+
           const BASE_URL = __ENV.BASE_URL || 'http://localhost:3001';
-          
+
           export default function() {
             const operations = [
               searchLargeDataset,
@@ -188,7 +188,7 @@ jobs:
             
             sleep(Math.random() * 2 + 0.5); // Variable sleep 0.5-2.5s
           }
-          
+
           function searchLargeDataset() {
             // Login first
             const loginResponse = http.post(`${BASE_URL}/api/auth/login`, JSON.stringify({
@@ -227,7 +227,7 @@ jobs:
             
             errorRate.add(response.status >= 400);
           }
-          
+
           function complexContactQueries() {
             const loginResponse = http.post(`${BASE_URL}/api/auth/login`, JSON.stringify({
               email: 'admin@nightlytest.com',
@@ -257,7 +257,7 @@ jobs:
               errorRate.add(response.status >= 400);
             });
           }
-          
+
           function bulkContactOperations() {
             const loginResponse = http.post(`${BASE_URL}/api/auth/login`, JSON.stringify({
               email: 'admin@nightlytest.com',
@@ -291,7 +291,7 @@ jobs:
               errorRate.add(response.status >= 400);
             }
           }
-          
+
           function paginationStressTest() {
             const loginResponse = http.post(`${BASE_URL}/api/auth/login`, JSON.stringify({
               email: 'admin@nightlytest.com',
@@ -330,7 +330,7 @@ jobs:
               errorRate.add(response.status >= 400);
             });
           }
-          
+
           function concurrentUserSimulation() {
             // Simulate different user creating account and immediately using system
             const timestamp = Date.now();
@@ -371,35 +371,35 @@ jobs:
             errorRate.add(registerResponse.status >= 400);
           }
           EOF
-          
+
           k6 run extended-load-test.js --env BASE_URL=http://localhost:3001
-      
+
       - name: Run memory leak detection
         run: |
           echo "## Extended Performance Test Results" >> $GITHUB_STEP_SUMMARY
-          
+
           # Monitor memory usage during the test
           docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}" > performance-stats.txt
-          
+
           echo "### System Resource Usage" >> $GITHUB_STEP_SUMMARY
           cat performance-stats.txt >> $GITHUB_STEP_SUMMARY
-          
+
           # Check for potential memory leaks
           BACKEND_MEMORY=$(docker stats connectkit-backend --no-stream --format "{{.MemUsage}}")
           echo "**Backend Memory Usage:** $BACKEND_MEMORY" >> $GITHUB_STEP_SUMMARY
-          
+
           # Performance test completed
           echo "✅ Extended performance testing completed" >> $GITHUB_STEP_SUMMARY
-      
+
       - name: Upload extended performance results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: extended-performance-results
           path: |
             performance-stats.txt
             *.html
-      
+
       - name: Stop services
         if: always()
         run: docker-compose down -v
@@ -410,176 +410,176 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.inputs.test_suite == 'all' || github.event.inputs.test_suite == 'chaos' || github.event_name == 'schedule' }}
     timeout-minutes: 60
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Start services
         run: |
           cp .env.example .env
           docker-compose up -d
           sleep 30
-      
+
       - name: Wait for services
         run: |
           timeout 60 bash -c 'until curl -f http://localhost:3001/api/health; do sleep 2; done'
-      
+
       - name: Install chaos testing tools
         run: |
           # Install toxiproxy for network chaos
           wget https://github.com/Shopify/toxiproxy/releases/download/v2.5.0/toxiproxy-server-linux-amd64
           chmod +x toxiproxy-server-linux-amd64
           ./toxiproxy-server-linux-amd64 &
-          
+
           wget https://github.com/Shopify/toxiproxy/releases/download/v2.5.0/toxiproxy-cli-linux-amd64
           chmod +x toxiproxy-cli-linux-amd64
           alias toxiproxy-cli='./toxiproxy-cli-linux-amd64'
-      
+
       - name: Test database connection failures
         run: |
           echo "## Chaos Engineering Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Test 1: Database connection interruption
           echo "### Database Connection Chaos Test" >> $GITHUB_STEP_SUMMARY
-          
+
           # Stop database container
           docker stop connectkit-db
-          
+
           # Test how backend handles database unavailability
           RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/api/health || echo "000")
-          
+
           if [ "$RESPONSE" = "503" ] || [ "$RESPONSE" = "500" ]; then
             echo "✅ Backend gracefully handles database disconnection (HTTP $RESPONSE)" >> $GITHUB_STEP_SUMMARY
           else
             echo "⚠️ Backend response to database failure: HTTP $RESPONSE" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # Restart database
           docker start connectkit-db
           sleep 30
-          
+
           # Test recovery
           timeout 60 bash -c 'until curl -f http://localhost:3001/api/health; do sleep 2; done'
           echo "✅ Service recovered after database restart" >> $GITHUB_STEP_SUMMARY
-      
+
       - name: Test Redis connection failures
         run: |
           echo "### Redis Connection Chaos Test" >> $GITHUB_STEP_SUMMARY
-          
+
           # Stop Redis container
           docker stop connectkit-redis
-          
+
           # Test how backend handles Redis unavailability
           RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/api/health || echo "000")
-          
+
           if [ "$RESPONSE" = "200" ]; then
             echo "✅ Backend continues functioning without Redis (HTTP $RESPONSE)" >> $GITHUB_STEP_SUMMARY
           else
             echo "⚠️ Backend affected by Redis failure: HTTP $RESPONSE" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # Restart Redis
           docker start connectkit-redis
           sleep 15
-      
+
       - name: Test high CPU load
         run: |
           echo "### CPU Stress Test" >> $GITHUB_STEP_SUMMARY
-          
+
           # Install stress testing tools
           sudo apt-get update
           sudo apt-get install -y stress-ng
-          
+
           # Apply CPU stress for 60 seconds
           stress-ng --cpu 2 --timeout 60s &
           STRESS_PID=$!
-          
+
           sleep 10
-          
+
           # Test API responsiveness under CPU stress
           RESPONSE_TIME=$(curl -o /dev/null -s -w "%{time_total}" http://localhost:3001/api/health)
-          
+
           if (( $(echo "$RESPONSE_TIME < 2.0" | bc -l) )); then
             echo "✅ API responsive under CPU stress (${RESPONSE_TIME}s response time)" >> $GITHUB_STEP_SUMMARY
           else
             echo "⚠️ API slow under CPU stress (${RESPONSE_TIME}s response time)" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # Wait for stress test to complete
           wait $STRESS_PID
-      
+
       - name: Test memory pressure
         run: |
           echo "### Memory Pressure Test" >> $GITHUB_STEP_SUMMARY
-          
+
           # Apply memory pressure
           stress-ng --vm 1 --vm-bytes 1G --timeout 30s &
           STRESS_PID=$!
-          
+
           sleep 10
-          
+
           # Test API under memory pressure
           RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/api/health)
-          
+
           if [ "$RESPONSE" = "200" ]; then
             echo "✅ API stable under memory pressure" >> $GITHUB_STEP_SUMMARY
           else
             echo "⚠️ API affected by memory pressure (HTTP $RESPONSE)" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           wait $STRESS_PID
-      
+
       - name: Test network latency simulation
         run: |
           echo "### Network Latency Simulation" >> $GITHUB_STEP_SUMMARY
-          
+
           # Simulate network delays using tc (traffic control)
           sudo tc qdisc add dev lo root handle 1: prio
           sudo tc qdisc add dev lo parent 1:1 handle 10: netem delay 100ms
-          
+
           # Test API with network delay
           START_TIME=$(date +%s.%N)
           curl -s http://localhost:3001/api/health > /dev/null
           END_TIME=$(date +%s.%N)
           RESPONSE_TIME=$(echo "$END_TIME - $START_TIME" | bc)
-          
+
           if (( $(echo "$RESPONSE_TIME > 0.1" | bc -l) )); then
             echo "✅ Network latency simulation working (${RESPONSE_TIME}s response)" >> $GITHUB_STEP_SUMMARY
           else
             echo "⚠️ Network latency simulation may not be working" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # Remove network delay
           sudo tc qdisc del dev lo root
-      
+
       - name: Test cascading failure recovery
         run: |
           echo "### Cascading Failure Recovery Test" >> $GITHUB_STEP_SUMMARY
-          
+
           # Stop all dependencies simultaneously
           docker stop connectkit-db connectkit-redis
-          
+
           # Wait for potential cascading effects
           sleep 20
-          
+
           # Check if backend is still running (should be degraded but not crashed)
           if docker ps --format "table {{.Names}}" | grep -q connectkit-backend; then
             echo "✅ Backend container survived dependency failures" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ Backend container crashed due to dependency failures" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # Restart dependencies in wrong order (Redis first, then DB)
           docker start connectkit-redis
           sleep 10
           docker start connectkit-db
           sleep 30
-          
+
           # Test full recovery
           timeout 60 bash -c 'until curl -f http://localhost:3001/api/health; do sleep 2; done'
           echo "✅ System recovered from cascading failure" >> $GITHUB_STEP_SUMMARY
-      
+
       - name: Stop services
         if: always()
         run: docker-compose down -v
@@ -603,20 +603,20 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      
+          cache: "npm"
+
       - name: Install backend dependencies
         working-directory: ./backend
         run: npm ci
-      
+
       - name: Run database migrations
         working-directory: ./backend
         env:
@@ -627,14 +627,14 @@ jobs:
           DB_PASSWORD: integrity_test
           DB_NAME: connectkit_integrity
         run: npm run db:migrate
-      
+
       - name: Create data integrity test suite
         working-directory: ./backend
         run: |
           cat > data-integrity-test.js << 'EOF'
           const { Pool } = require('pg');
           const crypto = require('crypto');
-          
+
           const pool = new Pool({
             host: 'localhost',
             port: 5432,
@@ -642,7 +642,7 @@ jobs:
             password: 'integrity_test',
             database: 'connectkit_integrity'
           });
-          
+
           async function runDataIntegrityTests() {
             console.log('🔍 Starting data integrity tests...');
             
@@ -676,7 +676,7 @@ jobs:
               await pool.end();
             }
           }
-          
+
           async function testForeignKeyConstraints() {
             const client = await pool.connect();
             
@@ -704,7 +704,7 @@ jobs:
               client.release();
             }
           }
-          
+
           async function testDataValidationConstraints() {
             const client = await pool.connect();
             
@@ -741,7 +741,7 @@ jobs:
               client.release();
             }
           }
-          
+
           async function testConcurrentTransactions() {
             // Simulate concurrent updates to the same record
             const promises = [];
@@ -778,7 +778,7 @@ jobs:
             
             console.log(`✅ Concurrent transactions: ${successful} successful, ${failed} failed (expected some failures)`);
           }
-          
+
           async function updateContactConcurrently(contactId, iteration) {
             const client = await pool.connect();
             
@@ -804,7 +804,7 @@ jobs:
               client.release();
             }
           }
-          
+
           async function testDataConsistencyUnderLoad() {
             const promises = [];
             const startTime = Date.now();
@@ -827,7 +827,7 @@ jobs:
             console.log(`Final counts: ${userCount.rows[0].count} users, ${contactCount.rows[0].count} contacts`);
             client.release();
           }
-          
+
           async function createUserWithContacts(index) {
             const client = await pool.connect();
             
@@ -870,7 +870,7 @@ jobs:
               client.release();
             }
           }
-          
+
           async function testAuditTrailIntegrity() {
             const client = await pool.connect();
             
@@ -919,12 +919,12 @@ jobs:
               client.release();
             }
           }
-          
+
           runDataIntegrityTests();
           EOF
-          
+
           node data-integrity-test.js
-      
+
       - name: Generate data integrity report
         run: |
           echo "## Data Integrity Test Results" >> $GITHUB_STEP_SUMMARY
@@ -942,24 +942,24 @@ jobs:
     name: Backup & Restore Tests
     runs-on: ubuntu-latest
     if: ${{ github.event.inputs.test_suite == 'all' || github.event.inputs.test_suite == 'backup-restore' || github.event_name == 'schedule' }}
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Start services
         run: |
           cp .env.example .env
           docker-compose up -d
           sleep 30
-      
+
       - name: Wait for services and seed data
         run: |
           timeout 60 bash -c 'until curl -f http://localhost:3001/api/health; do sleep 2; done'
-          
+
           # Create test data for backup
           cat > create-backup-data.js << 'EOF'
           const http = require('http');
-          
+
           async function createBackupData() {
             const baseUrl = 'http://localhost:3001';
             
@@ -1001,20 +1001,20 @@ jobs:
               console.log('✅ Backup test data created');
             }
           }
-          
+
           createBackupData().catch(console.error);
           EOF
-          
+
           node create-backup-data.js
-      
+
       - name: Create database backup
         run: |
           echo "## Backup & Restore Test Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Create database dump
           docker exec connectkit-db pg_dump -U admin connectkit > backup-test.sql
-          
+
           if [ -f "backup-test.sql" ] && [ -s "backup-test.sql" ]; then
             BACKUP_SIZE=$(wc -l < backup-test.sql)
             echo "✅ **Database backup created**: ${BACKUP_SIZE} lines" >> $GITHUB_STEP_SUMMARY
@@ -1022,26 +1022,26 @@ jobs:
             echo "❌ **Database backup failed**" >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
-      
+
       - name: Test backup restoration
         run: |
           # Stop services
           docker-compose down -v
-          
+
           # Start fresh database
           docker-compose up -d db
           sleep 30
-          
+
           # Restore from backup
           docker exec -i connectkit-db psql -U admin connectkit < backup-test.sql
-          
+
           # Start other services
           docker-compose up -d
           sleep 30
-          
+
           # Verify restoration
           timeout 60 bash -c 'until curl -f http://localhost:3001/api/health; do sleep 2; done'
-      
+
       - name: Verify backup data integrity
         run: |
           # Login and check if data was restored correctly
@@ -1095,21 +1095,21 @@ jobs:
               console.error('Error verifying restore:', error.message);
             }
           }
-          
+
           verifyRestore();
           EOF
-          
+
           node verify-restore.js
-          
+
           echo "✅ **Backup restoration verified**" >> $GITHUB_STEP_SUMMARY
           echo "- User data successfully restored" >> $GITHUB_STEP_SUMMARY
           echo "- Contact data integrity confirmed" >> $GITHUB_STEP_SUMMARY
           echo "- Authentication system working post-restore" >> $GITHUB_STEP_SUMMARY
-      
+
       - name: Test incremental backup scenario
         run: |
           echo "### Incremental Backup Test" >> $GITHUB_STEP_SUMMARY
-          
+
           # Create additional data after restore
           cat > create-incremental-data.js << 'EOF'
           async function createIncrementalData() {
@@ -1149,33 +1149,33 @@ jobs:
               console.log('✅ Incremental data created');
             }
           }
-          
+
           createIncrementalData().catch(console.error);
           EOF
-          
+
           node create-incremental-data.js
-          
+
           # Create incremental backup
           docker exec connectkit-db pg_dump -U admin connectkit > backup-incremental.sql
-          
+
           INCREMENTAL_SIZE=$(wc -l < backup-incremental.sql)
           ORIGINAL_SIZE=$(wc -l < backup-test.sql)
-          
+
           if [ "$INCREMENTAL_SIZE" -gt "$ORIGINAL_SIZE" ]; then
             echo "✅ **Incremental backup successful**: Backup grew from ${ORIGINAL_SIZE} to ${INCREMENTAL_SIZE} lines" >> $GITHUB_STEP_SUMMARY
           else
             echo "⚠️ **Incremental backup**: Size didn't increase as expected" >> $GITHUB_STEP_SUMMARY
           fi
-      
+
       - name: Upload backup files
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: backup-test-files
           path: |
             backup-test.sql
             backup-incremental.sql
-      
+
       - name: Stop services
         if: always()
         run: docker-compose down -v
@@ -1186,13 +1186,13 @@ jobs:
     runs-on: ubuntu-latest
     needs: [extended-performance, chaos-testing, data-integrity, backup-restore]
     if: always()
-    
+
     steps:
       - name: Download all nightly test artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: nightly-results/
-      
+
       - name: Generate comprehensive nightly report
         run: |
           echo "# 🌙 Nightly Extended Testing Report" > nightly-report.md
@@ -1200,10 +1200,10 @@ jobs:
           echo "**Test Date:** $(date -u)" >> nightly-report.md
           echo "**Test Duration:** Extended (~2 hours)" >> nightly-report.md
           echo "" >> nightly-report.md
-          
+
           echo "## 📊 Test Suite Results" >> nightly-report.md
           echo "" >> nightly-report.md
-          
+
           # Check job results
           if [ "${{ needs.extended-performance.result }}" == "success" ]; then
             echo "✅ **Extended Performance Testing**: All thresholds met" >> nightly-report.md
@@ -1212,7 +1212,7 @@ jobs:
           else
             echo "❌ **Extended Performance Testing**: Failed or timeout" >> nightly-report.md
           fi
-          
+
           if [ "${{ needs.chaos-testing.result }}" == "success" ]; then
             echo "✅ **Chaos Engineering**: System resilient to failures" >> nightly-report.md
           elif [ "${{ needs.chaos-testing.result }}" == "skipped" ]; then
@@ -1220,7 +1220,7 @@ jobs:
           else
             echo "❌ **Chaos Engineering**: System instability detected" >> nightly-report.md
           fi
-          
+
           if [ "${{ needs.data-integrity.result }}" == "success" ]; then
             echo "✅ **Data Integrity**: All constraints and consistency checks passed" >> nightly-report.md
           elif [ "${{ needs.data-integrity.result }}" == "skipped" ]; then
@@ -1228,7 +1228,7 @@ jobs:
           else
             echo "❌ **Data Integrity**: Data consistency issues found" >> nightly-report.md
           fi
-          
+
           if [ "${{ needs.backup-restore.result }}" == "success" ]; then
             echo "✅ **Backup & Restore**: Backup and recovery procedures working" >> nightly-report.md
           elif [ "${{ needs.backup-restore.result }}" == "skipped" ]; then
@@ -1236,15 +1236,15 @@ jobs:
           else
             echo "❌ **Backup & Restore**: Backup or restore process failed" >> nightly-report.md
           fi
-          
+
           echo "" >> nightly-report.md
           echo "## 🎯 System Health Assessment" >> nightly-report.md
           echo "" >> nightly-report.md
-          
+
           # Overall assessment
           SUCCESS_COUNT=$(echo "${{ needs.extended-performance.result == 'success' }} ${{ needs.chaos-testing.result == 'success' }} ${{ needs.data-integrity.result == 'success' }} ${{ needs.backup-restore.result == 'success' }}" | tr ' ' '\n' | grep -c "true")
           TOTAL_TESTS=4
-          
+
           if [ $SUCCESS_COUNT -eq $TOTAL_TESTS ]; then
             echo "🟢 **Overall System Health: EXCELLENT** ($SUCCESS_COUNT/$TOTAL_TESTS tests passed)" >> nightly-report.md
             echo "The system demonstrated excellent stability, performance, and resilience during extended testing." >> nightly-report.md
@@ -1258,7 +1258,7 @@ jobs:
             echo "🔴 **Overall System Health: POOR** ($SUCCESS_COUNT/$TOTAL_TESTS tests passed)" >> nightly-report.md
             echo "The system has significant issues that require immediate attention." >> nightly-report.md
           fi
-          
+
           echo "" >> nightly-report.md
           echo "## 🚀 Performance Insights" >> nightly-report.md
           echo "" >> nightly-report.md
@@ -1266,7 +1266,7 @@ jobs:
           echo "- Memory leak detection and resource monitoring" >> nightly-report.md
           echo "- Database performance under sustained load" >> nightly-report.md
           echo "- API response time degradation analysis" >> nightly-report.md
-          
+
           echo "" >> nightly-report.md
           echo "## 🛡️ Resilience Findings" >> nightly-report.md
           echo "" >> nightly-report.md
@@ -1274,11 +1274,11 @@ jobs:
           echo "- Database and Redis connection failure recovery" >> nightly-report.md
           echo "- System behavior under resource pressure" >> nightly-report.md
           echo "- Cascading failure prevention mechanisms" >> nightly-report.md
-          
+
           echo "" >> nightly-report.md
           echo "## 📋 Recommendations" >> nightly-report.md
           echo "" >> nightly-report.md
-          
+
           if [ $SUCCESS_COUNT -lt $TOTAL_TESTS ]; then
             echo "### Immediate Actions Needed" >> nightly-report.md
             echo "- Investigate failed test results in detail" >> nightly-report.md
@@ -1286,29 +1286,29 @@ jobs:
             echo "- Consider scaling infrastructure if performance issues detected" >> nightly-report.md
             echo "" >> nightly-report.md
           fi
-          
+
           echo "### Ongoing Maintenance" >> nightly-report.md
           echo "- Monitor trends in nightly test results" >> nightly-report.md
           echo "- Regular backup procedure validation" >> nightly-report.md
           echo "- Performance baseline updates as system evolves" >> nightly-report.md
           echo "- Chaos engineering scenarios expansion" >> nightly-report.md
-          
+
           cat nightly-report.md >> $GITHUB_STEP_SUMMARY
-      
+
       - name: Upload consolidated nightly report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: nightly-comprehensive-report
           path: |
             nightly-report.md
             nightly-results/
-      
+
       - name: Send notification on failures
         if: ${{ (needs.extended-performance.result == 'failure') || (needs.chaos-testing.result == 'failure') || (needs.data-integrity.result == 'failure') || (needs.backup-restore.result == 'failure') }}
         run: |
           echo "🚨 NIGHTLY TEST FAILURES DETECTED"
           echo "One or more nightly tests have failed. Please check the detailed results."
           echo "Failed tests should be investigated and resolved promptly."
-          
+
           # In a real environment, you might send Slack/email notifications here
           # curl -X POST -H 'Content-type: application/json' --data '{"text":"Nightly tests failed"}' $SLACK_WEBHOOK_URL
