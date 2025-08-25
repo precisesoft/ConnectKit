@@ -15,14 +15,17 @@ export const securityHeaders = helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc: ["'self'", "'unsafe-inline'", 'fonts.googleapis.com'],
       imgSrc: ["'self'", 'data:', 'https:'],
       connectSrc: ["'self'"],
-      fontSrc: ["'self'"],
+      fontSrc: ["'self'", 'fonts.gstatic.com', 'data:'],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
       frameSrc: ["'none'"],
+      frameAncestors: ["'none'"],
+      formAction: ["'self'"],
+      upgradeInsecureRequests: [],
     },
   },
 
@@ -71,6 +74,29 @@ export const securityHeaders = helmet({
 
   // X-XSS-Protection (legacy but still useful)
   xssFilter: true,
+
+  // Additional security headers
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+
+  // Permissions Policy
+  permissionsPolicy: {
+    features: {
+      accelerometer: ["'none'"],
+      autoplay: ["'none'"],
+      camera: ["'none'"],
+      encryptedMedia: ["'none'"],
+      fullscreen: ["'self'"],
+      geolocation: ["'none'"],
+      gyroscope: ["'none'"],
+      magnetometer: ["'none'"],
+      microphone: ["'none'"],
+      midi: ["'none'"],
+      payment: ["'none'"],
+      pictureInPicture: ["'none'"],
+      syncXhr: ["'none'"],
+      usb: ["'none'"],
+    },
+  },
 });
 
 /**
@@ -391,12 +417,25 @@ export const securityMiddleware = [
 ];
 
 /**
- * Development-specific security middleware (less strict)
+ * Development-specific security middleware (less strict but still secure)
  */
 export const developmentSecurityMiddleware = [
   helmet({
-    contentSecurityPolicy: false,
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        styleSrc: ["'self'", "'unsafe-inline'", 'fonts.googleapis.com'],
+        imgSrc: ["'self'", 'data:', 'https:'],
+        connectSrc: ["'self'", 'http://localhost:*', 'ws://localhost:*'],
+        fontSrc: ["'self'", 'fonts.gstatic.com', 'data:'],
+        objectSrc: ["'none'"],
+        mediaSrc: ["'self'"],
+        frameSrc: ["'none'"],
+      },
+    },
     crossOriginEmbedderPolicy: false,
+    hsts: false, // Disable HSTS in development
   }),
   noSQLInjectionProtection,
   xssProtection,

@@ -25,22 +25,29 @@ class EncryptionService {
 
   private getEncryptionKey(): Buffer {
     const keyString = process.env.ENCRYPTION_KEY;
-    
+
     if (!keyString) {
       if (process.env.NODE_ENV === 'production') {
-        throw new Error('ENCRYPTION_KEY environment variable is required in production');
+        throw new Error(
+          'ENCRYPTION_KEY environment variable is required in production'
+        );
       }
-      
+
       // Generate a random key for development
       const generatedKey = crypto.randomBytes(this.keyLength).toString('hex');
-      logger.warn('Using generated encryption key for development. Set ENCRYPTION_KEY environment variable.');
+      logger.warn(
+        'Using generated encryption key for development. Set ENCRYPTION_KEY environment variable.'
+      );
       return Buffer.from(generatedKey, 'hex');
     }
-    
-    if (keyString.length !== this.keyLength * 2) { // hex string length
-      throw new Error('ENCRYPTION_KEY must be 64 characters (32 bytes) in hex format');
+
+    if (keyString.length !== this.keyLength * 2) {
+      // hex string length
+      throw new Error(
+        'ENCRYPTION_KEY must be 64 characters (32 bytes) in hex format'
+      );
     }
-    
+
     return Buffer.from(keyString, 'hex');
   }
 
@@ -50,13 +57,13 @@ class EncryptionService {
   encrypt(text: string): EncryptionResult {
     try {
       const iv = crypto.randomBytes(SECURITY_CONSTANTS.IV_LENGTH);
-      const cipher = crypto.createCipher(this.algorithm, this.key, { iv });
-      
+      const cipher = crypto.createCipheriv(this.algorithm, this.key, iv);
+
       let encrypted = cipher.update(text, 'utf8', 'hex');
       encrypted += cipher.final('hex');
-      
+
       const tag = cipher.getAuthTag();
-      
+
       return {
         encrypted,
         iv: iv.toString('hex'),
@@ -75,13 +82,13 @@ class EncryptionService {
     try {
       const iv = Buffer.from(data.iv, 'hex');
       const tag = Buffer.from(data.tag, 'hex');
-      const decipher = crypto.createDecipher(this.algorithm, this.key, { iv });
-      
+      const decipher = crypto.createDecipheriv(this.algorithm, this.key, iv);
+
       decipher.setAuthTag(tag);
-      
+
       let decrypted = decipher.update(data.encrypted, 'hex', 'utf8');
       decrypted += decipher.final('utf8');
-      
+
       return decrypted;
     } catch (error) {
       logger.error('Decryption failed:', error);
@@ -97,7 +104,7 @@ class EncryptionService {
     fieldsToEncrypt: Array<keyof T>
   ): T {
     const encrypted = { ...obj };
-    
+
     for (const field of fieldsToEncrypt) {
       const value = encrypted[field];
       if (value && typeof value === 'string') {
@@ -105,7 +112,7 @@ class EncryptionService {
         encrypted[field] = JSON.stringify(encryptedData) as T[keyof T];
       }
     }
-    
+
     return encrypted;
   }
 
@@ -117,7 +124,7 @@ class EncryptionService {
     fieldsToDecrypt: Array<keyof T>
   ): T {
     const decrypted = { ...obj };
-    
+
     for (const field of fieldsToDecrypt) {
       const value = decrypted[field];
       if (value && typeof value === 'string') {
@@ -130,7 +137,7 @@ class EncryptionService {
         }
       }
     }
-    
+
     return decrypted;
   }
 
@@ -154,11 +161,11 @@ class EncryptionService {
   hash(text: string, salt?: string): string {
     const hash = crypto.createHash(SECURITY_CONSTANTS.HASH_ALGORITHM);
     hash.update(text);
-    
+
     if (salt) {
       hash.update(salt);
     }
-    
+
     return hash.digest('hex');
   }
 
@@ -198,23 +205,26 @@ class EncryptionService {
     const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const numbers = '0123456789';
     const symbols = '!@#$%^&*()_+-=[]{}|;:,.<>?';
-    
+
     const allChars = lowercase + uppercase + numbers + symbols;
     let password = '';
-    
+
     // Ensure at least one character from each category
     password += this.getRandomChar(lowercase);
     password += this.getRandomChar(uppercase);
     password += this.getRandomChar(numbers);
     password += this.getRandomChar(symbols);
-    
+
     // Fill the rest randomly
     for (let i = 4; i < length; i++) {
       password += this.getRandomChar(allChars);
     }
-    
+
     // Shuffle the password
-    return password.split('').sort(() => 0.5 - Math.random()).join('');
+    return password
+      .split('')
+      .sort(() => 0.5 - Math.random())
+      .join('');
   }
 
   private getRandomChar(chars: string): string {
@@ -225,7 +235,10 @@ class EncryptionService {
   /**
    * Mask sensitive data for logging
    */
-  maskSensitiveData(data: any, fieldsToMask: string[] = ['password', 'token', 'secret']): any {
+  maskSensitiveData(
+    data: any,
+    fieldsToMask: string[] = ['password', 'token', 'secret']
+  ): any {
     if (typeof data !== 'object' || data === null) {
       return data;
     }
@@ -235,15 +248,19 @@ class EncryptionService {
     }
 
     const masked = { ...data };
-    
+
     for (const key in masked) {
-      if (fieldsToMask.some(field => key.toLowerCase().includes(field.toLowerCase()))) {
+      if (
+        fieldsToMask.some(field =>
+          key.toLowerCase().includes(field.toLowerCase())
+        )
+      ) {
         masked[key] = '***MASKED***';
       } else if (typeof masked[key] === 'object') {
         masked[key] = this.maskSensitiveData(masked[key], fieldsToMask);
       }
     }
-    
+
     return masked;
   }
 
@@ -254,7 +271,7 @@ class EncryptionService {
     const prefix = 'ck_'; // ConnectKit prefix
     const timestamp = Date.now().toString(36);
     const random = this.generateToken(16);
-    
+
     return `${prefix}${timestamp}_${random}`;
   }
 
