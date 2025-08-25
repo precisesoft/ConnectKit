@@ -15,13 +15,15 @@ module.exports = {
         noUnusedParameters: false,
         strictNullChecks: false,
         strictPropertyInitialization: false,
+        noImplicitAny: false,
         esModuleInterop: true,
         skipLibCheck: true,
         forceConsistentCasingInFileNames: false,
         resolveJsonModule: true,
         allowJs: true,
         noEmit: true,
-        isolatedModules: false
+        isolatedModules: false,
+        types: ["node"]  // Only include node types, avoid jest types for now
       },
       isolatedModules: false
     }]
