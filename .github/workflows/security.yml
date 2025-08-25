@@ -73,6 +73,7 @@ jobs:
 
       - name: Run npm audit (Frontend)
         run: |
+          npm ci
           npm ci --workspace=frontend
           npm audit --workspace=frontend --audit-level=moderate --production || echo "Found vulnerabilities - check report"
           npm audit --workspace=frontend --json --production > npm-audit-frontend.json || true
@@ -201,8 +202,10 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Install frontend dependencies
-        run: npm ci --workspace=frontend
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm ci --workspace=frontend
 
       - name: Build frontend
         working-directory: ./frontend
@@ -276,8 +279,10 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Install backend dependencies
-        run: npm ci --workspace=backend
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm ci --workspace=backend
 
       - name: Run ESLint security plugin
         working-directory: ./backend

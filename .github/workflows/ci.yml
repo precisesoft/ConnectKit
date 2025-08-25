@@ -69,8 +69,10 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Install backend dependencies
-        run: npm ci --workspace=backend
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm ci --workspace=backend
 
       - name: Run backend linting
         working-directory: ./backend
@@ -115,8 +117,10 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Install frontend dependencies
-        run: npm ci --workspace=frontend
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm ci --workspace=frontend
 
       - name: Run frontend linting
         working-directory: ./frontend
@@ -196,6 +200,7 @@ jobs:
 
       - name: Install Playwright
         run: |
+          npm ci
           npm ci --workspace=frontend
           cd frontend && npx playwright install --with-deps
 
