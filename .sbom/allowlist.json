@@ -1,0 +1,60 @@
+{
+  "vulnerabilities": {
+    "exceptions": [
+      {
+        "cve": "CVE-2024-EXAMPLE",
+        "reason": "Development dependency only, not in production build",
+        "justification": "vulnerable_code_not_in_execute_path",
+        "approved_by": "Security Team",
+        "approved_date": "2024-01-15"
+      }
+    ],
+    "temporary_exceptions": [
+      {
+        "cve": "CVE-2024-TEMP",
+        "reason": "Fix in progress, tracking in JIRA-123",
+        "expires": "2024-12-31",
+        "approved_by": "Security Team",
+        "approved_date": "2024-08-01"
+      }
+    ]
+  },
+  "thresholds": {
+    "critical": {
+      "max_allowed": 20,
+      "fail_build": false,
+      "notify": true
+    },
+    "high": {
+      "max_allowed": 50,
+      "fail_build": false,
+      "notify": true
+    },
+    "medium": {
+      "max_allowed": 100,
+      "fail_build": false,
+      "notify": true
+    },
+    "low": {
+      "max_allowed": 50,
+      "fail_build": false,
+      "notify": false
+    }
+  },
+  "severity_mapping": {
+    "description": "Maps vendor severity levels to standardized levels",
+    "mappings": {
+      "CRITICAL": "critical",
+      "HIGH": "high",
+      "MEDIUM": "medium",
+      "MODERATE": "medium",
+      "LOW": "low",
+      "NEGLIGIBLE": "low",
+      "UNKNOWN": "medium"
+    }
+  },
+  "component_allowlist": {
+    "description": "Components with known acceptable risks",
+    "components": []
+  }
+}

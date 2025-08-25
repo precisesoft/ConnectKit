@@ -1,0 +1,53 @@
+{
+  "sbom_generation": {
+    "formats": {
+      "cyclonedx": {
+        "enabled": true,
+        "output_file": "sbom-cyclonedx.json"
+      },
+      "spdx": {
+        "enabled": true,
+        "output_file": "sbom-spdx.json"
+      },
+      "syft": {
+        "enabled": true,
+        "output_file": "sbom-syft.json"
+      },
+      "table": {
+        "enabled": true,
+        "output_file": "sbom-table.txt"
+      },
+      "csv": {
+        "enabled": true,
+        "output_file": "sbom-components.csv"
+      },
+      "html": {
+        "enabled": true,
+        "output_file": "sbom-report.html"
+      }
+    }
+  },
+  "vulnerability_scanning": {
+    "severity_threshold": "medium",
+    "fail_on_critical": true,
+    "fail_on_high": false,
+    "tools": {
+      "grype": {
+        "enabled": true,
+        "output_formats": ["json", "table"]
+      }
+    }
+  },
+  "compliance": {
+    "ntia_minimum_elements": true,
+    "executive_order_14028": true,
+    "fedramp_controls": true,
+    "nist_800_53": true
+  },
+  "metadata": {
+    "project_name": "ConnectKit",
+    "project_version": "1.0.0",
+    "organization": "ConnectKit Team",
+    "contact": "security@connectkit.com"
+  }
+}

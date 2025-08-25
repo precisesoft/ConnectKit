@@ -92,7 +92,7 @@ prometheus-data/
 
 # SBOM Generation Output
 sbom-output/
-*.sbom
+# Note: .sbom/ directory contains configuration and should be tracked
 vulnerabilities-*.json
 vulnerabilities-*.txt
 

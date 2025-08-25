@@ -1,0 +1,85 @@
+# SBOM Generation Ignore File
+# Files and directories to exclude from SBOM generation
+
+# Development and build artifacts
+node_modules/*/test/
+node_modules/*/tests/
+node_modules/*/__tests__/
+node_modules/*/docs/
+node_modules/*/documentation/
+node_modules/*/.nyc_output/
+node_modules/*/coverage/
+
+# Development dependencies (unless specified otherwise)
+# Note: Most dev dependencies should be excluded from production SBOM
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+*-test.js
+*-test.ts
+
+# Documentation and metadata
+*.md
+CHANGELOG*
+HISTORY*
+AUTHORS*
+CONTRIBUTORS*
+README*
+LICENSE*
+NOTICE*
+
+# Configuration files that don't represent components
+.eslintrc*
+.prettierrc*
+tsconfig*.json
+jest.config.*
+webpack.config.*
+rollup.config.*
+vite.config.*
+
+# Git and CI/CD
+.git/
+.github/
+.gitignore
+.gitattributes
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary and cache files
+tmp/
+temp/
+*.tmp
+*.cache
+.cache/
+
+# Build outputs (these are generated, not dependencies)
+dist/
+build/
+out/
+
+# Docker files (infrastructure, not components)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Environment and secrets
+.env*
+secrets/
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Logs
+*.log
+logs/

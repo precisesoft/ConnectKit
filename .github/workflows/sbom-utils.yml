@@ -64,6 +64,31 @@ jobs:
           npm ci --workspace=backend --omit=dev
           npm ci --workspace=frontend --omit=dev
 
+      - name: Verify SBOM configuration
+        run: |
+          echo "🔍 Verifying SBOM configuration files..."
+          
+          # Ensure SBOM configuration directory exists
+          if [ ! -d ".sbom" ]; then
+            echo "❌ SBOM configuration directory (.sbom) not found"
+            exit 1
+          fi
+
+          # Verify required configuration files
+          for config_file in ".sbom/sbom-config.json" ".sbom/allowlist.json" ".sbom/license-policy.json"; do
+            if [ ! -f "$config_file" ]; then
+              echo "❌ Required SBOM configuration file missing: $config_file"
+              exit 1
+            else
+              echo "✅ Found: $config_file"
+            fi
+          done
+
+          # Ensure output directory exists
+          mkdir -p sbom-output
+          
+          echo "✅ SBOM configuration verified"
+
       - name: Install SBOM and security tools
         run: |
           # Install Syft for SBOM generation

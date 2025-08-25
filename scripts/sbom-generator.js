@@ -29,11 +29,23 @@ class SBOMGenerator {
 
   loadConfig() {
     try {
-      return JSON.parse(
-        fs.readFileSync(path.join(SBOM_DIR, 'sbom-config.json'), 'utf8'),
-      );
+      if (!fs.existsSync(SBOM_DIR)) {
+        console.warn(`⚠️ SBOM directory ${SBOM_DIR} does not exist, creating with defaults`);
+        fs.mkdirSync(SBOM_DIR, { recursive: true });
+        this.createDefaultConfigFiles();
+      }
+      
+      const configPath = path.join(SBOM_DIR, 'sbom-config.json');
+      if (!fs.existsSync(configPath)) {
+        console.warn('⚠️ SBOM config file not found, creating default config');
+        const defaultConfig = this.getDefaultConfig();
+        fs.writeFileSync(configPath, JSON.stringify(defaultConfig, null, 2));
+        return defaultConfig;
+      }
+      
+      return JSON.parse(fs.readFileSync(configPath, 'utf8'));
     } catch (error) {
-      console.warn('⚠️ Could not load SBOM config, using defaults');
+      console.warn('⚠️ Could not load SBOM config, using defaults:', error.message);
       return this.getDefaultConfig();
     }
   }
@@ -67,6 +79,9 @@ class SBOMGenerator {
           cyclonedx: { enabled: true, output_file: 'sbom-cyclonedx.json' },
           spdx: { enabled: true, output_file: 'sbom-spdx.json' },
           syft: { enabled: true, output_file: 'sbom-syft.json' },
+          table: { enabled: true, output_file: 'sbom-table.txt' },
+          csv: { enabled: true, output_file: 'sbom-components.csv' },
+          html: { enabled: true, output_file: 'sbom-report.html' },
         },
       },
       vulnerability_scanning: {
@@ -75,6 +90,44 @@ class SBOMGenerator {
         fail_on_high: false,
       },
     };
+  }
+
+  createDefaultConfigFiles() {
+    console.log('🔧 Creating default SBOM configuration files...');
+    
+    // Create default allowlist
+    const defaultAllowlist = {
+      vulnerabilities: {
+        exceptions: [],
+        temporary_exceptions: []
+      },
+      thresholds: {
+        critical: { max_allowed: 0, fail_build: true },
+        high: { max_allowed: 0, fail_build: true },
+        medium: { max_allowed: 10, fail_build: false },
+        low: { max_allowed: 50, fail_build: false }
+      }
+    };
+    
+    fs.writeFileSync(
+      path.join(SBOM_DIR, 'allowlist.json'), 
+      JSON.stringify(defaultAllowlist, null, 2)
+    );
+
+    // Create default license policy
+    const defaultLicensePolicy = {
+      license_policy: {
+        approved: ['MIT', 'Apache-2.0', 'BSD-2-Clause', 'BSD-3-Clause', 'ISC'],
+        prohibited: ['GPL-3.0', 'AGPL-3.0'],
+      }
+    };
+    
+    fs.writeFileSync(
+      path.join(SBOM_DIR, 'license-policy.json'), 
+      JSON.stringify(defaultLicensePolicy, null, 2)
+    );
+    
+    console.log('✅ Default configuration files created');
   }
 
   ensureDirectories() {

@@ -1,0 +1,66 @@
+{
+  "license_policy": {
+    "approved": [
+      "MIT",
+      "Apache-2.0",
+      "BSD-2-Clause",
+      "BSD-3-Clause",
+      "ISC",
+      "0BSD",
+      "Unlicense",
+      "CC0-1.0",
+      "Apache License 2.0",
+      "BSD 3-Clause",
+      "BSD 2-Clause",
+      "MIT License"
+    ],
+    "conditionally_approved": [
+      {
+        "license": "GPL-2.0",
+        "conditions": "Only for development dependencies, not distributed"
+      },
+      {
+        "license": "LGPL-2.1",
+        "conditions": "Dynamic linking allowed, source changes must be disclosed"
+      }
+    ],
+    "prohibited": [
+      "GPL-3.0",
+      "AGPL-3.0",
+      "SSPL-1.0",
+      "Commons Clause",
+      "BUSL-1.1"
+    ],
+    "review_required": [
+      "CC-BY-SA-4.0",
+      "MPL-2.0",
+      "EPL-2.0",
+      "CDDL-1.0"
+    ]
+  },
+  "compliance_rules": {
+    "require_license_info": true,
+    "allow_unknown_licenses": false,
+    "require_copyright_info": true,
+    "allow_dual_licensing": true
+  },
+  "federal_compliance": {
+    "description": "Federal compliance requires clear license identification",
+    "requirements": {
+      "ntia_minimum_elements": {
+        "license_information": "required",
+        "license_conclusion": "required"
+      },
+      "executive_order_14028": {
+        "license_transparency": "required",
+        "oss_vulnerability_disclosure": "required"
+      }
+    }
+  },
+  "metadata": {
+    "last_updated": "2024-08-25",
+    "version": "1.0",
+    "approved_by": "Legal and Security Teams",
+    "review_frequency": "quarterly"
+  }
+}
