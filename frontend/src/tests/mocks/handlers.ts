@@ -1,6 +1,6 @@
-import { rest } from 'msw';
-import { 
-  createMockApiResponse, 
+import { http, HttpResponse } from 'msw';
+import {
+  createMockApiResponse,
   createMockApiError,
   createMockUser,
   createMockContact,
@@ -54,48 +54,46 @@ const mockContacts = [
 // Authentication handlers
 export const authHandlers = [
   // Login
-  rest.post(`${API_BASE_URL}/auth/login`, (req, res, ctx) => {
-    const { email, password } = req.body as any;
+  http.post(`${API_BASE_URL}/auth/login`, async ({ request }) => {
+    const { email, password } = (await request.json()) as any;
 
     if (email === 'test@example.com' && password === 'TestPass123!') {
-      return res(
-        ctx.status(200),
-        ctx.json(createMockApiResponse({
+      return HttpResponse.json(
+        createMockApiResponse({
           user: mockUsers[0],
           accessToken: 'mock-access-token',
           refreshToken: 'mock-refresh-token',
-        }))
+        }),
+        { status: 200 }
       );
     }
 
     if (email === 'locked@example.com') {
-      return res(
-        ctx.status(423),
-        ctx.json(createMockApiError('Account is locked', 423))
-      );
+      return HttpResponse.json(createMockApiError('Account is locked', 423), {
+        status: 423,
+      });
     }
 
-    return res(
-      ctx.status(401),
-      ctx.json(createMockApiError('Invalid credentials', 401))
-    );
+    return HttpResponse.json(createMockApiError('Invalid credentials', 401), {
+      status: 401,
+    });
   }),
 
   // Register
-  rest.post(`${API_BASE_URL}/auth/register`, (req, res, ctx) => {
-    const { email, username } = req.body as any;
+  http.post(`${API_BASE_URL}/auth/register`, async ({ request }) => {
+    const { email, username } = (await request.json()) as any;
 
     if (email === 'existing@example.com') {
-      return res(
-        ctx.status(409),
-        ctx.json(createMockApiError('Email already exists', 409))
+      return HttpResponse.json(
+        createMockApiError('Email already exists', 409),
+        { status: 409 }
       );
     }
 
     if (username === 'existinguser') {
-      return res(
-        ctx.status(409),
-        ctx.json(createMockApiError('Username already exists', 409))
+      return HttpResponse.json(
+        createMockApiError('Username already exists', 409),
+        { status: 409 }
       );
     }
 
@@ -105,118 +103,117 @@ export const authHandlers = [
       username,
     });
 
-    return res(
-      ctx.status(201),
-      ctx.json(createMockApiResponse({
+    return HttpResponse.json(
+      createMockApiResponse({
         user: newUser,
         message: 'Registration successful',
-      }))
+      }),
+      { status: 201 }
     );
   }),
 
   // Logout
-  rest.post(`${API_BASE_URL}/auth/logout`, (req, res, ctx) => {
-    return res(
-      ctx.status(200),
-      ctx.json(createMockApiResponse(null, { message: 'Logged out successfully' }))
+  http.post(`${API_BASE_URL}/auth/logout`, () => {
+    return HttpResponse.json(
+      createMockApiResponse(null, { message: 'Logged out successfully' }),
+      { status: 200 }
     );
   }),
 
   // Refresh token
-  rest.post(`${API_BASE_URL}/auth/refresh`, (req, res, ctx) => {
-    const { refreshToken } = req.body as any;
+  http.post(`${API_BASE_URL}/auth/refresh`, async ({ request }) => {
+    const { refreshToken } = (await request.json()) as any;
 
     if (refreshToken === 'invalid-refresh-token') {
-      return res(
-        ctx.status(401),
-        ctx.json(createMockApiError('Invalid refresh token', 401))
+      return HttpResponse.json(
+        createMockApiError('Invalid refresh token', 401),
+        { status: 401 }
       );
     }
 
-    return res(
-      ctx.status(200),
-      ctx.json(createMockApiResponse({
+    return HttpResponse.json(
+      createMockApiResponse({
         accessToken: 'new-mock-access-token',
         refreshToken: 'new-mock-refresh-token',
-      }))
+      }),
+      { status: 200 }
     );
   }),
 
   // Get current user profile
-  rest.get(`${API_BASE_URL}/auth/profile`, (req, res, ctx) => {
-    const authHeader = req.headers.get('authorization');
+  http.get(`${API_BASE_URL}/auth/profile`, ({ request }) => {
+    const authHeader = request.headers.get('authorization');
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res(
-        ctx.status(401),
-        ctx.json(createMockApiError('Unauthorized', 401))
-      );
+      return HttpResponse.json(createMockApiError('Unauthorized', 401), {
+        status: 401,
+      });
     }
 
-    return res(
-      ctx.status(200),
-      ctx.json(createMockApiResponse({ user: mockUsers[0] }))
-    );
+    return HttpResponse.json(createMockApiResponse({ user: mockUsers[0] }), {
+      status: 200,
+    });
   }),
 
   // Forgot password
-  rest.post(`${API_BASE_URL}/auth/forgot-password`, (req, res, ctx) => {
-    return res(
-      ctx.status(200),
-      ctx.json(createMockApiResponse(null, {
-        message: 'If an account with that email exists, a password reset link has been sent.',
-      }))
+  http.post(`${API_BASE_URL}/auth/forgot-password`, () => {
+    return HttpResponse.json(
+      createMockApiResponse(null, {
+        message:
+          'If an account with that email exists, a password reset link has been sent.',
+      }),
+      { status: 200 }
     );
   }),
 
   // Reset password
-  rest.post(`${API_BASE_URL}/auth/reset-password`, (req, res, ctx) => {
-    const { token } = req.body as any;
+  http.post(`${API_BASE_URL}/auth/reset-password`, async ({ request }) => {
+    const { token } = (await request.json()) as any;
 
     if (token === 'invalid-token') {
-      return res(
-        ctx.status(400),
-        ctx.json(createMockApiError('Invalid or expired reset token', 400))
+      return HttpResponse.json(
+        createMockApiError('Invalid or expired reset token', 400),
+        { status: 400 }
       );
     }
 
-    return res(
-      ctx.status(200),
-      ctx.json(createMockApiResponse(null, { message: 'Password reset successful' }))
+    return HttpResponse.json(
+      createMockApiResponse(null, { message: 'Password reset successful' }),
+      { status: 200 }
     );
   }),
 
   // Change password
-  rest.post(`${API_BASE_URL}/auth/change-password`, (req, res, ctx) => {
-    const { currentPassword } = req.body as any;
+  http.post(`${API_BASE_URL}/auth/change-password`, async ({ request }) => {
+    const { currentPassword } = (await request.json()) as any;
 
     if (currentPassword !== 'TestPass123!') {
-      return res(
-        ctx.status(400),
-        ctx.json(createMockApiError('Current password is incorrect', 400))
+      return HttpResponse.json(
+        createMockApiError('Current password is incorrect', 400),
+        { status: 400 }
       );
     }
 
-    return res(
-      ctx.status(200),
-      ctx.json(createMockApiResponse(null, { message: 'Password changed successfully' }))
+    return HttpResponse.json(
+      createMockApiResponse(null, { message: 'Password changed successfully' }),
+      { status: 200 }
     );
   }),
 
   // Verify email
-  rest.post(`${API_BASE_URL}/auth/verify-email`, (req, res, ctx) => {
-    const { token } = req.body as any;
+  http.post(`${API_BASE_URL}/auth/verify-email`, async ({ request }) => {
+    const { token } = (await request.json()) as any;
 
     if (token === 'invalid-verification-token') {
-      return res(
-        ctx.status(400),
-        ctx.json(createMockApiError('Invalid verification token', 400))
+      return HttpResponse.json(
+        createMockApiError('Invalid verification token', 400),
+        { status: 400 }
       );
     }
 
-    return res(
-      ctx.status(200),
-      ctx.json(createMockApiResponse(null, { message: 'Email verified successfully' }))
+    return HttpResponse.json(
+      createMockApiResponse(null, { message: 'Email verified successfully' }),
+      { status: 200 }
     );
   }),
 ];
@@ -224,20 +221,22 @@ export const authHandlers = [
 // Contact handlers
 export const contactHandlers = [
   // Get contacts
-  rest.get(`${API_BASE_URL}/contacts`, (req, res, ctx) => {
-    const page = parseInt(req.url.searchParams.get('page') || '1');
-    const limit = parseInt(req.url.searchParams.get('limit') || '10');
-    const search = req.url.searchParams.get('search');
-    const isFavorite = req.url.searchParams.get('isFavorite');
+  http.get(`${API_BASE_URL}/contacts`, ({ request }) => {
+    const url = new URL(request.url);
+    const page = parseInt(url.searchParams.get('page') || '1');
+    const limit = parseInt(url.searchParams.get('limit') || '10');
+    const search = url.searchParams.get('search');
+    const isFavorite = url.searchParams.get('isFavorite');
 
     let filteredContacts = [...mockContacts];
 
     // Apply search filter
     if (search) {
-      filteredContacts = filteredContacts.filter(contact =>
-        contact.firstName.toLowerCase().includes(search.toLowerCase()) ||
-        contact.lastName.toLowerCase().includes(search.toLowerCase()) ||
-        contact.email.toLowerCase().includes(search.toLowerCase())
+      filteredContacts = filteredContacts.filter(
+        contact =>
+          contact.firstName.toLowerCase().includes(search.toLowerCase()) ||
+          contact.lastName.toLowerCase().includes(search.toLowerCase()) ||
+          contact.email.toLowerCase().includes(search.toLowerCase())
       );
     }
 
@@ -250,9 +249,8 @@ export const contactHandlers = [
     const endIndex = startIndex + limit;
     const paginatedContacts = filteredContacts.slice(startIndex, endIndex);
 
-    return res(
-      ctx.status(200),
-      ctx.json(createMockApiResponse({
+    return HttpResponse.json(
+      createMockApiResponse({
         data: paginatedContacts,
         pagination: {
           page,
@@ -262,37 +260,36 @@ export const contactHandlers = [
           hasNext: endIndex < filteredContacts.length,
           hasPrevious: page > 1,
         },
-      }))
+      }),
+      { status: 200 }
     );
   }),
 
   // Get single contact
-  rest.get(`${API_BASE_URL}/contacts/:id`, (req, res, ctx) => {
-    const { id } = req.params;
+  http.get(`${API_BASE_URL}/contacts/:id`, ({ params }) => {
+    const { id } = params;
     const contact = mockContacts.find(c => c.id === id);
 
     if (!contact) {
-      return res(
-        ctx.status(404),
-        ctx.json(createMockApiError('Contact not found', 404))
-      );
+      return HttpResponse.json(createMockApiError('Contact not found', 404), {
+        status: 404,
+      });
     }
 
-    return res(
-      ctx.status(200),
-      ctx.json(createMockApiResponse({ contact }))
-    );
+    return HttpResponse.json(createMockApiResponse({ contact }), {
+      status: 200,
+    });
   }),
 
   // Create contact
-  rest.post(`${API_BASE_URL}/contacts`, (req, res, ctx) => {
-    const contactData = req.body as any;
+  http.post(`${API_BASE_URL}/contacts`, async ({ request }) => {
+    const contactData = (await request.json()) as any;
 
     // Check for duplicate email
     if (mockContacts.some(c => c.email === contactData.email)) {
-      return res(
-        ctx.status(409),
-        ctx.json(createMockApiError('Contact with this email already exists', 409))
+      return HttpResponse.json(
+        createMockApiError('Contact with this email already exists', 409),
+        { status: 409 }
       );
     }
 
@@ -303,23 +300,21 @@ export const contactHandlers = [
 
     mockContacts.push(newContact);
 
-    return res(
-      ctx.status(201),
-      ctx.json(createMockApiResponse({ contact: newContact }))
-    );
+    return HttpResponse.json(createMockApiResponse({ contact: newContact }), {
+      status: 201,
+    });
   }),
 
   // Update contact
-  rest.put(`${API_BASE_URL}/contacts/:id`, (req, res, ctx) => {
-    const { id } = req.params;
-    const updateData = req.body as any;
+  http.put(`${API_BASE_URL}/contacts/:id`, async ({ params, request }) => {
+    const { id } = params;
+    const updateData = (await request.json()) as any;
     const contactIndex = mockContacts.findIndex(c => c.id === id);
 
     if (contactIndex === -1) {
-      return res(
-        ctx.status(404),
-        ctx.json(createMockApiError('Contact not found', 404))
-      );
+      return HttpResponse.json(createMockApiError('Contact not found', 404), {
+        status: 404,
+      });
     }
 
     const updatedContact = {
@@ -330,91 +325,94 @@ export const contactHandlers = [
 
     mockContacts[contactIndex] = updatedContact;
 
-    return res(
-      ctx.status(200),
-      ctx.json(createMockApiResponse({ contact: updatedContact }))
+    return HttpResponse.json(
+      createMockApiResponse({ contact: updatedContact }),
+      { status: 200 }
     );
   }),
 
   // Delete contact
-  rest.delete(`${API_BASE_URL}/contacts/:id`, (req, res, ctx) => {
-    const { id } = req.params;
+  http.delete(`${API_BASE_URL}/contacts/:id`, ({ params }) => {
+    const { id } = params;
     const contactIndex = mockContacts.findIndex(c => c.id === id);
 
     if (contactIndex === -1) {
-      return res(
-        ctx.status(404),
-        ctx.json(createMockApiError('Contact not found', 404))
-      );
+      return HttpResponse.json(createMockApiError('Contact not found', 404), {
+        status: 404,
+      });
     }
 
     mockContacts.splice(contactIndex, 1);
 
-    return res(
-      ctx.status(200),
-      ctx.json(createMockApiResponse(null, { message: 'Contact deleted successfully' }))
+    return HttpResponse.json(
+      createMockApiResponse(null, { message: 'Contact deleted successfully' }),
+      { status: 200 }
     );
   }),
 
   // Toggle favorite
-  rest.patch(`${API_BASE_URL}/contacts/:id/favorite`, (req, res, ctx) => {
-    const { id } = req.params;
+  http.patch(`${API_BASE_URL}/contacts/:id/favorite`, ({ params }) => {
+    const { id } = params;
     const contactIndex = mockContacts.findIndex(c => c.id === id);
 
     if (contactIndex === -1) {
-      return res(
-        ctx.status(404),
-        ctx.json(createMockApiError('Contact not found', 404))
-      );
+      return HttpResponse.json(createMockApiError('Contact not found', 404), {
+        status: 404,
+      });
     }
 
-    mockContacts[contactIndex].isFavorite = !mockContacts[contactIndex].isFavorite;
+    mockContacts[contactIndex].isFavorite =
+      !mockContacts[contactIndex].isFavorite;
 
-    return res(
-      ctx.status(200),
-      ctx.json(createMockApiResponse({ contact: mockContacts[contactIndex] }))
+    return HttpResponse.json(
+      createMockApiResponse({ contact: mockContacts[contactIndex] }),
+      { status: 200 }
     );
   }),
 
   // Get favorite contacts
-  rest.get(`${API_BASE_URL}/contacts/favorites`, (req, res, ctx) => {
+  http.get(`${API_BASE_URL}/contacts/favorites`, () => {
     const favoriteContacts = mockContacts.filter(c => c.isFavorite);
 
-    return res(
-      ctx.status(200),
-      ctx.json(createMockApiResponse({
+    return HttpResponse.json(
+      createMockApiResponse({
         contacts: favoriteContacts,
         total: favoriteContacts.length,
-      }))
+      }),
+      { status: 200 }
     );
   }),
 
   // Search contacts
-  rest.get(`${API_BASE_URL}/contacts/search`, (req, res, ctx) => {
-    const query = req.url.searchParams.get('q');
-    const limit = parseInt(req.url.searchParams.get('limit') || '10');
+  http.get(`${API_BASE_URL}/contacts/search`, ({ request }) => {
+    const url = new URL(request.url);
+    const query = url.searchParams.get('q');
+    const limit = parseInt(url.searchParams.get('limit') || '10');
 
     if (!query) {
-      return res(
-        ctx.status(400),
-        ctx.json(createMockApiError('Search query is required', 400))
+      return HttpResponse.json(
+        createMockApiError('Search query is required', 400),
+        { status: 400 }
       );
     }
 
-    const searchResults = mockContacts.filter(contact =>
-      contact.firstName.toLowerCase().includes(query.toLowerCase()) ||
-      contact.lastName.toLowerCase().includes(query.toLowerCase()) ||
-      contact.email.toLowerCase().includes(query.toLowerCase()) ||
-      contact.company?.toLowerCase().includes(query.toLowerCase())
-    ).slice(0, limit);
+    const searchResults = mockContacts
+      .filter(
+        contact =>
+          contact.firstName.toLowerCase().includes(query.toLowerCase()) ||
+          contact.lastName.toLowerCase().includes(query.toLowerCase()) ||
+          contact.email.toLowerCase().includes(query.toLowerCase()) ||
+          contact.company?.toLowerCase().includes(query.toLowerCase())
+      )
+      .slice(0, limit);
 
-    return res(
-      ctx.status(200),
-      ctx.json(createMockApiResponse({
+    return HttpResponse.json(
+      createMockApiResponse({
         contacts: searchResults,
         query,
         total: searchResults.length,
-      }))
+      }),
+      { status: 200 }
     );
   }),
 ];
@@ -422,49 +420,44 @@ export const contactHandlers = [
 // User handlers
 export const userHandlers = [
   // Get current user
-  rest.get(`${API_BASE_URL}/users/me`, (req, res, ctx) => {
-    return res(
-      ctx.status(200),
-      ctx.json(createMockApiResponse({ user: mockUsers[0] }))
-    );
+  http.get(`${API_BASE_URL}/users/me`, () => {
+    return HttpResponse.json(createMockApiResponse({ user: mockUsers[0] }), {
+      status: 200,
+    });
   }),
 
   // Update user profile
-  rest.put(`${API_BASE_URL}/users/me`, (req, res, ctx) => {
-    const updateData = req.body as any;
+  http.put(`${API_BASE_URL}/users/me`, async ({ request }) => {
+    const updateData = (await request.json()) as any;
     const updatedUser = {
       ...mockUsers[0],
       ...updateData,
       updatedAt: new Date().toISOString(),
     };
 
-    return res(
-      ctx.status(200),
-      ctx.json(createMockApiResponse({ user: updatedUser }))
-    );
+    return HttpResponse.json(createMockApiResponse({ user: updatedUser }), {
+      status: 200,
+    });
   }),
 ];
 
 // Error handlers for testing error scenarios
 export const errorHandlers = [
   // Simulate network error
-  rest.get(`${API_BASE_URL}/error/network`, (req, res, ctx) => {
-    return res.networkError('Network error');
+  http.get(`${API_BASE_URL}/error/network`, () => {
+    return HttpResponse.error();
   }),
 
   // Simulate server error
-  rest.get(`${API_BASE_URL}/error/server`, (req, res, ctx) => {
-    return res(
-      ctx.status(500),
-      ctx.json(createMockApiError('Internal server error', 500))
-    );
+  http.get(`${API_BASE_URL}/error/server`, () => {
+    return HttpResponse.json(createMockApiError('Internal server error', 500), {
+      status: 500,
+    });
   }),
 
   // Simulate timeout
-  rest.get(`${API_BASE_URL}/error/timeout`, (req, res, ctx) => {
-    return res(
-      ctx.delay('infinite')
-    );
+  http.get(`${API_BASE_URL}/error/timeout`, () => {
+    return new Promise(() => {}); // Never resolves
   }),
 ];
 
