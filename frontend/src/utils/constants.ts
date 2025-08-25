@@ -3,7 +3,8 @@
  */
 
 // API Configuration
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 export const REQUEST_TIMEOUT = 30000; // 30 seconds
 
 // Application Information
@@ -100,8 +101,8 @@ export const USER_VALIDATION = {
 // Regular Expressions
 export const REGEX = {
   EMAIL: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-  PHONE: /^[\+]?[1-9][\d]{0,15}$/,
-  URL: /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/,
+  PHONE: /^[+]?[1-9][\d]{0,15}$/,
+  URL: /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/,
   PASSWORD: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/,
   NAME: /^[a-zA-Z\s'-]+$/,
   SLUG: /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
@@ -218,12 +219,7 @@ export const CONTACT_CATEGORIES = [
 ] as const;
 
 // Contact Importance Levels
-export const IMPORTANCE_LEVELS = [
-  'low',
-  'medium',
-  'high',
-  'critical',
-] as const;
+export const IMPORTANCE_LEVELS = ['low', 'medium', 'high', 'critical'] as const;
 
 // Contact Frequencies
 export const CONTACT_FREQUENCIES = [

@@ -6,7 +6,10 @@ import { format, formatDistanceToNow, parseISO, isValid } from 'date-fns';
 import { DATE_FORMATS } from './constants';
 
 // Date formatting functions
-export const formatDate = (date: string | Date, formatStr: string = DATE_FORMATS.DISPLAY): string => {
+export const formatDate = (
+  date: string | Date,
+  formatStr: string = DATE_FORMATS.DISPLAY
+): string => {
   try {
     const dateObj = typeof date === 'string' ? parseISO(date) : date;
     if (!isValid(dateObj)) {
@@ -41,7 +44,10 @@ export const formatRelativeTime = (date: string | Date): string => {
 };
 
 // Number formatting functions
-export const formatNumber = (num: number, options?: Intl.NumberFormatOptions): string => {
+export const formatNumber = (
+  num: number,
+  options?: Intl.NumberFormatOptions
+): string => {
   return new Intl.NumberFormat('en-US', options).format(num);
 };
 
@@ -81,37 +87,44 @@ export const formatFileSize = (bytes: number, decimals = 2): string => {
 };
 
 // Phone number formatting
-export const formatPhoneNumber = (phone: string, countryCode = 'US'): string => {
+export const formatPhoneNumber = (
+  phone: string,
+  countryCode = 'US'
+): string => {
   // Remove all non-digit characters except + at the beginning
   const cleaned = phone.replace(/[^\d+]/g, '');
-  
+
   if (countryCode === 'US') {
     // US phone number formatting
     if (cleaned.length === 10) {
       return cleaned.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
     }
-    
+
     if (cleaned.length === 11 && cleaned.startsWith('1')) {
       return cleaned.replace(/(\d{1})(\d{3})(\d{3})(\d{4})/, '+$1 ($2) $3-$4');
     }
   }
-  
+
   // International format
   if (cleaned.startsWith('+')) {
     return cleaned.replace(/(\+\d{1,3})(\d{3})(\d{3})(\d{4})/, '$1 $2-$3-$4');
   }
-  
+
   // Return cleaned number if no specific formatting applies
   return cleaned;
 };
 
 // Name formatting
-export const formatFullName = (firstName: string, lastName: string, format: 'first-last' | 'last-first' | 'initials' = 'first-last'): string => {
+export const formatFullName = (
+  firstName: string,
+  lastName: string,
+  format: 'first-last' | 'last-first' | 'initials' = 'first-last'
+): string => {
   const first = firstName?.trim() || '';
   const last = lastName?.trim() || '';
-  
+
   if (!first && !last) return '';
-  
+
   switch (format) {
     case 'last-first':
       return `${last}, ${first}`.replace(/^,\s*|,\s*$/, '');
@@ -137,7 +150,11 @@ export const capitalizeWords = (text: string): string => {
   return text.replace(/\b\w/g, l => l.toUpperCase());
 };
 
-export const truncateText = (text: string, maxLength: number, suffix = '...'): string => {
+export const truncateText = (
+  text: string,
+  maxLength: number,
+  suffix = '...'
+): string => {
   if (!text || text.length <= maxLength) return text;
   return text.substring(0, maxLength - suffix.length) + suffix;
 };
@@ -154,12 +171,12 @@ export const slugify = (text: string): string => {
 // URL formatting
 export const formatUrl = (url: string): string => {
   if (!url) return '';
-  
+
   // Add protocol if missing
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
     return `https://${url}`;
   }
-  
+
   return url;
 };
 
@@ -168,48 +185,54 @@ export const getDomainFromUrl = (url: string): string => {
     const formatted = formatUrl(url);
     const urlObj = new URL(formatted);
     return urlObj.hostname;
-  } catch (error) {
+  } catch (_error) {
     return url;
   }
 };
 
 // Address formatting
-export const formatAddress = (address: {
-  street?: string;
-  city?: string;
-  state?: string;
-  zipCode?: string;
-  country?: string;
-}, format: 'single-line' | 'multi-line' = 'single-line'): string => {
+export const formatAddress = (
+  address: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    country?: string;
+  },
+  format: 'single-line' | 'multi-line' = 'single-line'
+): string => {
   const parts: string[] = [];
-  
+
   if (address.street) parts.push(address.street);
-  
+
   const cityStateZip = [address.city, address.state, address.zipCode]
     .filter(Boolean)
     .join(', ')
     .replace(', ,', ','); // Clean up double commas
-  
+
   if (cityStateZip) parts.push(cityStateZip);
   if (address.country && address.country !== 'USA') parts.push(address.country);
-  
+
   if (format === 'multi-line') {
     return parts.join('\n');
   }
-  
+
   return parts.join(', ');
 };
 
 // Tag formatting
-export const formatTags = (tags: string[], maxVisible = 3): { visible: string[]; hidden: number } => {
+export const formatTags = (
+  tags: string[],
+  maxVisible = 3
+): { visible: string[]; hidden: number } => {
   if (!tags || tags.length === 0) {
     return { visible: [], hidden: 0 };
   }
-  
+
   if (tags.length <= maxVisible) {
     return { visible: tags, hidden: 0 };
   }
-  
+
   return {
     visible: tags.slice(0, maxVisible),
     hidden: tags.length - maxVisible,
@@ -217,9 +240,12 @@ export const formatTags = (tags: string[], maxVisible = 3): { visible: string[];
 };
 
 // Search highlighting
-export const highlightSearchTerms = (text: string, searchTerm: string): string => {
+export const highlightSearchTerms = (
+  text: string,
+  searchTerm: string
+): string => {
   if (!text || !searchTerm) return text;
-  
+
   const regex = new RegExp(`(${searchTerm})`, 'gi');
   return text.replace(regex, '<mark>$1</mark>');
 };
@@ -228,15 +254,15 @@ export const highlightSearchTerms = (text: string, searchTerm: string): string =
 export const getContrastColor = (hexColor: string): 'light' | 'dark' => {
   // Remove # if present
   const color = hexColor.replace('#', '');
-  
+
   // Convert to RGB
   const r = parseInt(color.substr(0, 2), 16);
   const g = parseInt(color.substr(2, 2), 16);
   const b = parseInt(color.substr(4, 2), 16);
-  
+
   // Calculate luminance
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  
+
   return luminance > 0.5 ? 'dark' : 'light';
 };
 
@@ -246,7 +272,7 @@ export const generateAvatarColor = (text: string): string => {
   for (let i = 0; i < text.length; i++) {
     hash = text.charCodeAt(i) + ((hash << 5) - hash);
   }
-  
+
   const hue = Math.abs(hash) % 360;
   return `hsl(${hue}, 65%, 50%)`;
 };
@@ -256,21 +282,24 @@ export const formatList = (items: string[], conjunction = 'and'): string => {
   if (!items || items.length === 0) return '';
   if (items.length === 1) return items[0];
   if (items.length === 2) return `${items[0]} ${conjunction} ${items[1]}`;
-  
+
   const lastItem = items[items.length - 1];
   const otherItems = items.slice(0, -1).join(', ');
-  
+
   return `${otherItems}, ${conjunction} ${lastItem}`;
 };
 
 // Progress formatting
-export const formatProgress = (current: number, total: number): {
+export const formatProgress = (
+  current: number,
+  total: number
+): {
   percentage: number;
   display: string;
 } => {
   const percentage = total > 0 ? Math.round((current / total) * 100) : 0;
   const display = `${current} of ${total}`;
-  
+
   return { percentage, display };
 };
 
@@ -280,7 +309,7 @@ export const formatDuration = (milliseconds: number): string => {
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
-  
+
   if (days > 0) return `${days}d ${hours % 24}h`;
   if (hours > 0) return `${hours}h ${minutes % 60}m`;
   if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
@@ -288,12 +317,15 @@ export const formatDuration = (milliseconds: number): string => {
 };
 
 // Social media formatting
-export const formatSocialHandle = (platform: string, handle: string): string => {
+export const formatSocialHandle = (
+  platform: string,
+  handle: string
+): string => {
   if (!handle) return '';
-  
+
   // Remove @ symbol if present
   const cleanHandle = handle.replace(/^@/, '');
-  
+
   switch (platform.toLowerCase()) {
     case 'twitter':
     case 'x':
@@ -311,7 +343,7 @@ export const formatSocialHandle = (platform: string, handle: string): string => 
 
 export const getSocialUrl = (platform: string, handle: string): string => {
   const cleanHandle = handle.replace(/^@/, '');
-  
+
   const urls: Record<string, string> = {
     twitter: `https://twitter.com/${cleanHandle}`,
     x: `https://x.com/${cleanHandle}`,
@@ -320,8 +352,11 @@ export const getSocialUrl = (platform: string, handle: string): string => {
     instagram: `https://instagram.com/${cleanHandle}`,
     facebook: `https://facebook.com/${cleanHandle}`,
   };
-  
-  return urls[platform.toLowerCase()] || `https://${platform.toLowerCase()}.com/${cleanHandle}`;
+
+  return (
+    urls[platform.toLowerCase()] ||
+    `https://${platform.toLowerCase()}.com/${cleanHandle}`
+  );
 };
 
 export default {

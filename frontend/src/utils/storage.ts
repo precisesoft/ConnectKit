@@ -28,14 +28,14 @@ export class Storage {
   static set<T>(key: string, value: T): boolean {
     try {
       localStorage.setItem(key, JSON.stringify(value));
-      
+
       // Dispatch custom event for cross-tab synchronization
       window.dispatchEvent(
         new CustomEvent('storage-change', {
           detail: { key, newValue: value },
         })
       );
-      
+
       return true;
     } catch (error) {
       console.error(`Error writing to localStorage (${key}):`, error);
@@ -49,14 +49,14 @@ export class Storage {
   static remove(key: string): boolean {
     try {
       localStorage.removeItem(key);
-      
+
       // Dispatch custom event for cross-tab synchronization
       window.dispatchEvent(
         new CustomEvent('storage-change', {
           detail: { key, newValue: null },
         })
       );
-      
+
       return true;
     } catch (error) {
       console.error(`Error removing from localStorage (${key}):`, error);
@@ -115,7 +115,7 @@ export class Storage {
     try {
       let used = 0;
       for (const key in localStorage) {
-        if (localStorage.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(localStorage, key)) {
           used += localStorage[key].length;
         }
       }
@@ -192,12 +192,14 @@ export class UIStorage {
     });
   }
 
-  static setUIState(state: Partial<{
-    sidebarOpen: boolean;
-    sidebarWidth: number;
-    themeMode: 'light' | 'dark' | 'system';
-    densityMode: 'compact' | 'standard' | 'comfortable';
-  }>): boolean {
+  static setUIState(
+    state: Partial<{
+      sidebarOpen: boolean;
+      sidebarWidth: number;
+      themeMode: 'light' | 'dark' | 'system';
+      densityMode: 'compact' | 'standard' | 'comfortable';
+    }>
+  ): boolean {
     const current = this.getUIState();
     return Storage.set(this.key, { ...current, ...state });
   }
@@ -226,13 +228,15 @@ export class PreferencesStorage {
     });
   }
 
-  static setPreferences(prefs: Partial<{
-    language: string;
-    timezone: string;
-    dateFormat: string;
-    emailNotifications: boolean;
-    pushNotifications: boolean;
-  }>): boolean {
+  static setPreferences(
+    prefs: Partial<{
+      language: string;
+      timezone: string;
+      dateFormat: string;
+      emailNotifications: boolean;
+      pushNotifications: boolean;
+    }>
+  ): boolean {
     const current = this.getPreferences();
     return Storage.set(this.key, { ...current, ...prefs });
   }
@@ -252,13 +256,13 @@ export class SearchStorage {
 
   static addRecentSearch(query: string): boolean {
     const current = this.getRecentSearches();
-    
+
     // Remove existing occurrence
     const filtered = current.filter(item => item !== query);
-    
+
     // Add to beginning and limit size
     const updated = [query, ...filtered].slice(0, this.maxItems);
-    
+
     return Storage.set(this.key, updated);
   }
 
@@ -338,7 +342,7 @@ export class StorageMigration {
 
   static migrate(): void {
     const currentVersion = Storage.get<number>(this.versionKey, 0);
-    
+
     if (currentVersion < this.currentVersion) {
       this.runMigrations(currentVersion);
       Storage.set(this.versionKey, this.currentVersion);
@@ -346,13 +350,15 @@ export class StorageMigration {
   }
 
   private static runMigrations(fromVersion: number): void {
-    console.log(`Running storage migrations from version ${fromVersion} to ${this.currentVersion}`);
-    
+    console.log(
+      `Running storage migrations from version ${fromVersion} to ${this.currentVersion}`
+    );
+
     // Example migration from version 0 to 1
     if (fromVersion < 1) {
       this.migrateToV1();
     }
-    
+
     // Add more migrations here as needed
   }
 
@@ -360,7 +366,7 @@ export class StorageMigration {
     // Example: Migrate old auth storage structure
     const oldAuthKey = 'auth-data';
     const oldAuth = Storage.get(oldAuthKey);
-    
+
     if (oldAuth) {
       AuthStorage.setAuthData(oldAuth);
       Storage.remove(oldAuthKey);
@@ -370,34 +376,41 @@ export class StorageMigration {
 
 // Storage event listeners for cross-tab synchronization
 export class StorageEventManager {
-  private static listeners: Map<string, ((event: CustomEvent) => void)[]> = new Map();
+  private static listeners: Map<string, ((event: CustomEvent) => void)[]> =
+    new Map();
 
-  static addEventListener(key: string, callback: (event: CustomEvent) => void): void {
+  static addEventListener(
+    key: string,
+    callback: (event: CustomEvent) => void
+  ): void {
     if (!this.listeners.has(key)) {
       this.listeners.set(key, []);
     }
-    
+
     this.listeners.get(key)!.push(callback);
-    
+
     // Add global event listener if this is the first listener
     if (this.getTotalListeners() === 1) {
       this.addGlobalListener();
     }
   }
 
-  static removeEventListener(key: string, callback: (event: CustomEvent) => void): void {
+  static removeEventListener(
+    key: string,
+    callback: (event: CustomEvent) => void
+  ): void {
     const keyListeners = this.listeners.get(key);
     if (keyListeners) {
       const index = keyListeners.indexOf(callback);
       if (index > -1) {
         keyListeners.splice(index, 1);
       }
-      
+
       if (keyListeners.length === 0) {
         this.listeners.delete(key);
       }
     }
-    
+
     // Remove global listener if no more listeners
     if (this.getTotalListeners() === 0) {
       this.removeGlobalListener();

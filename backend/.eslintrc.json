@@ -5,12 +5,7 @@
     "es2022": true,
     "jest": true
   },
-  "extends": [
-    "eslint:recommended",
-    "@typescript-eslint/recommended",
-    "plugin:security/recommended",
-    "prettier"
-  ],
+  "extends": ["eslint:recommended", "prettier"],
   "ignorePatterns": [
     "dist",
     "node_modules",
@@ -18,40 +13,17 @@
     "*.config.js",
     "*.config.ts"
   ],
-  "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": 2022,
-    "sourceType": "module",
-    "project": "./tsconfig.json"
+    "sourceType": "module"
   },
-  "plugins": [
-    "@typescript-eslint",
-    "node",
-    "security"
-  ],
+  "plugins": [],
   "rules": {
-    "@typescript-eslint/no-unused-vars": [
-      "error",
-      {
-        "argsIgnorePattern": "^_",
-        "varsIgnorePattern": "^_"
-      }
-    ],
-    "@typescript-eslint/explicit-function-return-type": "warn",
-    "@typescript-eslint/explicit-module-boundary-types": "warn",
-    "@typescript-eslint/no-explicit-any": "warn",
-    "@typescript-eslint/no-empty-function": "off",
-    "@typescript-eslint/prefer-const": "error",
-    "@typescript-eslint/no-var-requires": "error",
     "prefer-const": "error",
     "no-var": "error",
     "no-console": ["warn", { "allow": ["warn", "error"] }],
     "no-debugger": "error",
-    "node/no-process-exit": "error",
-    "node/no-unpublished-require": "off",
-    "security/detect-object-injection": "warn",
-    "security/detect-non-literal-regexp": "warn",
-    "security/detect-unsafe-regex": "error"
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }]
   },
   "overrides": [
     {

@@ -3,12 +3,10 @@ import {
   TextField,
   InputAdornment,
   IconButton,
-  Autocomplete,
   Box,
   Typography,
   Chip,
   Paper,
-  List,
   ListItem,
   ListItemText,
   ListItemAvatar,
@@ -16,12 +14,7 @@ import {
   Divider,
   CircularProgress,
 } from '@mui/material';
-import {
-  Search,
-  Clear,
-  FilterList,
-  TrendingUp,
-} from '@mui/icons-material';
+import { Search, Clear, TrendingUp } from '@mui/icons-material';
 
 import { useDebounce } from '@hooks/useDebounce';
 import { useSearch } from '@store/uiStore';
@@ -145,7 +138,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
     setInputValue(value);
-    
+
     if (value && showSuggestions) {
       setShowDropdown(true);
     }
@@ -154,24 +147,27 @@ const SearchBar: React.FC<SearchBarProps> = ({
   // Handle search submission
   const handleSearch = (searchQuery?: string) => {
     const queryToUse = searchQuery || inputValue;
-    
+
     if (queryToUse.trim()) {
       setQuery(queryToUse);
-      
+
       // Save to recent searches
       const updated = [
         queryToUse,
-        ...recentSearches.filter(item => item !== queryToUse)
+        ...recentSearches.filter(item => item !== queryToUse),
       ].slice(0, 5);
-      
+
       setRecentSearches(updated);
-      localStorage.setItem('connectkit-recent-searches', JSON.stringify(updated));
-      
+      localStorage.setItem(
+        'connectkit-recent-searches',
+        JSON.stringify(updated)
+      );
+
       if (onSearch) {
         onSearch(queryToUse);
       }
     }
-    
+
     setShowDropdown(false);
     searchInputRef.current?.blur();
   };
@@ -192,7 +188,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
     setInputValue(suggestion.title);
     setQuery(suggestion.title);
     setShowDropdown(false);
-    
+
     if (onSuggestionSelect) {
       onSuggestionSelect(suggestion);
     } else if (onSearch) {
@@ -241,18 +237,18 @@ const SearchBar: React.FC<SearchBarProps> = ({
         autoFocus={autoFocus}
         InputProps={{
           startAdornment: (
-            <InputAdornment position="start">
-              <Search color="action" />
+            <InputAdornment position='start'>
+              <Search color='action' />
             </InputAdornment>
           ),
           endAdornment: (
-            <InputAdornment position="end">
+            <InputAdornment position='end'>
               {loading && <CircularProgress size={20} />}
               {inputValue && !loading && (
                 <IconButton
-                  size="small"
+                  size='small'
                   onClick={handleClear}
-                  aria-label="clear search"
+                  aria-label='clear search'
                 >
                   <Clear />
                 </IconButton>
@@ -280,19 +276,17 @@ const SearchBar: React.FC<SearchBarProps> = ({
           {/* Current Search */}
           {inputValue && (
             <>
-              <ListItem
-                button
-                onClick={() => handleSearch()}
-                sx={{ py: 1 }}
-              >
+              <ListItem button onClick={() => handleSearch()} sx={{ py: 1 }}>
                 <ListItemAvatar>
-                  <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32 }}>
+                  <Avatar
+                    sx={{ bgcolor: 'primary.main', width: 32, height: 32 }}
+                  >
                     <Search />
                   </Avatar>
                 </ListItemAvatar>
                 <ListItemText
                   primary={`Search for "${inputValue}"`}
-                  secondary="Press Enter to search"
+                  secondary='Press Enter to search'
                 />
               </ListItem>
               <Divider />
@@ -303,11 +297,15 @@ const SearchBar: React.FC<SearchBarProps> = ({
           {suggestions.length > 0 && (
             <>
               <Box sx={{ p: 1.5, pb: 0 }}>
-                <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                  fontWeight={600}
+                >
                   SUGGESTIONS
                 </Typography>
               </Box>
-              {suggestions.slice(0, maxSuggestions).map((suggestion) => (
+              {suggestions.slice(0, maxSuggestions).map(suggestion => (
                 <ListItem
                   key={suggestion.id}
                   button
@@ -331,7 +329,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
                   {suggestion.count !== undefined && (
                     <Chip
                       label={suggestion.count}
-                      size="small"
+                      size='small'
                       sx={{ ml: 1, height: 20, fontSize: '0.7rem' }}
                     />
                   )}
@@ -345,7 +343,11 @@ const SearchBar: React.FC<SearchBarProps> = ({
           {!inputValue && showRecentSearches && recentSearches.length > 0 && (
             <>
               <Box sx={{ p: 1.5, pb: 0 }}>
-                <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                  fontWeight={600}
+                >
                   RECENT SEARCHES
                 </Typography>
               </Box>
@@ -358,7 +360,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
                 >
                   <ListItemAvatar>
                     <Avatar sx={{ bgcolor: 'grey.100', width: 32, height: 32 }}>
-                      <Search color="action" />
+                      <Search color='action' />
                     </Avatar>
                   </ListItemAvatar>
                   <ListItemText
@@ -375,7 +377,11 @@ const SearchBar: React.FC<SearchBarProps> = ({
           {!inputValue && showPopularSearches && (
             <>
               <Box sx={{ p: 1.5, pb: 0 }}>
-                <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                  fontWeight={600}
+                >
                   POPULAR SEARCHES
                 </Typography>
               </Box>
@@ -387,8 +393,10 @@ const SearchBar: React.FC<SearchBarProps> = ({
                   sx={{ py: 0.5 }}
                 >
                   <ListItemAvatar>
-                    <Avatar sx={{ bgcolor: 'success.light', width: 32, height: 32 }}>
-                      <TrendingUp color="success" />
+                    <Avatar
+                      sx={{ bgcolor: 'success.light', width: 32, height: 32 }}
+                    >
+                      <TrendingUp color='success' />
                     </Avatar>
                   </ListItemAvatar>
                   <ListItemText
@@ -403,7 +411,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
           {/* No results */}
           {inputValue && suggestions.length === 0 && !loading && (
             <Box sx={{ p: 2, textAlign: 'center' }}>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant='body2' color='text.secondary'>
                 No suggestions found
               </Typography>
             </Box>
