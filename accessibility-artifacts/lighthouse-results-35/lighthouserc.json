@@ -1,0 +1,24 @@
+{
+  "ci": {
+    "collect": {
+      "url": [
+        "http://localhost:3200/",
+        "http://localhost:3200/login",
+        "http://localhost:3200/register"
+      ],
+      "settings": {
+        "chromeFlags": "--no-sandbox --disable-dev-shm-usage",
+        "onlyCategories": ["accessibility"]
+      }
+    },
+    "assert": {
+      "assertions": {
+        "categories:accessibility": ["error", {"minScore": 0.9}]
+      }
+    },
+    "upload": {
+      "target": "filesystem",
+      "outputDir": "./lighthouse-results"
+    }
+  }
+}
