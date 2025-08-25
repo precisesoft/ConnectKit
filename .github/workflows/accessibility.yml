@@ -1,12 +1,12 @@
-name: Accessibility Testing (Disabled)
+name: Accessibility Testing
 
-# Temporarily disabled - using minimal CI first
+# Comprehensive accessibility testing with Lighthouse, WAVE, and color contrast
 on:
   workflow_dispatch:
-  # pull_request:
-  #   branches: [main, develop]
-  # push:
-  #   branches: [main]
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main]
   schedule:
     # Run accessibility tests daily at 3 AM UTC
     - cron: "0 3 * * *"
