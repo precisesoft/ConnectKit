@@ -3,7 +3,6 @@ name: Deploy to Production
 on:
   push:
     branches: [main]
-    branches-ignore: [fix/ci-pipeline-frontend-tests]
     tags: ["v*"]
   workflow_dispatch:
     inputs:
