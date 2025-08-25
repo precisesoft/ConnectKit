@@ -1,12 +1,11 @@
-name: Security Testing (Disabled)
+name: Security Testing
 
-# Temporarily disabled - using minimal CI first
 on:
   workflow_dispatch:
-  # push:
-  #   branches: [main, develop]
-  # pull_request:
-  #   branches: [main, develop]
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
   schedule:
     # Run security scans daily at 1 AM UTC
     - cron: "0 1 * * *"
@@ -133,8 +132,8 @@ jobs:
 
       - name: Build Docker images
         run: |
-          docker build -t connectkit-backend:security-test -f docker/backend/Dockerfile ./backend
-          docker build -t connectkit-frontend:security-test -f docker/frontend/Dockerfile ./frontend
+          docker build -t connectkit-backend:security-test --target production -f docker/backend/Dockerfile .
+          docker build -t connectkit-frontend:security-test --target production -f docker/frontend/Dockerfile ./frontend
 
       - name: Run Trivy vulnerability scanner (Backend)
         uses: aquasecurity/trivy-action@master
@@ -212,15 +211,14 @@ jobs:
         working-directory: ./frontend
         run: npm run build
 
+      - name: Install security ESLint plugin
+        working-directory: ./frontend
+        run: npm install --save-dev eslint-plugin-security
+
       - name: Run ESLint security plugin
         working-directory: ./frontend
         run: |
-          # Check if security plugin is installed
-          if npm list eslint-plugin-security; then
-            npm run lint -- --format=json --output-file=eslint-security-results.json || true
-          else
-            echo "ESLint security plugin not installed, skipping"
-          fi
+          npm run lint -- --format=json --output-file=eslint-security-results.json || true
 
       - name: Analyze bundle for security issues
         working-directory: ./frontend
@@ -288,12 +286,7 @@ jobs:
       - name: Run ESLint security plugin
         working-directory: ./backend
         run: |
-          # Check if security plugin is installed
-          if npm list eslint-plugin-security; then
-            npm run lint -- --format=json --output-file=eslint-security-results.json || true
-          else
-            echo "ESLint security plugin not installed, skipping"
-          fi
+          npm run lint -- --format=json --output-file=eslint-security-results.json || true
 
       - name: Run custom security tests
         working-directory: ./backend
@@ -357,10 +350,25 @@ jobs:
 
       - name: Start application services
         run: |
-          cp .env.example .env
-          echo "JWT_SECRET=test-jwt-secret-for-security-testing" >> .env
+          # Create environment file
+          cat > .env << EOF
+          NODE_ENV=test
+          PORT=3001
+          FRONTEND_PORT=3000
+          DB_HOST=localhost
+          DB_PORT=5432
+          DB_USER=postgres
+          DB_PASSWORD=postgres
+          DB_NAME=connectkit_test
+          REDIS_URL=redis://localhost:6379
+          JWT_SECRET=test-jwt-secret-for-security-testing-very-long-key
+          JWT_REFRESH_SECRET=test-refresh-secret-for-security-testing-very-long-key
+          ENCRYPTION_KEY=test-encryption-key-32-characters
+          CORS_ORIGIN=http://localhost:3000
+          EOF
+
           docker compose up -d
-          sleep 45
+          sleep 60
 
       - name: Wait for services
         run: |
@@ -403,9 +411,25 @@ jobs:
 
       - name: Start application services
         run: |
-          cp .env.example .env
+          # Create environment file
+          cat > .env << EOF
+          NODE_ENV=test
+          PORT=3001
+          FRONTEND_PORT=3000
+          DB_HOST=localhost
+          DB_PORT=5432
+          DB_USER=postgres
+          DB_PASSWORD=postgres
+          DB_NAME=connectkit_test
+          REDIS_URL=redis://localhost:6379
+          JWT_SECRET=test-jwt-secret-for-security-testing-very-long-key
+          JWT_REFRESH_SECRET=test-refresh-secret-for-security-testing-very-long-key
+          ENCRYPTION_KEY=test-encryption-key-32-characters
+          CORS_ORIGIN=http://localhost:3000
+          EOF
+
           docker compose up -d
-          sleep 30
+          sleep 45
 
       - name: Wait for services
         run: |
@@ -446,7 +470,19 @@ jobs:
           if echo "$FRONTEND_HEADERS" | grep -i "content-security-policy"; then
             echo "✅ Content-Security-Policy present" >> $GITHUB_STEP_SUMMARY
           else
-            echo "⚠️ Missing Content-Security-Policy header" >> $GITHUB_STEP_SUMMARY
+            echo "❌ Missing Content-Security-Policy header" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if echo "$FRONTEND_HEADERS" | grep -i "permissions-policy"; then
+            echo "✅ Permissions-Policy present" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Missing Permissions-Policy header" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if echo "$FRONTEND_HEADERS" | grep -i "cross-origin-embedder-policy"; then
+            echo "✅ Cross-Origin-Embedder-Policy present" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Missing Cross-Origin-Embedder-Policy header" >> $GITHUB_STEP_SUMMARY
           fi
 
           # Check for information disclosure

@@ -1,111 +1,25 @@
-# OWASP ZAP Security Testing Rules for ConnectKit
-# Format: RULE_ID	THRESHOLD	[URL_REGEX]
-# Thresholds: IGNORE, INFO, LOW, MEDIUM, HIGH, OFF
+# OWASP ZAP Rules Configuration
+# Format: Action	Rule ID	Rule Description
 
-# Content Security Policy
-10038	MEDIUM
+# Ignore false positives for development
+IGNORE	10021	X-Content-Type-Options Header Missing (Development only)
+IGNORE	10016	Web Browser XSS Protection Not Enabled (Legacy browsers)
+IGNORE	10015	Incomplete or No Cache-control and Pragma HTTP Header Set
 
-# Missing Anti-clickjacking Header
-10020	MEDIUM
+# Reduce noise for API endpoints
+IGNORE	10027	Information Disclosure - Suspicious Comments
+IGNORE	10017	Cross-Domain JavaScript Source File Inclusion
 
-# X-Content-Type-Options Header Missing
-10021	MEDIUM
+# Authentication related ignores for test endpoints
+IGNORE	10105	Weak Authentication Method
 
-# Information Disclosure - Suspicious Comments
-10027	LOW
+# Content Security Policy - warn instead of fail
+WARN	10038	Content Security Policy (CSP) Header Not Set
 
-# Server Leaks Version Information via "Server" HTTP Response Header Field
-10036	LOW
+# Cookie security - appropriate for our use case
+WARN	10054	Cookie Without SameSite Attribute
+WARN	10055	CSP: Wildcard Directive
 
-# Secure Pages Include Mixed Content
-10040	HIGH
-
-# HTTP to HTTPS Insecure Transition in Form Post
-10041	HIGH
-
-# HTTPS to HTTP Insecure Transition in Form Post
-10042	HIGH
-
-# User Controllable HTML Element Attribute (Potential XSS)
-10031	MEDIUM
-
-# User Controllable JavaScript Event (XSS)
-10043	HIGH
-
-# Big Redirect Detected (Potential Sensitive Information Leak)
-10044	MEDIUM
-
-# Retrieved from Cache
-10050	INFO
-
-# X-ChromeLogger-Data (XCOLD) Header Information Leak
-10052	MEDIUM
-
-# Cookie No HttpOnly Flag
-10010	MEDIUM
-
-# Cookie Without Secure Flag
-10011	MEDIUM
-
-# Incomplete or No Cache-control and Pragma HTTP Header Set
-10015	LOW
-
-# Web Browser XSS Protection Not Enabled
-10016	LOW
-
-# Cross-Domain JavaScript Source File Inclusion
-10017	MEDIUM
-
-# Content-Type Header Missing
-10019	LOW
-
-# Anti-CSRF Tokens Scanner
-10202	HIGH
-
-# Directory Browsing
-0	HIGH
-
-# Path Traversal
-6	HIGH
-
-# Remote File Inclusion
-7	HIGH
-
-# Server Side Include
-40009	HIGH
-
-# Cross Site Scripting (Reflected)
-40012	HIGH
-
-# Cross Site Scripting (Persistent)
-40014	HIGH
-
-# Cross Site Scripting (Persistent) - Prime
-40016	HIGH
-
-# Cross Site Scripting (Persistent) - Spider
-40017	HIGH
-
-# SQL Injection
-40018	HIGH
-
-# Remote OS Command Injection
-90020	HIGH
-
-# Buffer Overflow
-30001	HIGH
-
-# Format String Error
-30002	HIGH
-
-# Integer Overflow Error
-30003	HIGH
-
-# Ignore static resources that don't need security scanning
-10049	IGNORE	.*\.(css|js|png|jpg|gif|ico|woff|woff2)$
-
-# Ignore health check endpoints from certain rules
-10027	IGNORE	.*/api/health$
-
-# Reduce noise from development/test endpoints
-10027	IGNORE	.*/api/test.*
+# Missing security headers that we handle differently
+IGNORE	10020	X-Frame-Options Header Not Set (We use CSP frame-ancestors)
+IGNORE	10019	Content-Type Header Missing

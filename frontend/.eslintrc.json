@@ -7,10 +7,11 @@
   },
   "extends": [
     "eslint:recommended",
-    "@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended",
     "plugin:react/recommended",
     "plugin:react-hooks/recommended",
     "plugin:jsx-a11y/recommended",
+    "plugin:security/recommended",
     "prettier"
   ],
   "ignorePatterns": [
@@ -20,7 +21,8 @@
     "coverage",
     "build",
     "*.config.js",
-    "*.config.ts"
+    "*.config.ts",
+    "e2e/**/*"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
@@ -28,15 +30,15 @@
     "sourceType": "module",
     "ecmaFeatures": {
       "jsx": true
-    },
-    "project": "./tsconfig.json"
+    }
   },
   "plugins": [
     "react",
     "react-hooks",
     "react-refresh",
     "@typescript-eslint",
-    "jsx-a11y"
+    "jsx-a11y",
+    "security"
   ],
   "rules": {
     "react/react-in-jsx-scope": "off",
@@ -60,8 +62,6 @@
     "@typescript-eslint/explicit-module-boundary-types": "off",
     "@typescript-eslint/no-explicit-any": "warn",
     "@typescript-eslint/no-empty-function": "off",
-    "@typescript-eslint/prefer-const": "error",
-    "@typescript-eslint/no-var-requires": "error",
     "prefer-const": "error",
     "no-var": "error",
     "no-console": ["warn", { "allow": ["warn", "error"] }],
@@ -73,7 +73,19 @@
         "components": ["Link"],
         "specialLink": ["to"]
       }
-    ]
+    ],
+    "security/detect-object-injection": "warn",
+    "security/detect-non-literal-regexp": "warn",
+    "security/detect-unsafe-regex": "error",
+    "security/detect-buffer-noassert": "error",
+    "security/detect-child-process": "error",
+    "security/detect-disable-mustache-escape": "error",
+    "security/detect-eval-with-expression": "error",
+    "security/detect-no-csrf-before-method-override": "error",
+    "security/detect-non-literal-fs-filename": "warn",
+    "security/detect-non-literal-require": "error",
+    "security/detect-possible-timing-attacks": "error",
+    "security/detect-pseudoRandomBytes": "error"
   },
   "settings": {
     "react": {
@@ -87,7 +99,8 @@
         "jest": true
       },
       "rules": {
-        "@typescript-eslint/no-explicit-any": "off"
+        "@typescript-eslint/no-explicit-any": "off",
+        "security/detect-object-injection": "off"
       }
     }
   ]

@@ -52,8 +52,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm install
-          npm install --workspace=backend --include=dev
+          npm ci
+          npm ci --workspace=backend
 
       - name: Install OpenSSL FIPS module
         run: |
@@ -103,11 +103,14 @@ jobs:
             try {
               const key = crypto.randomBytes(32);
               const iv = crypto.randomBytes(16);
-              const cipher = crypto.createCipher(algorithm, key);
+              const cipher = crypto.createCipheriv(algorithm, key, iv);
+              const testData = 'FIPS compliance test data';
+              let encrypted = cipher.update(testData, 'utf8', 'hex');
+              encrypted += cipher.final('hex');
               console.log(`✅ ${algorithm.toUpperCase()}: COMPLIANT`);
               compliantCount++;
             } catch (error) {
-              console.log(`❌ ${algorithm.toUpperCase()}: NOT AVAILABLE`);
+              console.log(`❌ ${algorithm.toUpperCase()}: NOT AVAILABLE - ${error.message}`);
             }
           });
 
@@ -178,6 +181,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
 
       - name: Install Syft for SBOM generation
         run: |
