@@ -22,13 +22,11 @@ import {
   ExitToApp,
   Notifications,
   Search,
-  DarkMode,
-  LightMode,
   Person,
 } from '@mui/icons-material';
 
 import { useAuthStore } from '@store/authStore';
-import { useUIStore, useSidebar, useNotifications } from '@store/uiStore';
+import { useSidebar, useNotifications } from '@store/uiStore';
 import { useAuth } from '@hooks/useAuth';
 import SearchBar from '@components/common/SearchBar';
 

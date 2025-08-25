@@ -31,7 +31,7 @@ const forgotPasswordSchema = yup.object().shape({
     .required('Email is required'),
 });
 
-interface ForgotPasswordFormData extends ForgotPasswordRequest {}
+type ForgotPasswordFormData = ForgotPasswordRequest;
 
 interface ForgotPasswordFormProps {
   onSuccess?: () => void;
@@ -169,7 +169,7 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
           </Typography>
 
           <Typography variant='body1' color='text.secondary' sx={{ mb: 3 }}>
-            We've sent password reset instructions to:
+            We&apos;ve sent password reset instructions to:
           </Typography>
 
           <Typography
@@ -238,8 +238,8 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
               Forgot Password
             </Typography>
             <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
-              Enter your email address and we'll send you instructions to reset
-              your password.
+              Enter your email address and we&apos;ll send you instructions to
+              reset your password.
             </Typography>
           </Box>
         )}

@@ -8,16 +8,11 @@ import {
   Paper,
   useTheme,
 } from '@mui/material';
-import {
-  Home,
-  ArrowBack,
-  Search,
-  ContactPhone,
-} from '@mui/icons-material';
+import { Home, ArrowBack, Search, ContactPhone } from '@mui/icons-material';
 
 const NotFoundPage: React.FC = () => {
   const navigate = useNavigate();
-  const theme = useTheme();
+  const _theme = useTheme();
 
   const handleGoHome = () => {
     navigate('/');
@@ -41,7 +36,7 @@ const NotFoundPage: React.FC = () => {
         px: 2,
       }}
     >
-      <Container maxWidth="md">
+      <Container maxWidth='md'>
         <Paper
           elevation={1}
           sx={{
@@ -53,8 +48,8 @@ const NotFoundPage: React.FC = () => {
         >
           {/* 404 Illustration */}
           <Typography
-            variant="h1"
-            component="div"
+            variant='h1'
+            component='div'
             sx={{
               fontSize: { xs: '6rem', sm: '8rem', md: '10rem' },
               fontWeight: 700,
@@ -70,8 +65,8 @@ const NotFoundPage: React.FC = () => {
 
           {/* Error Message */}
           <Typography
-            variant="h4"
-            component="h1"
+            variant='h4'
+            component='h1'
             gutterBottom
             sx={{
               fontWeight: 600,
@@ -83,8 +78,8 @@ const NotFoundPage: React.FC = () => {
           </Typography>
 
           <Typography
-            variant="body1"
-            color="text.secondary"
+            variant='body1'
+            color='text.secondary'
             sx={{
               mb: 4,
               maxWidth: 500,
@@ -92,8 +87,9 @@ const NotFoundPage: React.FC = () => {
               lineHeight: 1.6,
             }}
           >
-            The page you're looking for doesn't exist or has been moved. 
-            Don't worry, you can find what you're looking for from our homepage or contacts.
+            The page you&apos;re looking for doesn&apos;t exist or has been
+            moved. Don&apos;t worry, you can find what you&apos;re looking for
+            from our homepage or contacts.
           </Typography>
 
           {/* Action Buttons */}
@@ -108,8 +104,8 @@ const NotFoundPage: React.FC = () => {
             }}
           >
             <Button
-              variant="contained"
-              size="large"
+              variant='contained'
+              size='large'
               startIcon={<Home />}
               onClick={handleGoHome}
               sx={{
@@ -119,7 +115,8 @@ const NotFoundPage: React.FC = () => {
                 textTransform: 'none',
                 background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
                 '&:hover': {
-                  background: 'linear-gradient(45deg, #1565c0 30%, #1976d2 90%)',
+                  background:
+                    'linear-gradient(45deg, #1565c0 30%, #1976d2 90%)',
                 },
               }}
             >
@@ -127,8 +124,8 @@ const NotFoundPage: React.FC = () => {
             </Button>
 
             <Button
-              variant="outlined"
-              size="large"
+              variant='outlined'
+              size='large'
               startIcon={<ContactPhone />}
               onClick={handleGoToContacts}
               sx={{
@@ -142,8 +139,8 @@ const NotFoundPage: React.FC = () => {
             </Button>
 
             <Button
-              variant="text"
-              size="large"
+              variant='text'
+              size='large'
               startIcon={<ArrowBack />}
               onClick={handleGoBack}
               sx={{
@@ -165,14 +162,10 @@ const NotFoundPage: React.FC = () => {
               borderColor: 'divider',
             }}
           >
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              gutterBottom
-            >
-              Still can't find what you're looking for?
+            <Typography variant='body2' color='text.secondary' gutterBottom>
+              Still can&apos;t find what you&apos;re looking for?
             </Typography>
-            
+
             <Box
               sx={{
                 display: 'flex',
@@ -183,8 +176,8 @@ const NotFoundPage: React.FC = () => {
               }}
             >
               <Button
-                variant="text"
-                size="small"
+                variant='text'
+                size='small'
                 startIcon={<Search />}
                 onClick={() => {
                   // Focus on search when navigating to contacts
@@ -195,13 +188,14 @@ const NotFoundPage: React.FC = () => {
               >
                 Search Contacts
               </Button>
-              
+
               <Button
-                variant="text"
-                size="small"
+                variant='text'
+                size='small'
                 onClick={() => {
                   // Handle support contact
-                  window.location.href = 'mailto:support@connectkit.com?subject=Page%20Not%20Found%20Help';
+                  window.location.href =
+                    'mailto:support@connectkit.com?subject=Page%20Not%20Found%20Help';
                 }}
                 sx={{ textTransform: 'none' }}
               >

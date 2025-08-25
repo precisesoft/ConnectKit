@@ -32,12 +32,16 @@ import { useContacts } from '@hooks/useContacts';
 import LoadingSpinner from '@components/common/LoadingSpinner';
 
 const HomePage: React.FC = () => {
-  const theme = useTheme();
+  const _theme = useTheme();
   const { user } = useAuth();
-  const { stats, isLoadingStats, contacts } = useContacts({ limit: 5, sortBy: 'updatedAt', sortOrder: 'desc' });
+  const { stats, isLoadingStats, contacts } = useContacts({
+    limit: 5,
+    sortBy: 'updatedAt',
+    sortOrder: 'desc',
+  });
 
   if (isLoadingStats) {
-    return <LoadingSpinner message="Loading dashboard..." />;
+    return <LoadingSpinner message='Loading dashboard...' />;
   }
 
   const quickStats = [
@@ -106,18 +110,18 @@ const HomePage: React.FC = () => {
           color: 'white',
         }}
       >
-        <Typography variant="h4" component="h1" gutterBottom>
+        <Typography variant='h4' component='h1' gutterBottom>
           Welcome back, {user?.firstName}! 👋
         </Typography>
-        <Typography variant="body1" sx={{ opacity: 0.9 }}>
-          Here's an overview of your contact management activity.
+        <Typography variant='body1' sx={{ opacity: 0.9 }}>
+          Here&apos;s an overview of your contact management activity.
         </Typography>
       </Paper>
 
       <Grid container spacing={3}>
         {/* Quick Stats */}
         <Grid item xs={12}>
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+          <Typography variant='h6' gutterBottom sx={{ fontWeight: 600 }}>
             Quick Stats
           </Typography>
         </Grid>
@@ -151,10 +155,14 @@ const HomePage: React.FC = () => {
                     {stat.icon}
                   </Avatar>
                   <Box>
-                    <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
+                    <Typography
+                      variant='h4'
+                      component='div'
+                      sx={{ fontWeight: 700 }}
+                    >
                       {stat.value.toLocaleString()}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant='body2' color='text.secondary'>
                       {stat.title}
                     </Typography>
                   </Box>
@@ -166,7 +174,7 @@ const HomePage: React.FC = () => {
 
         {/* Quick Actions */}
         <Grid item xs={12} md={8}>
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mt: 2 }}>
+          <Typography variant='h6' gutterBottom sx={{ fontWeight: 600, mt: 2 }}>
             Quick Actions
           </Typography>
           <Grid container spacing={2}>
@@ -199,10 +207,13 @@ const HomePage: React.FC = () => {
                         {action.icon}
                       </Avatar>
                       <Box>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                        <Typography
+                          variant='subtitle1'
+                          sx={{ fontWeight: 600 }}
+                        >
                           {action.title}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography variant='body2' color='text.secondary'>
                           {action.description}
                         </Typography>
                       </Box>
@@ -216,7 +227,7 @@ const HomePage: React.FC = () => {
 
         {/* Recent Activity */}
         <Grid item xs={12} md={4}>
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mt: 2 }}>
+          <Typography variant='h6' gutterBottom sx={{ fontWeight: 600, mt: 2 }}>
             Recent Contacts
           </Typography>
           <Card>
@@ -241,23 +252,33 @@ const HomePage: React.FC = () => {
                             src={contact.avatar}
                             sx={{ bgcolor: 'primary.main' }}
                           >
-                            {contact.firstName[0]}{contact.lastName[0]}
+                            {contact.firstName[0]}
+                            {contact.lastName[0]}
                           </Avatar>
                         </ListItemAvatar>
                         <ListItemText
                           primary={`${contact.firstName} ${contact.lastName}`}
                           secondary={
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1,
+                                mt: 0.5,
+                              }}
+                            >
                               {contact.company && (
                                 <Chip
                                   label={contact.company}
-                                  size="small"
-                                  variant="outlined"
+                                  size='small'
+                                  variant='outlined'
                                   sx={{ height: 20, fontSize: '0.7rem' }}
                                 />
                               )}
                               {contact.isFavorite && (
-                                <Star sx={{ color: 'warning.main', fontSize: 16 }} />
+                                <Star
+                                  sx={{ color: 'warning.main', fontSize: 16 }}
+                                />
                               )}
                             </Box>
                           }
@@ -277,13 +298,13 @@ const HomePage: React.FC = () => {
                       opacity: 0.5,
                     }}
                   />
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant='body2' color='text.secondary'>
                     No contacts yet
                   </Typography>
                   <Button
-                    variant="outlined"
-                    size="small"
-                    href="/contacts/new"
+                    variant='outlined'
+                    size='small'
+                    href='/contacts/new'
                     sx={{ mt: 2 }}
                   >
                     Add Your First Contact
@@ -297,17 +318,21 @@ const HomePage: React.FC = () => {
         {/* Top Tags */}
         {stats?.topTags && stats.topTags.length > 0 && (
           <Grid item xs={12} md={6}>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mt: 2 }}>
+            <Typography
+              variant='h6'
+              gutterBottom
+              sx={{ fontWeight: 600, mt: 2 }}
+            >
               Popular Tags
             </Typography>
             <Card>
               <CardContent>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {stats.topTags.slice(0, 10).map((tag) => (
+                  {stats.topTags.slice(0, 10).map(tag => (
                     <Chip
                       key={tag.name}
                       label={`${tag.name} (${tag.count})`}
-                      variant="outlined"
+                      variant='outlined'
                       component={Button}
                       href={`/contacts?tags=${encodeURIComponent(tag.name)}`}
                       sx={{
@@ -327,7 +352,11 @@ const HomePage: React.FC = () => {
         {/* Top Companies */}
         {stats?.topCompanies && stats.topCompanies.length > 0 && (
           <Grid item xs={12} md={6}>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mt: 2 }}>
+            <Typography
+              variant='h6'
+              gutterBottom
+              sx={{ fontWeight: 600, mt: 2 }}
+            >
               Top Companies
             </Typography>
             <Card>
@@ -352,11 +381,13 @@ const HomePage: React.FC = () => {
                         />
                         <Chip
                           label={company.count}
-                          size="small"
+                          size='small'
                           sx={{ minWidth: 40 }}
                         />
                       </ListItem>
-                      {index < Math.min(stats.topCompanies.length, 5) - 1 && <Divider />}
+                      {index < Math.min(stats.topCompanies.length, 5) - 1 && (
+                        <Divider />
+                      )}
                     </React.Fragment>
                   ))}
                 </List>

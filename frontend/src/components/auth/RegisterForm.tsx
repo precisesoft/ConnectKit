@@ -111,7 +111,7 @@ const registerSchema = yup.object().shape({
     .required('Please confirm your password'),
 });
 
-interface RegisterFormData extends RegisterRequest {}
+type RegisterFormData = RegisterRequest;
 
 interface RegisterFormProps {
   onSuccess?: () => void;

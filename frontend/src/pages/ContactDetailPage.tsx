@@ -26,7 +26,6 @@ import {
 } from '@mui/icons-material';
 
 import LoadingSpinner from '@components/common/LoadingSpinner';
-import ErrorMessage from '@components/common/ErrorMessage';
 
 const ContactDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -50,7 +49,8 @@ const ContactDetailPage: React.FC = () => {
       country: 'USA',
     },
     website: 'https://johndoe.dev',
-    notes: 'Great developer with excellent problem-solving skills. Interested in React and TypeScript.',
+    notes:
+      'Great developer with excellent problem-solving skills. Interested in React and TypeScript.',
     tags: ['Developer', 'React', 'TypeScript', 'Remote'],
     isFavorite: true,
     avatar: undefined,
@@ -80,7 +80,7 @@ const ContactDetailPage: React.FC = () => {
   };
 
   if (!contact) {
-    return <LoadingSpinner message="Loading contact..." />;
+    return <LoadingSpinner message='Loading contact...' />;
   }
 
   return (
@@ -90,15 +90,22 @@ const ContactDetailPage: React.FC = () => {
         <IconButton onClick={handleBack} sx={{ mr: 2 }}>
           <ArrowBack />
         </IconButton>
-        <Typography variant="h4" component="h1" sx={{ flexGrow: 1, fontWeight: 600 }}>
+        <Typography
+          variant='h4'
+          component='h1'
+          sx={{ flexGrow: 1, fontWeight: 600 }}
+        >
           Contact Details
         </Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>
-          <IconButton onClick={handleToggleFavorite} color={contact.isFavorite ? 'warning' : 'default'}>
+          <IconButton
+            onClick={handleToggleFavorite}
+            color={contact.isFavorite ? 'warning' : 'default'}
+          >
             {contact.isFavorite ? <Star /> : <StarBorder />}
           </IconButton>
           <Button
-            variant="outlined"
+            variant='outlined'
             startIcon={<Edit />}
             onClick={handleEdit}
             sx={{ textTransform: 'none' }}
@@ -106,8 +113,8 @@ const ContactDetailPage: React.FC = () => {
             Edit
           </Button>
           <Button
-            variant="outlined"
-            color="error"
+            variant='outlined'
+            color='error'
             startIcon={<Delete />}
             onClick={handleDelete}
             sx={{ textTransform: 'none' }}
@@ -132,21 +139,24 @@ const ContactDetailPage: React.FC = () => {
                   mr: 3,
                 }}
               >
-                {contact.firstName[0]}{contact.lastName[0]}
+                {contact.firstName[0]}
+                {contact.lastName[0]}
               </Avatar>
               <Box sx={{ flexGrow: 1 }}>
-                <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
+                <Typography variant='h5' gutterBottom sx={{ fontWeight: 600 }}>
                   {contact.firstName} {contact.lastName}
                 </Typography>
                 {contact.jobTitle && (
-                  <Typography variant="h6" color="text.secondary" gutterBottom>
+                  <Typography variant='h6' color='text.secondary' gutterBottom>
                     {contact.jobTitle}
                   </Typography>
                 )}
                 {contact.company && (
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <Business sx={{ fontSize: 20, mr: 1, color: 'text.secondary' }} />
-                    <Typography variant="body1" color="text.secondary">
+                    <Business
+                      sx={{ fontSize: 20, mr: 1, color: 'text.secondary' }}
+                    />
+                    <Typography variant='body1' color='text.secondary'>
                       {contact.company}
                     </Typography>
                   </Box>
@@ -161,14 +171,14 @@ const ContactDetailPage: React.FC = () => {
               {contact.email && (
                 <Grid item xs={12} sm={6}>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <Email sx={{ fontSize: 20, mr: 2, color: 'primary.main' }} />
+                    <Email
+                      sx={{ fontSize: 20, mr: 2, color: 'primary.main' }}
+                    />
                     <Box>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant='body2' color='text.secondary'>
                         Email
                       </Typography>
-                      <Typography variant="body1">
-                        {contact.email}
-                      </Typography>
+                      <Typography variant='body1'>{contact.email}</Typography>
                     </Box>
                   </Box>
                 </Grid>
@@ -177,14 +187,14 @@ const ContactDetailPage: React.FC = () => {
               {contact.phone && (
                 <Grid item xs={12} sm={6}>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <Phone sx={{ fontSize: 20, mr: 2, color: 'primary.main' }} />
+                    <Phone
+                      sx={{ fontSize: 20, mr: 2, color: 'primary.main' }}
+                    />
                     <Box>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant='body2' color='text.secondary'>
                         Phone
                       </Typography>
-                      <Typography variant="body1">
-                        {contact.phone}
-                      </Typography>
+                      <Typography variant='body1'>{contact.phone}</Typography>
                     </Box>
                   </Box>
                 </Grid>
@@ -193,17 +203,19 @@ const ContactDetailPage: React.FC = () => {
               {contact.website && (
                 <Grid item xs={12} sm={6}>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <Language sx={{ fontSize: 20, mr: 2, color: 'primary.main' }} />
+                    <Language
+                      sx={{ fontSize: 20, mr: 2, color: 'primary.main' }}
+                    />
                     <Box>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant='body2' color='text.secondary'>
                         Website
                       </Typography>
                       <Typography
-                        variant="body1"
-                        component="a"
+                        variant='body1'
+                        component='a'
                         href={contact.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        target='_blank'
+                        rel='noopener noreferrer'
                         sx={{
                           color: 'primary.main',
                           textDecoration: 'none',
@@ -221,22 +233,33 @@ const ContactDetailPage: React.FC = () => {
 
               {contact.address && (
                 <Grid item xs={12}>
-                  <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                    <LocationOn sx={{ fontSize: 20, mr: 2, color: 'primary.main', mt: 0.5 }} />
+                  <Box
+                    sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}
+                  >
+                    <LocationOn
+                      sx={{
+                        fontSize: 20,
+                        mr: 2,
+                        color: 'primary.main',
+                        mt: 0.5,
+                      }}
+                    />
                     <Box>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant='body2' color='text.secondary'>
                         Address
                       </Typography>
-                      <Typography variant="body1">
+                      <Typography variant='body1'>
                         {contact.address.street}
                         {contact.address.street && <br />}
-                        {contact.address.city}, {contact.address.state} {contact.address.zipCode}
-                        {contact.address.country && contact.address.country !== 'USA' && (
-                          <>
-                            <br />
-                            {contact.address.country}
-                          </>
-                        )}
+                        {contact.address.city}, {contact.address.state}{' '}
+                        {contact.address.zipCode}
+                        {contact.address.country &&
+                          contact.address.country !== 'USA' && (
+                            <>
+                              <br />
+                              {contact.address.country}
+                            </>
+                          )}
                       </Typography>
                     </Box>
                   </Box>
@@ -249,12 +272,16 @@ const ContactDetailPage: React.FC = () => {
               <>
                 <Divider sx={{ my: 3 }} />
                 <Box>
-                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+                  <Typography
+                    variant='h6'
+                    gutterBottom
+                    sx={{ fontWeight: 600 }}
+                  >
                     Tags
                   </Typography>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                    {contact.tags.map((tag) => (
-                      <Chip key={tag} label={tag} variant="outlined" />
+                    {contact.tags.map(tag => (
+                      <Chip key={tag} label={tag} variant='outlined' />
                     ))}
                   </Box>
                 </Box>
@@ -267,12 +294,14 @@ const ContactDetailPage: React.FC = () => {
                 <Divider sx={{ my: 3 }} />
                 <Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <Notes sx={{ fontSize: 20, mr: 1, color: 'primary.main' }} />
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    <Notes
+                      sx={{ fontSize: 20, mr: 1, color: 'primary.main' }}
+                    />
+                    <Typography variant='h6' sx={{ fontWeight: 600 }}>
                       Notes
                     </Typography>
                   </Box>
-                  <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+                  <Typography variant='body1' sx={{ whiteSpace: 'pre-wrap' }}>
                     {contact.notes}
                   </Typography>
                 </Box>
@@ -284,60 +313,60 @@ const ContactDetailPage: React.FC = () => {
         {/* Sidebar */}
         <Grid item xs={12} md={4}>
           <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+            <Typography variant='h6' gutterBottom sx={{ fontWeight: 600 }}>
               Contact Info
             </Typography>
-            
+
             <Box sx={{ mb: 3 }}>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
+              <Typography variant='body2' color='text.secondary' gutterBottom>
                 Created
               </Typography>
-              <Typography variant="body1">
+              <Typography variant='body1'>
                 {new Date(contact.createdAt).toLocaleDateString()}
               </Typography>
             </Box>
 
             <Box sx={{ mb: 3 }}>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
+              <Typography variant='body2' color='text.secondary' gutterBottom>
                 Last Updated
               </Typography>
-              <Typography variant="body1">
+              <Typography variant='body1'>
                 {new Date(contact.updatedAt).toLocaleDateString()}
               </Typography>
             </Box>
 
             <Box sx={{ mb: 3 }}>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
+              <Typography variant='body2' color='text.secondary' gutterBottom>
                 Status
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 {contact.isFavorite && (
                   <Chip
                     icon={<Star />}
-                    label="Favorite"
-                    color="warning"
-                    size="small"
+                    label='Favorite'
+                    color='warning'
+                    size='small'
                     sx={{ mr: 1 }}
                   />
                 )}
-                <Chip
-                  label="Active"
-                  color="success"
-                  size="small"
-                />
+                <Chip label='Active' color='success' size='small' />
               </Box>
             </Box>
 
             {/* Quick Actions */}
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mt: 3 }}>
+            <Typography
+              variant='h6'
+              gutterBottom
+              sx={{ fontWeight: 600, mt: 3 }}
+            >
               Quick Actions
             </Typography>
-            
+
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               {contact.email && (
                 <Button
                   fullWidth
-                  variant="outlined"
+                  variant='outlined'
                   startIcon={<Email />}
                   href={`mailto:${contact.email}`}
                   sx={{ textTransform: 'none', justifyContent: 'flex-start' }}
@@ -345,11 +374,11 @@ const ContactDetailPage: React.FC = () => {
                   Send Email
                 </Button>
               )}
-              
+
               {contact.phone && (
                 <Button
                   fullWidth
-                  variant="outlined"
+                  variant='outlined'
                   startIcon={<Phone />}
                   href={`tel:${contact.phone}`}
                   sx={{ textTransform: 'none', justifyContent: 'flex-start' }}

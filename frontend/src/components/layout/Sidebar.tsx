@@ -20,13 +20,10 @@ import {
   People,
   Person,
   Settings,
-  StarBorder,
   Star,
-  Dashboard,
   ContactPhone,
   Business,
   Label,
-  Analytics,
   ImportExport,
   ChevronLeft,
 } from '@mui/icons-material';
@@ -52,7 +49,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   const { open, width, setOpen } = useSidebar();
   const { stats } = useContacts();
 
@@ -151,8 +148,8 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
         }}
       >
         <Typography
-          variant="h6"
-          component="div"
+          variant='h6'
+          component='div'
           sx={{
             fontWeight: 600,
             color: 'primary.main',
@@ -162,9 +159,9 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
           Navigation
         </Typography>
         {!isMobile && (
-          <Tooltip title="Collapse sidebar">
+          <Tooltip title='Collapse sidebar'>
             <IconButton
-              size="small"
+              size='small'
               onClick={() => setOpen(false)}
               sx={{ ml: 1 }}
             >
@@ -179,7 +176,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
       {/* Navigation List */}
       <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
         <List sx={{ px: 1, py: 1 }}>
-          {navigationItems.map((item) => (
+          {navigationItems.map(item => (
             <React.Fragment key={item.id}>
               <ListItemButton
                 selected={isActive(item.path)}
@@ -221,16 +218,14 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
                 {item.badge !== undefined && item.badge > 0 && (
                   <Chip
                     label={item.badge}
-                    size="small"
+                    size='small'
                     sx={{
                       height: 20,
                       fontSize: '0.75rem',
                       backgroundColor: isActive(item.path)
                         ? 'rgba(255, 255, 255, 0.2)'
                         : 'action.selected',
-                      color: isActive(item.path)
-                        ? 'inherit'
-                        : 'text.secondary',
+                      color: isActive(item.path) ? 'inherit' : 'text.secondary',
                       '& .MuiChip-label': {
                         px: 1,
                       },
@@ -247,7 +242,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
       {/* Quick Actions */}
       <Box sx={{ p: 2 }}>
         <Typography
-          variant="caption"
+          variant='caption'
           sx={{
             color: 'text.secondary',
             textTransform: 'uppercase',
@@ -276,7 +271,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
               <Person />
             </ListItemIcon>
             <ListItemText
-              primary="Add Contact"
+              primary='Add Contact'
               primaryTypographyProps={{
                 fontSize: '0.875rem',
                 fontWeight: 600,
@@ -296,7 +291,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
               <ImportExport />
             </ListItemIcon>
             <ListItemText
-              primary="Import/Export"
+              primary='Import/Export'
               primaryTypographyProps={{
                 fontSize: '0.875rem',
               }}
@@ -315,7 +310,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
         }}
       >
         <Typography
-          variant="caption"
+          variant='caption'
           sx={{
             color: 'text.secondary',
             display: 'block',
@@ -325,7 +320,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
           ConnectKit v1.0.0
         </Typography>
         <Typography
-          variant="caption"
+          variant='caption'
           sx={{
             color: 'text.secondary',
           }}
@@ -339,7 +334,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   if (isMobile) {
     return (
       <Drawer
-        variant="temporary"
+        variant='temporary'
         open={open}
         onClose={handleClose}
         ModalProps={{
@@ -360,8 +355,8 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
 
   return (
     <Drawer
-      variant="persistent"
-      anchor="left"
+      variant='persistent'
+      anchor='left'
       open={open}
       sx={{
         width: open ? width : 0,

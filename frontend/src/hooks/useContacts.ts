@@ -3,10 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ContactService } from '@services/contact.service';
 import {
   Contact,
-  CreateContactRequest,
   UpdateContactRequest,
   ContactFilters,
-  ContactStats,
   PaginatedResponse,
   SearchRequest,
   SearchResult,
@@ -29,7 +27,7 @@ const CONTACT_COMPANIES_QUERY_KEY = 'contact-companies';
 export const useContacts = (initialFilters?: ContactFilters) => {
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState<ContactFilters>(initialFilters || {});
-  
+
   // Query for fetching contacts with pagination and filters
   const {
     data: contactsData,
@@ -56,20 +54,14 @@ export const useContacts = (initialFilters?: ContactFilters) => {
   });
 
   // Query for available tags
-  const {
-    data: tags,
-    isLoading: isLoadingTags,
-  } = useQuery({
+  const { data: tags, isLoading: isLoadingTags } = useQuery({
     queryKey: [CONTACT_TAGS_QUERY_KEY],
     queryFn: ContactService.getTags,
     staleTime: 15 * 60 * 1000, // 15 minutes
   });
 
   // Query for available companies
-  const {
-    data: companies,
-    isLoading: isLoadingCompanies,
-  } = useQuery({
+  const { data: companies, isLoading: isLoadingCompanies } = useQuery({
     queryKey: [CONTACT_COMPANIES_QUERY_KEY],
     queryFn: ContactService.getCompanies,
     staleTime: 15 * 60 * 1000, // 15 minutes
@@ -78,11 +70,11 @@ export const useContacts = (initialFilters?: ContactFilters) => {
   // Mutation for creating a contact
   const createContactMutation = useMutation({
     mutationFn: ContactService.createContact,
-    onSuccess: (newContact) => {
+    onSuccess: newContact => {
       // Invalidate and refetch contacts
       queryClient.invalidateQueries([CONTACTS_QUERY_KEY]);
       queryClient.invalidateQueries([CONTACT_STATS_QUERY_KEY]);
-      
+
       showSuccessNotification(
         `Contact "${newContact.firstName} ${newContact.lastName}" created successfully!`
       );
@@ -97,9 +89,14 @@ export const useContacts = (initialFilters?: ContactFilters) => {
 
   // Mutation for updating a contact
   const updateContactMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: UpdateContactRequest }) =>
-      ContactService.updateContact(id, updates),
-    onSuccess: (updatedContact) => {
+    mutationFn: ({
+      id,
+      updates,
+    }: {
+      id: string;
+      updates: UpdateContactRequest;
+    }) => ContactService.updateContact(id, updates),
+    onSuccess: updatedContact => {
       // Update contact in cache
       queryClient.setQueryData(
         [CONTACTS_QUERY_KEY, filters],
@@ -107,16 +104,16 @@ export const useContacts = (initialFilters?: ContactFilters) => {
           if (!oldData) return oldData;
           return {
             ...oldData,
-            data: oldData.data.map((contact) =>
+            data: oldData.data.map(contact =>
               contact.id === updatedContact.id ? updatedContact : contact
             ),
           };
         }
       );
-      
+
       // Invalidate stats
       queryClient.invalidateQueries([CONTACT_STATS_QUERY_KEY]);
-      
+
       showSuccessNotification(
         `Contact "${updatedContact.firstName} ${updatedContact.lastName}" updated successfully!`
       );
@@ -140,7 +137,7 @@ export const useContacts = (initialFilters?: ContactFilters) => {
           if (!oldData) return oldData;
           return {
             ...oldData,
-            data: oldData.data.filter((contact) => contact.id !== deletedId),
+            data: oldData.data.filter(contact => contact.id !== deletedId),
             pagination: {
               ...oldData.pagination,
               total: oldData.pagination.total - 1,
@@ -148,11 +145,11 @@ export const useContacts = (initialFilters?: ContactFilters) => {
           };
         }
       );
-      
+
       // Invalidate queries
       queryClient.invalidateQueries([CONTACTS_QUERY_KEY]);
       queryClient.invalidateQueries([CONTACT_STATS_QUERY_KEY]);
-      
+
       showSuccessNotification('Contact deleted successfully!');
     },
     onError: (error: any) => {
@@ -166,15 +163,15 @@ export const useContacts = (initialFilters?: ContactFilters) => {
   // Mutation for bulk deleting contacts
   const bulkDeleteContactsMutation = useMutation({
     mutationFn: ContactService.deleteContacts,
-    onSuccess: (result) => {
+    onSuccess: result => {
       // Invalidate queries
       queryClient.invalidateQueries([CONTACTS_QUERY_KEY]);
       queryClient.invalidateQueries([CONTACT_STATS_QUERY_KEY]);
-      
+
       showSuccessNotification(
         `${result.deleted} contact${result.deleted !== 1 ? 's' : ''} deleted successfully!`
       );
-      
+
       if (result.failed > 0) {
         showErrorNotification(
           `Failed to delete ${result.failed} contact${result.failed !== 1 ? 's' : ''}`,
@@ -193,7 +190,7 @@ export const useContacts = (initialFilters?: ContactFilters) => {
   // Mutation for toggling favorite status
   const toggleFavoriteMutation = useMutation({
     mutationFn: ContactService.toggleFavorite,
-    onSuccess: (updatedContact) => {
+    onSuccess: updatedContact => {
       // Update contact in cache
       queryClient.setQueryData(
         [CONTACTS_QUERY_KEY, filters],
@@ -201,20 +198,18 @@ export const useContacts = (initialFilters?: ContactFilters) => {
           if (!oldData) return oldData;
           return {
             ...oldData,
-            data: oldData.data.map((contact) =>
+            data: oldData.data.map(contact =>
               contact.id === updatedContact.id ? updatedContact : contact
             ),
           };
         }
       );
-      
+
       // Invalidate stats
       queryClient.invalidateQueries([CONTACT_STATS_QUERY_KEY]);
-      
+
       const action = updatedContact.isFavorite ? 'added to' : 'removed from';
-      showSuccessNotification(
-        `Contact ${action} favorites!`
-      );
+      showSuccessNotification(`Contact ${action} favorites!`);
     },
     onError: (error: any) => {
       showErrorNotification(
@@ -233,89 +228,95 @@ export const useContacts = (initialFilters?: ContactFilters) => {
     setFilters({});
   }, []);
 
-  const searchContacts = useCallback(async (searchRequest: SearchRequest): Promise<SearchResult> => {
-    try {
-      return await ContactService.searchContacts(searchRequest);
-    } catch (error: any) {
-      showErrorNotification(
-        error.message || 'Search failed',
-        'Search Error'
-      );
-      throw error;
-    }
-  }, []);
-
-  const exportContacts = useCallback(async (exportRequest: ExportContactsRequest): Promise<void> => {
-    try {
-      await ContactService.exportContacts(exportRequest);
-      showSuccessNotification('Contacts exported successfully!');
-    } catch (error: any) {
-      showErrorNotification(
-        error.message || 'Export failed',
-        'Export Error'
-      );
-      throw error;
-    }
-  }, []);
-
-  const importContacts = useCallback(async (
-    importRequest: ImportContactsRequest,
-    onProgress?: (progress: number) => void
-  ): Promise<ImportResult> => {
-    try {
-      const result = await ContactService.importContacts(importRequest, onProgress);
-      
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries([CONTACTS_QUERY_KEY]);
-      queryClient.invalidateQueries([CONTACT_STATS_QUERY_KEY]);
-      queryClient.invalidateQueries([CONTACT_TAGS_QUERY_KEY]);
-      queryClient.invalidateQueries([CONTACT_COMPANIES_QUERY_KEY]);
-      
-      showSuccessNotification(
-        `Import completed! ${result.success} contacts imported successfully.`
-      );
-      
-      if (result.failed > 0) {
-        showErrorNotification(
-          `${result.failed} contacts failed to import. Check the import log for details.`,
-          'Import Warnings'
-        );
+  const searchContacts = useCallback(
+    async (searchRequest: SearchRequest): Promise<SearchResult> => {
+      try {
+        return await ContactService.searchContacts(searchRequest);
+      } catch (error: any) {
+        showErrorNotification(error.message || 'Search failed', 'Search Error');
+        throw error;
       }
-      
-      return result;
-    } catch (error: any) {
-      showErrorNotification(
-        error.message || 'Import failed',
-        'Import Error'
-      );
-      throw error;
-    }
-  }, [queryClient]);
+    },
+    []
+  );
 
-  const getContactById = useCallback(async (id: string): Promise<Contact | null> => {
-    try {
-      return await ContactService.getContact(id);
-    } catch (error: any) {
-      if (error.status === 404) {
-        showErrorNotification('Contact not found', 'Not Found');
-      } else {
-        showErrorNotification(
-          error.message || 'Failed to fetch contact',
-          'Fetch Error'
-        );
+  const exportContacts = useCallback(
+    async (exportRequest: ExportContactsRequest): Promise<void> => {
+      try {
+        await ContactService.exportContacts(exportRequest);
+        showSuccessNotification('Contacts exported successfully!');
+      } catch (error: any) {
+        showErrorNotification(error.message || 'Export failed', 'Export Error');
+        throw error;
       }
-      return null;
-    }
-  }, []);
+    },
+    []
+  );
+
+  const importContacts = useCallback(
+    async (
+      importRequest: ImportContactsRequest,
+      onProgress?: (progress: number) => void
+    ): Promise<ImportResult> => {
+      try {
+        const result = await ContactService.importContacts(
+          importRequest,
+          onProgress
+        );
+
+        // Invalidate queries to refresh data
+        queryClient.invalidateQueries([CONTACTS_QUERY_KEY]);
+        queryClient.invalidateQueries([CONTACT_STATS_QUERY_KEY]);
+        queryClient.invalidateQueries([CONTACT_TAGS_QUERY_KEY]);
+        queryClient.invalidateQueries([CONTACT_COMPANIES_QUERY_KEY]);
+
+        showSuccessNotification(
+          `Import completed! ${result.success} contacts imported successfully.`
+        );
+
+        if (result.failed > 0) {
+          showErrorNotification(
+            `${result.failed} contacts failed to import. Check the import log for details.`,
+            'Import Warnings'
+          );
+        }
+
+        return result;
+      } catch (error: any) {
+        showErrorNotification(error.message || 'Import failed', 'Import Error');
+        throw error;
+      }
+    },
+    [queryClient]
+  );
+
+  const getContactById = useCallback(
+    async (id: string): Promise<Contact | null> => {
+      try {
+        return await ContactService.getContact(id);
+      } catch (error: any) {
+        if (error.status === 404) {
+          showErrorNotification('Contact not found', 'Not Found');
+        } else {
+          showErrorNotification(
+            error.message || 'Failed to fetch contact',
+            'Fetch Error'
+          );
+        }
+        return null;
+      }
+    },
+    []
+  );
 
   // Computed values
   const contacts = useMemo(() => contactsData?.data || [], [contactsData]);
   const pagination = useMemo(() => contactsData?.pagination, [contactsData]);
   const totalContacts = useMemo(() => pagination?.total || 0, [pagination]);
-  
+
   const isLoading = isLoadingContacts || isLoadingStats;
   const hasError = !!(contactsError || statsError);
-  
+
   const selectedContacts = useMemo(() => {
     // This would be managed by a separate state for multi-select functionality
     // For now, return empty array
@@ -330,7 +331,7 @@ export const useContacts = (initialFilters?: ContactFilters) => {
     stats,
     tags: tags || [],
     companies: companies || [],
-    
+
     // Loading states
     isLoading,
     isLoadingContacts,
@@ -339,12 +340,12 @@ export const useContacts = (initialFilters?: ContactFilters) => {
     isLoadingCompanies,
     isFetching: isFetchingContacts,
     hasError,
-    
+
     // Filters
     filters,
     updateFilters,
     clearFilters,
-    
+
     // Actions
     createContact: createContactMutation.mutate,
     updateContact: (id: string, updates: UpdateContactRequest) =>
@@ -352,17 +353,17 @@ export const useContacts = (initialFilters?: ContactFilters) => {
     deleteContact: deleteContactMutation.mutate,
     bulkDeleteContacts: bulkDeleteContactsMutation.mutate,
     toggleFavorite: toggleFavoriteMutation.mutate,
-    
+
     // Async operations
     searchContacts,
     exportContacts,
     importContacts,
     getContactById,
-    
+
     // Utilities
     refetchContacts,
     selectedContacts, // Placeholder for selection state
-    
+
     // Mutation states
     isCreating: createContactMutation.isPending,
     isUpdating: updateContactMutation.isPending,
