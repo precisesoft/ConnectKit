@@ -11,21 +11,19 @@
     "node_modules",
     "coverage",
     "*.config.js",
-    "*.config.ts"
+    "*.config.ts",
+    "**/*.ts"
   ],
-  "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": 2022,
     "sourceType": "module"
   },
-  "plugins": ["@typescript-eslint"],
   "rules": {
     "prefer-const": "error",
     "no-var": "error",
     "no-console": ["warn", { "allow": ["warn", "error"] }],
     "no-debugger": "error",
-    "no-unused-vars": "off",
-    "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }]
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }]
   },
   "overrides": [
     {
