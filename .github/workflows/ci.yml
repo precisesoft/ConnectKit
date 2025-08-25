@@ -72,7 +72,7 @@ jobs:
       - name: Install dependencies
         run: |
           npm install
-          npm install --workspace=backend
+          npm install --workspace=backend --include=dev
 
       - name: Run backend linting
         working-directory: ./backend
@@ -120,7 +120,7 @@ jobs:
       - name: Install dependencies
         run: |
           npm install
-          npm install --workspace=frontend
+          npm install --workspace=frontend --include=dev
 
       - name: Run frontend linting
         working-directory: ./frontend
@@ -201,7 +201,7 @@ jobs:
       - name: Install Playwright
         run: |
           npm install
-          npm install --workspace=frontend
+          npm install --workspace=frontend --include=dev
           cd frontend && npx playwright install --with-deps
 
       - name: Run E2E tests
