@@ -1,5 +1,11 @@
 name: Security Testing
 
+# PORT ALLOCATION STRATEGY (to prevent conflicts when jobs run in parallel):
+# ├── OWASP ZAP Job:       Frontend: 3000, Backend: 3001, PostgreSQL: 5433, Redis: 6380
+# ├── Security Headers:    Frontend: 3100, Backend: 3101, PostgreSQL: 5434, Redis: 6381
+# ├── Backend Security:    PostgreSQL: 5432 (isolated service container)
+# └── Other jobs:          Use service containers or no ports
+
 on:
   workflow_dispatch:
   push:
@@ -132,8 +138,10 @@ jobs:
 
       - name: Build Docker images
         run: |
-          docker build -t connectkit-backend:security-test --target production -f docker/backend/Dockerfile .
-          docker build -t connectkit-frontend:security-test --target production -f docker/frontend/Dockerfile ./frontend
+          # Build backend targeting dependencies stage (skip TypeScript compilation for security scan)
+          docker build -t connectkit-backend:security-test --target dependencies -f docker/backend/Dockerfile .
+          # Build frontend targeting dependencies stage (skip TypeScript compilation for security scan)
+          docker build -t connectkit-frontend:security-test --target dependencies -f docker/frontend/Dockerfile .
 
       - name: Run Trivy vulnerability scanner (Backend)
         uses: aquasecurity/trivy-action@master
@@ -350,22 +358,33 @@ jobs:
 
       - name: Start application services
         run: |
-          # Create environment file
+          # Create environment file with unique ports for OWASP ZAP job
           cat > .env << EOF
           NODE_ENV=test
           PORT=3001
           FRONTEND_PORT=3000
           DB_HOST=localhost
-          DB_PORT=5432
+          DB_PORT=5433
           DB_USER=postgres
           DB_PASSWORD=postgres
           DB_NAME=connectkit_test
-          REDIS_URL=redis://localhost:6379
+          REDIS_URL=redis://localhost:6380
           JWT_SECRET=test-jwt-secret-for-security-testing-very-long-key
           JWT_REFRESH_SECRET=test-refresh-secret-for-security-testing-very-long-key
           ENCRYPTION_KEY=test-encryption-key-32-characters
           CORS_ORIGIN=http://localhost:3000
           EOF
+
+          # Set unique port overrides to prevent conflicts with other security jobs
+          export POSTGRES_PORT=5433
+          export REDIS_PORT=6380
+
+          # Check port availability before starting
+          if lsof -i:3000 -i:3001 -i:5433 -i:6380 >/dev/null 2>&1; then
+            echo "Warning: Some ports already in use, attempting cleanup..."
+            docker compose down -v || true
+            sleep 5
+          fi
 
           docker compose up -d
           sleep 60
@@ -400,7 +419,21 @@ jobs:
 
       - name: Stop services
         if: always()
-        run: docker compose down -v
+        run: |
+          # Comprehensive cleanup for OWASP ZAP job (ports: 3000, 3001, 5433, 6380)
+          docker compose down -v || true
+
+          # Ensure ports are freed
+          docker container prune -f || true
+          sleep 5
+
+          # Kill any processes still using our ports
+          for port in 3000 3001 5433 6380; do
+            if lsof -ti:$port >/dev/null 2>&1; then
+              echo "Cleaning up processes on port $port"
+              lsof -ti:$port | xargs kill -9 || true
+            fi
+          done
 
   # Security headers and configuration testing
   security-headers:
@@ -411,30 +444,41 @@ jobs:
 
       - name: Start application services
         run: |
-          # Create environment file
+          # Create environment file with unique ports for Security Headers job
           cat > .env << EOF
           NODE_ENV=test
-          PORT=3001
-          FRONTEND_PORT=3000
+          PORT=3101
+          FRONTEND_PORT=3100
           DB_HOST=localhost
-          DB_PORT=5432
+          DB_PORT=5434
           DB_USER=postgres
           DB_PASSWORD=postgres
           DB_NAME=connectkit_test
-          REDIS_URL=redis://localhost:6379
+          REDIS_URL=redis://localhost:6381
           JWT_SECRET=test-jwt-secret-for-security-testing-very-long-key
           JWT_REFRESH_SECRET=test-refresh-secret-for-security-testing-very-long-key
           ENCRYPTION_KEY=test-encryption-key-32-characters
-          CORS_ORIGIN=http://localhost:3000
+          CORS_ORIGIN=http://localhost:3100
           EOF
+
+          # Set unique port overrides to prevent conflicts with other security jobs
+          export POSTGRES_PORT=5434
+          export REDIS_PORT=6381
+
+          # Check port availability before starting
+          if lsof -i:3100 -i:3101 -i:5434 -i:6381 >/dev/null 2>&1; then
+            echo "Warning: Some ports already in use, attempting cleanup..."
+            docker compose down -v || true
+            sleep 5
+          fi
 
           docker compose up -d
           sleep 45
 
       - name: Wait for services
         run: |
-          timeout 60 bash -c 'until curl -f http://localhost:3001/api/health; do sleep 2; done'
-          timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
+          timeout 60 bash -c 'until curl -f http://localhost:3101/api/health; do sleep 2; done'
+          timeout 60 bash -c 'until curl -f http://localhost:3100; do sleep 2; done'
 
       - name: Test security headers
         run: |
@@ -442,7 +486,7 @@ jobs:
 
           # Test backend security headers
           echo "### Backend API Security Headers" >> $GITHUB_STEP_SUMMARY
-          BACKEND_HEADERS=$(curl -I http://localhost:3001/api/health 2>/dev/null)
+          BACKEND_HEADERS=$(curl -I http://localhost:3101/api/health 2>/dev/null)
 
           # Check for required security headers
           if echo "$BACKEND_HEADERS" | grep -i "x-content-type-options: nosniff"; then
@@ -465,7 +509,7 @@ jobs:
 
           # Test frontend security headers
           echo "### Frontend Security Headers" >> $GITHUB_STEP_SUMMARY
-          FRONTEND_HEADERS=$(curl -I http://localhost:3000 2>/dev/null)
+          FRONTEND_HEADERS=$(curl -I http://localhost:3100 2>/dev/null)
 
           if echo "$FRONTEND_HEADERS" | grep -i "content-security-policy"; then
             echo "✅ Content-Security-Policy present" >> $GITHUB_STEP_SUMMARY
@@ -501,7 +545,7 @@ jobs:
           CORS_RESPONSE=$(curl -H "Origin: http://malicious.example.com" \
             -H "Access-Control-Request-Method: POST" \
             -H "Access-Control-Request-Headers: X-Requested-With" \
-            -X OPTIONS http://localhost:3001/api/contacts 2>/dev/null)
+            -X OPTIONS http://localhost:3101/api/contacts 2>/dev/null)
 
           if echo "$CORS_RESPONSE" | grep -i "access-control-allow-origin: \*"; then
             echo "❌ CORS allows all origins - security risk!" >> $GITHUB_STEP_SUMMARY
@@ -515,7 +559,7 @@ jobs:
 
           # Test rate limiting with rapid requests
           for i in {1..15}; do
-            curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3001/api/health
+            curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3101/api/health
           done | tail -5 > rate_limit_test.txt
 
           if grep -q "429" rate_limit_test.txt; then
@@ -526,7 +570,21 @@ jobs:
 
       - name: Stop services
         if: always()
-        run: docker compose down -v
+        run: |
+          # Comprehensive cleanup for Security Headers job (ports: 3100, 3101, 5434, 6381)
+          docker compose down -v || true
+
+          # Ensure ports are freed
+          docker container prune -f || true
+          sleep 5
+
+          # Kill any processes still using our ports
+          for port in 3100 3101 5434 6381; do
+            if lsof -ti:$port >/dev/null 2>&1; then
+              echo "Cleaning up processes on port $port"
+              lsof -ti:$port | xargs kill -9 || true
+            fi
+          done
 
   # Security test report consolidation
   security-report:

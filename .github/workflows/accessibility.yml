@@ -1,5 +1,12 @@
 name: Accessibility Testing
 
+# PORT ALLOCATION STRATEGY (to prevent conflicts when jobs run in parallel):
+# ├── lighthouse-a11y:       Frontend: 3200
+# ├── axe-core-tests:        Frontend: 3201
+# ├── wave-testing:          Frontend: 3202
+# ├── color-contrast:        Frontend: 3203
+# └── keyboard-navigation:   Frontend: 3204
+
 # Comprehensive accessibility testing with Lighthouse, WAVE, and color contrast
 on:
   workflow_dispatch:
@@ -40,12 +47,13 @@ jobs:
         working-directory: ./frontend
         run: |
           npm install -g serve
-          serve -s dist -p 3000 &
+          # Use port 3200 for lighthouse-a11y job to avoid conflicts
+          serve -s dist -p 3200 &
           sleep 10
 
       - name: Wait for frontend
         run: |
-          timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
+          timeout 60 bash -c 'until curl -f http://localhost:3200; do sleep 2; done'
 
       - name: Install Lighthouse CI
         run: npm install -g @lhci/cli@0.12.x
@@ -59,10 +67,10 @@ jobs:
               "collect": {
                 "numberOfRuns": 3,
                 "url": [
-                  "http://localhost:3000",
-                  "http://localhost:3000/login",
-                  "http://localhost:3000/register",
-                  "http://localhost:3000/contacts"
+                  "http://localhost:3200",
+                  "http://localhost:3200/login",
+                  "http://localhost:3200/register",
+                  "http://localhost:3200/contacts"
                 ],
                 "settings": {
                   "onlyCategories": ["accessibility"],
@@ -113,7 +121,11 @@ jobs:
       - name: Stop frontend server
         if: always()
         run: |
-          pkill -f "serve -s dist -p 3000" || true
+          # Stop lighthouse-a11y server (port 3200)
+          pkill -f "serve -s dist -p 3200" || true
+          if lsof -ti:3200 >/dev/null 2>&1; then
+            lsof -ti:3200 | xargs kill -9 || true
+          fi
 
   # Axe-core automated accessibility testing
   axe-core-tests:
@@ -143,12 +155,13 @@ jobs:
         run: |
           npx vite build --mode development
           npm install -g serve
-          serve -s dist -p 3000 &
+          # Use port 3201 for axe-core-tests job to avoid conflicts
+          serve -s dist -p 3201 &
           sleep 10
 
       - name: Wait for frontend
         run: |
-          timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
+          timeout 60 bash -c 'until curl -f http://localhost:3201; do sleep 2; done'
 
       - name: Create Axe accessibility tests
         working-directory: ./frontend
@@ -167,7 +180,7 @@ jobs:
 
           pages.forEach(({ name, url }) => {
             test(`${name} page should not have accessibility violations`, async ({ page }) => {
-              await page.goto(`http://localhost:3000${url}`);
+              await page.goto(`http://localhost:3201${url}`);
               
               // Wait for page to load
               await page.waitForLoadState('networkidle');
@@ -182,7 +195,7 @@ jobs:
           });
 
           test('Contact form should be accessible', async ({ page }) => {
-            await page.goto('http://localhost:3000/login');
+            await page.goto('http://localhost:3201/login');
             
             // Fill login form (this would need valid test credentials)
             // For now, just test the form structure
@@ -197,7 +210,7 @@ jobs:
           });
 
           test('Navigation should be keyboard accessible', async ({ page }) => {
-            await page.goto('http://localhost:3000/');
+            await page.goto('http://localhost:3201/');
             await page.waitForLoadState('networkidle');
             
             // Test keyboard navigation
@@ -233,7 +246,11 @@ jobs:
       - name: Stop frontend server
         if: always()
         run: |
-          pkill -f "serve -s dist -p 3000" || true
+          # Stop axe-core-tests server (port 3201)
+          pkill -f "serve -s dist -p 3201" || true
+          if lsof -ti:3201 >/dev/null 2>&1; then
+            lsof -ti:3201 | xargs kill -9 || true
+          fi
 
   # WAVE (Web Accessibility Evaluation Tool) testing
   wave-testing:
@@ -257,12 +274,13 @@ jobs:
         working-directory: ./frontend
         run: |
           npm install -g serve
-          serve -s dist -p 3000 &
+          # Use port 3202 for wave-testing job to avoid conflicts
+          serve -s dist -p 3202 &
           sleep 10
 
       - name: Wait for frontend
         run: |
-          timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
+          timeout 60 bash -c 'until curl -f http://localhost:3202; do sleep 2; done'
 
       - name: Install WAVE CLI (alternative implementation)
         run: |
@@ -284,9 +302,9 @@ jobs:
             const results = {};
             
             const urls = [
-              'http://localhost:3000',
-              'http://localhost:3000/login',
-              'http://localhost:3000/register'
+              'http://localhost:3202',
+              'http://localhost:3202/login',
+              'http://localhost:3202/register'
             ];
             
             for (const url of urls) {
@@ -398,7 +416,11 @@ jobs:
       - name: Stop frontend server
         if: always()
         run: |
-          pkill -f "serve -s dist -p 3000" || true
+          # Stop wave-testing server (port 3202)
+          pkill -f "serve -s dist -p 3202" || true
+          if lsof -ti:3202 >/dev/null 2>&1; then
+            lsof -ti:3202 | xargs kill -9 || true
+          fi
 
   # Color contrast and visual accessibility testing
   color-contrast:
@@ -422,12 +444,13 @@ jobs:
         working-directory: ./frontend
         run: |
           npm install -g serve
-          serve -s dist -p 3000 &
+          # Use port 3203 for color-contrast job to avoid conflicts
+          serve -s dist -p 3203 &
           sleep 10
 
       - name: Wait for frontend
         run: |
-          timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
+          timeout 60 bash -c 'until curl -f http://localhost:3203; do sleep 2; done'
 
       - name: Install color contrast testing tools
         run: |
@@ -468,9 +491,9 @@ jobs:
             const results = {};
             
             const urls = [
-              'http://localhost:3000',
-              'http://localhost:3000/login',
-              'http://localhost:3000/register'
+              'http://localhost:3203',
+              'http://localhost:3203/login',
+              'http://localhost:3203/register'
             ];
             
             for (const url of urls) {
@@ -607,7 +630,11 @@ jobs:
       - name: Stop frontend server
         if: always()
         run: |
-          pkill -f "serve -s dist -p 3000" || true
+          # Stop color-contrast server (port 3203)
+          pkill -f "serve -s dist -p 3203" || true
+          if lsof -ti:3203 >/dev/null 2>&1; then
+            lsof -ti:3203 | xargs kill -9 || true
+          fi
 
   # Keyboard navigation testing
   keyboard-navigation:
@@ -637,12 +664,13 @@ jobs:
         run: |
           npx vite build --mode development
           npm install -g serve
-          serve -s dist -p 3000 &
+          # Use port 3204 for keyboard-navigation job to avoid conflicts
+          serve -s dist -p 3204 &
           sleep 10
 
       - name: Wait for frontend
         run: |
-          timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
+          timeout 60 bash -c 'until curl -f http://localhost:3204; do sleep 2; done'
 
       - name: Create keyboard navigation tests
         working-directory: ./frontend
@@ -654,7 +682,7 @@ jobs:
 
           test.describe('Keyboard Navigation Tests', () => {
             test('should navigate through all focusable elements on home page', async ({ page }) => {
-              await page.goto('http://localhost:3000/');
+              await page.goto('http://localhost:3204/');
               await page.waitForLoadState('networkidle');
               
               // Get all focusable elements
@@ -683,7 +711,7 @@ jobs:
             });
             
             test('should handle Enter key on buttons and links', async ({ page }) => {
-              await page.goto('http://localhost:3000/');
+              await page.goto('http://localhost:3204/');
               await page.waitForLoadState('networkidle');
               
               // Find clickable elements
@@ -706,7 +734,7 @@ jobs:
             });
             
             test('should navigate login form with keyboard only', async ({ page }) => {
-              await page.goto('http://localhost:3000/login');
+              await page.goto('http://localhost:3204/login');
               await page.waitForLoadState('networkidle');
               
               // Tab to first form field
@@ -737,7 +765,7 @@ jobs:
             });
             
             test('should support Escape key to close modals/dialogs', async ({ page }) => {
-              await page.goto('http://localhost:3000/');
+              await page.goto('http://localhost:3204/');
               await page.waitForLoadState('networkidle');
               
               // Look for elements that might open modals
@@ -758,7 +786,7 @@ jobs:
             });
             
             test('should have proper skip links', async ({ page }) => {
-              await page.goto('http://localhost:3000/');
+              await page.goto('http://localhost:3204/');
               await page.waitForLoadState('networkidle');
               
               // Tab to first element (should potentially be skip link)
@@ -803,7 +831,11 @@ jobs:
       - name: Stop frontend server
         if: always()
         run: |
-          pkill -f "serve -s dist -p 3000" || true
+          # Stop keyboard-navigation server (port 3204)
+          pkill -f "serve -s dist -p 3204" || true
+          if lsof -ti:3204 >/dev/null 2>&1; then
+            lsof -ti:3204 | xargs kill -9 || true
+          fi
 
   # Accessibility report consolidation
   accessibility-report:
