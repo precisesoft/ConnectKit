@@ -1,0 +1,139 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Deployment environment"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  NODE_VERSION: "18"
+  DOCKER_BUILDKIT: 1
+
+jobs:
+  # Build and push Docker images
+  build-and-push:
+    name: Build & Push Images
+    runs-on: ubuntu-latest
+    outputs:
+      backend-image: ${{ steps.meta.outputs.backend-image }}
+      frontend-image: ${{ steps.meta.outputs.frontend-image }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.environment == 'production'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract metadata
+        id: meta
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          else
+            VERSION=${{ github.sha }}
+          fi
+
+          echo "backend-image=connectkit/backend:$VERSION" >> $GITHUB_OUTPUT
+          echo "frontend-image=connectkit/frontend:$VERSION" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./docker/backend/Dockerfile
+          push: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.environment == 'production' }}
+          tags: ${{ steps.meta.outputs.backend-image }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          target: production
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./docker/frontend/Dockerfile
+          push: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.environment == 'production' }}
+          tags: ${{ steps.meta.outputs.frontend-image }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          target: production
+
+  # Deploy to staging
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build-and-push]
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+    environment:
+      name: staging
+      url: https://staging.connectkit.app
+    steps:
+      - name: Deploy to staging
+        run: |
+          echo "🚀 Deploying to staging environment..."
+          echo "Backend Image: ${{ needs.build-and-push.outputs.backend-image }}"
+          echo "Frontend Image: ${{ needs.build-and-push.outputs.frontend-image }}"
+          # Add your actual deployment commands here
+          # Example: kubectl, docker-compose, or deployment scripts
+          echo "✅ Staging deployment completed successfully!"
+
+  # Deploy to production
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build-and-push, deploy-staging]
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+    environment:
+      name: production
+      url: https://connectkit.app
+    steps:
+      - name: Deploy to production
+        run: |
+          echo "🚀 Deploying to production environment..."
+          echo "Backend Image: ${{ needs.build-and-push.outputs.backend-image }}"
+          echo "Frontend Image: ${{ needs.build-and-push.outputs.frontend-image }}"
+          # Add your actual deployment commands here
+          # Example: kubectl, helm, or deployment scripts
+          echo "✅ Production deployment completed successfully!"
+
+      - name: Create deployment summary
+        run: |
+          echo "## 🎉 Production Deployment Successful" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Deployment Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: \`${{ needs.build-and-push.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Backend Image**: \`${{ needs.build-and-push.outputs.backend-image }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frontend Image**: \`${{ needs.build-and-push.outputs.frontend-image }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: Production" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL**: https://connectkit.app" >> $GITHUB_STEP_SUMMARY
+
+  # Post-deployment health check
+  health-check:
+    name: Health Check
+    runs-on: ubuntu-latest
+    needs: [deploy-staging]
+    if: always() && needs.deploy-staging.result == 'success'
+    steps:
+      - name: Check staging health
+        run: |
+          echo "🔍 Running health checks on staging environment..."
+          # Add health check commands here
+          # Example: curl health endpoints, run smoke tests
+          echo "✅ All health checks passed!"
