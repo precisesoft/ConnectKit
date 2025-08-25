@@ -33,9 +33,7 @@ describe('useAuth', () => {
   let queryClient: QueryClient;
 
   const wrapper = ({ children }: { children: ReactNode }) => (
-    <QueryClientProvider client={queryClient}>
-      {children}
-    </QueryClientProvider>
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
 
   beforeEach(() => {
@@ -95,13 +93,21 @@ describe('useAuth', () => {
         password: 'TestPass123!',
       });
 
-      expect(mockLocalStorage.setItem).toHaveBeenCalledWith('accessToken', 'mock-access-token');
-      expect(mockLocalStorage.setItem).toHaveBeenCalledWith('refreshToken', 'mock-refresh-token');
+      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+        'accessToken',
+        'mock-access-token'
+      );
+      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+        'refreshToken',
+        'mock-refresh-token'
+      );
     });
 
     it('should handle login failure', async () => {
       const errorMessage = 'Invalid credentials';
-      (AuthService.login as vi.Mock).mockRejectedValueOnce(new Error(errorMessage));
+      (AuthService.login as vi.Mock).mockRejectedValueOnce(
+        new Error(errorMessage)
+      );
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
@@ -163,10 +169,10 @@ describe('useAuth', () => {
   describe('Logout', () => {
     it('should logout successfully', async () => {
       const mockUser = createMockUser();
-      
+
       // Setup authenticated state
       const { result } = renderHook(() => useAuth(), { wrapper });
-      
+
       // Manually set authenticated state
       act(() => {
         (result.current as any).setUser(mockUser);
@@ -193,7 +199,9 @@ describe('useAuth', () => {
     it('should handle logout errors gracefully', async () => {
       const { result } = renderHook(() => useAuth(), { wrapper });
 
-      (AuthService.logout as vi.Mock).mockRejectedValueOnce(new Error('Logout failed'));
+      (AuthService.logout as vi.Mock).mockRejectedValueOnce(
+        new Error('Logout failed')
+      );
 
       await act(async () => {
         await result.current.logout();
@@ -243,7 +251,9 @@ describe('useAuth', () => {
 
     it('should handle registration failure', async () => {
       const errorMessage = 'Email already exists';
-      (AuthService.register as vi.Mock).mockRejectedValueOnce(new Error(errorMessage));
+      (AuthService.register as vi.Mock).mockRejectedValueOnce(
+        new Error(errorMessage)
+      );
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
@@ -271,7 +281,7 @@ describe('useAuth', () => {
 
   describe('Token Refresh', () => {
     it('should refresh token successfully', async () => {
-      mockLocalStorage.getItem.mockImplementation((key) => {
+      mockLocalStorage.getItem.mockImplementation(key => {
         if (key === 'refreshToken') return 'old-refresh-token';
         return null;
       });
@@ -289,14 +299,24 @@ describe('useAuth', () => {
         await result.current.refreshToken();
       });
 
-      expect(AuthService.refreshToken).toHaveBeenCalledWith('old-refresh-token');
-      expect(mockLocalStorage.setItem).toHaveBeenCalledWith('accessToken', 'new-access-token');
-      expect(mockLocalStorage.setItem).toHaveBeenCalledWith('refreshToken', 'new-refresh-token');
+      expect(AuthService.refreshToken).toHaveBeenCalledWith(
+        'old-refresh-token'
+      );
+      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+        'accessToken',
+        'new-access-token'
+      );
+      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+        'refreshToken',
+        'new-refresh-token'
+      );
     });
 
     it('should handle refresh token failure', async () => {
       mockLocalStorage.getItem.mockReturnValue('invalid-refresh-token');
-      (AuthService.refreshToken as vi.Mock).mockRejectedValueOnce(new Error('Invalid refresh token'));
+      (AuthService.refreshToken as vi.Mock).mockRejectedValueOnce(
+        new Error('Invalid refresh token')
+      );
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
@@ -329,7 +349,9 @@ describe('useAuth', () => {
         await result.current.forgotPassword({ email: 'test@example.com' });
       });
 
-      expect(AuthService.forgotPassword).toHaveBeenCalledWith({ email: 'test@example.com' });
+      expect(AuthService.forgotPassword).toHaveBeenCalledWith({
+        email: 'test@example.com',
+      });
     });
 
     it('should handle password reset', async () => {
@@ -414,7 +436,7 @@ describe('useAuth', () => {
   describe('Persistence', () => {
     it('should restore user session from localStorage on initialization', async () => {
       const mockUser = createMockUser();
-      mockLocalStorage.getItem.mockImplementation((key) => {
+      mockLocalStorage.getItem.mockImplementation(key => {
         if (key === 'accessToken') return 'stored-access-token';
         if (key === 'refreshToken') return 'stored-refresh-token';
         return null;
@@ -434,7 +456,7 @@ describe('useAuth', () => {
     });
 
     it('should handle invalid stored tokens', async () => {
-      mockLocalStorage.getItem.mockImplementation((key) => {
+      mockLocalStorage.getItem.mockImplementation(key => {
         if (key === 'accessToken') return 'invalid-token';
         return null;
       });

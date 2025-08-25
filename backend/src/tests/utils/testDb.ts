@@ -1,6 +1,5 @@
 import { Pool } from 'pg';
-import { databaseConfig } from '../../config/database.config';
-import { logger } from '../../utils/logger';
+import logger from '../../utils/logger';
 
 /**
  * Test database utilities for managing test database connections and data
@@ -18,10 +17,12 @@ export class TestDatabase {
     }
 
     try {
-      const config = databaseConfig.getConfig();
       this.pool = new Pool({
-        ...config,
+        host: process.env.TEST_DB_HOST || 'localhost',
+        port: parseInt(process.env.TEST_DB_PORT || '5432', 10),
         database: process.env.TEST_DB_NAME || 'connectkit_test',
+        user: process.env.TEST_DB_USER || 'postgres',
+        password: process.env.TEST_DB_PASSWORD || 'postgres',
         max: 10,
         idleTimeoutMillis: 30000,
         connectionTimeoutMillis: 2000,
@@ -108,13 +109,13 @@ export class TestDatabase {
 
     try {
       const client = await this.pool.connect();
-      
+
       try {
         await client.query('BEGIN');
-        
+
         // Disable foreign key constraints temporarily
         await client.query('SET session_replication_role = replica');
-        
+
         // Clean tables in order (reverse of dependency)
         const tables = [
           'contacts',
@@ -123,14 +124,16 @@ export class TestDatabase {
           'email_verification_tokens',
           'users',
         ];
-        
+
         for (const table of tables) {
-          await client.query(`TRUNCATE TABLE ${table} RESTART IDENTITY CASCADE`);
+          await client.query(
+            `TRUNCATE TABLE ${table} RESTART IDENTITY CASCADE`
+          );
         }
-        
+
         // Re-enable foreign key constraints
         await client.query('SET session_replication_role = DEFAULT');
-        
+
         await client.query('COMMIT');
         logger.info('Test database cleaned successfully');
       } catch (error) {
@@ -158,55 +161,61 @@ export class TestDatabase {
       await this.cleanup();
 
       const client = await this.pool.connect();
-      
+
       try {
         await client.query('BEGIN');
 
         // Seed users if provided
         if (seedData.users) {
           for (const user of seedData.users) {
-            await client.query(`
+            await client.query(
+              `
               INSERT INTO users (
                 id, username, email, password_hash, first_name, last_name, 
                 role, is_active, is_verified, created_at, updated_at
               ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-            `, [
-              user.id,
-              user.username,
-              user.email,
-              user.passwordHash,
-              user.firstName,
-              user.lastName,
-              user.role || 'user',
-              user.isActive !== false,
-              user.isVerified !== false,
-              user.createdAt || new Date(),
-              user.updatedAt || new Date(),
-            ]);
+            `,
+              [
+                user.id,
+                user.username,
+                user.email,
+                user.passwordHash,
+                user.firstName,
+                user.lastName,
+                user.role || 'user',
+                user.isActive !== false,
+                user.isVerified !== false,
+                user.createdAt || new Date(),
+                user.updatedAt || new Date(),
+              ]
+            );
           }
         }
 
         // Seed contacts if provided
         if (seedData.contacts) {
           for (const contact of seedData.contacts) {
-            await client.query(`
+            await client.query(
+              `
               INSERT INTO contacts (
                 id, user_id, first_name, last_name, email, phone, 
                 company, notes, is_favorite, created_at, updated_at
               ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-            `, [
-              contact.id,
-              contact.userId,
-              contact.firstName,
-              contact.lastName,
-              contact.email,
-              contact.phone,
-              contact.company,
-              contact.notes,
-              contact.isFavorite || false,
-              contact.createdAt || new Date(),
-              contact.updatedAt || new Date(),
-            ]);
+            `,
+              [
+                contact.id,
+                contact.userId,
+                contact.firstName,
+                contact.lastName,
+                contact.email,
+                contact.phone,
+                contact.company,
+                contact.notes,
+                contact.isFavorite || false,
+                contact.createdAt || new Date(),
+                contact.updatedAt || new Date(),
+              ]
+            );
           }
         }
 
@@ -227,11 +236,15 @@ export class TestDatabase {
   /**
    * Get record count for a table
    */
-  static async getCount(table: string, condition?: string, params?: any[]): Promise<number> {
-    const query = condition ? 
-      `SELECT COUNT(*) as count FROM ${table} WHERE ${condition}` :
-      `SELECT COUNT(*) as count FROM ${table}`;
-    
+  static async getCount(
+    table: string,
+    condition?: string,
+    params?: any[]
+  ): Promise<number> {
+    const query = condition
+      ? `SELECT COUNT(*) as count FROM ${table} WHERE ${condition}`
+      : `SELECT COUNT(*) as count FROM ${table}`;
+
     const result = await this.query(query, params);
     return parseInt(result[0].count, 10);
   }
@@ -239,7 +252,11 @@ export class TestDatabase {
   /**
    * Check if a record exists
    */
-  static async exists(table: string, condition: string, params: any[]): Promise<boolean> {
+  static async exists(
+    table: string,
+    condition: string,
+    params: any[]
+  ): Promise<boolean> {
     const count = await this.getCount(table, condition, params);
     return count > 0;
   }
@@ -248,13 +265,13 @@ export class TestDatabase {
    * Get a single record
    */
   static async getRecord<T = any>(
-    table: string, 
-    condition: string, 
+    table: string,
+    condition: string,
     params: any[]
   ): Promise<T | null> {
     const query = `SELECT * FROM ${table} WHERE ${condition} LIMIT 1`;
     const result = await this.query<T>(query, params);
-    return result.length > 0 ? result[0] : null;
+    return result.length > 0 ? result[0] || null : null;
   }
 
   /**
@@ -293,7 +310,7 @@ export class TestDatabase {
     callback: (client: any) => Promise<T>
   ): Promise<T> {
     const client = await this.beginTransaction();
-    
+
     try {
       const result = await callback(client);
       // Always rollback test transactions

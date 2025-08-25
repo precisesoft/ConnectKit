@@ -34,7 +34,7 @@ jobs:
 
       - name: Build frontend
         working-directory: ./frontend
-        run: npm run build
+        run: npx vite build --mode development
 
       - name: Serve frontend for testing
         working-directory: ./frontend
@@ -142,7 +142,7 @@ jobs:
       - name: Build and serve frontend
         working-directory: ./frontend
         run: |
-          npm run build
+          npx vite build --mode development
           npm install -g serve
           serve -s dist -p 3000 &
           sleep 10
@@ -578,7 +578,7 @@ jobs:
       - name: Build and serve frontend
         working-directory: ./frontend
         run: |
-          npm run build
+          npx vite build --mode development
           npm install -g serve
           serve -s dist -p 3000 &
           sleep 10

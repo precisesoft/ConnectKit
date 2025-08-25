@@ -29,11 +29,11 @@ const developmentFormat = winston.format.combine(
   winston.format.errors({ stack: true }),
   winston.format.printf(({ timestamp, level, message, ...meta }) => {
     let log = `${timestamp} [${level}]: ${message}`;
-    
+
     if (Object.keys(meta).length > 0) {
       log += `\n${JSON.stringify(meta, null, 2)}`;
     }
-    
+
     return log;
   })
 );
@@ -43,28 +43,20 @@ const productionFormat = winston.format.combine(
   winston.format.timestamp(),
   winston.format.errors({ stack: true }),
   winston.format.json(),
-  winston.format.printf((info) => {
-    // Ensure consistent structure for production logs
+  winston.format.printf(info => {
+    // Extract metadata excluding the base properties
+    const { timestamp, level, message, ...metadata } = info;
+
+    // Create clean log object
     const logObject = {
-      timestamp: info.timestamp,
-      level: info.level,
-      message: info.message,
+      timestamp,
+      level,
+      message,
       service: 'connectkit-api',
-      ...info,
+      ...metadata,
     };
-    
-    // Remove duplicate fields
-    delete logObject.timestamp;
-    delete logObject.level;
-    delete logObject.message;
-    
-    return JSON.stringify({
-      timestamp: info.timestamp,
-      level: info.level,
-      message: info.message,
-      service: 'connectkit-api',
-      ...logObject,
-    });
+
+    return JSON.stringify(logObject);
   })
 );
 
@@ -73,7 +65,7 @@ const getLogLevel = (): string => {
   if (process.env.LOG_LEVEL) {
     return process.env.LOG_LEVEL;
   }
-  
+
   switch (process.env.NODE_ENV) {
     case 'production':
       return 'info';
@@ -85,7 +77,9 @@ const getLogLevel = (): string => {
 };
 
 const getLogFormat = () => {
-  return process.env.NODE_ENV === 'production' ? productionFormat : developmentFormat;
+  return process.env.NODE_ENV === 'production'
+    ? productionFormat
+    : developmentFormat;
 };
 
 // Create logs directory if it doesn't exist
@@ -114,7 +108,7 @@ if (process.env.NODE_ENV === 'production') {
       maxFiles: 5,
       tailable: true,
     }),
-    
+
     // Combined log file
     new winston.transports.File({
       filename: path.join(logsDir, 'combined.log'),
@@ -229,7 +223,7 @@ export const morganStream = {
 };
 
 // Error handling for logger itself
-logger.on('error', (error) => {
+logger.on('error', error => {
   console.error('Logger error:', error);
 });
 
@@ -241,12 +235,12 @@ process.on('unhandledRejection', (reason, promise) => {
   });
 });
 
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', error => {
   logger.error('Uncaught Exception', {
     error: error.message,
     stack: error.stack,
   });
-  
+
   // Give logger time to write before exiting
   setTimeout(() => {
     process.exit(1);

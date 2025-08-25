@@ -93,7 +93,7 @@ class RedisConnection {
         logger.warn('Redis connection closed');
       });
 
-      this.client.on('reconnecting', time => {
+      this.client.on('reconnecting', (time: number) => {
         logger.info(`Redis reconnecting in ${time}ms`);
       });
 

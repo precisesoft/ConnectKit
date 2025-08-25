@@ -1,5 +1,9 @@
 import React, { ReactElement, ReactNode } from 'react';
-import { render as rtlRender, RenderOptions, RenderResult } from '@testing-library/react';
+import {
+  render as rtlRender,
+  RenderOptions,
+  RenderResult,
+} from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
@@ -27,22 +31,24 @@ interface TestProvidersProps {
   initialRoute?: string;
 }
 
-const TestProviders: React.FC<TestProvidersProps> = ({ 
-  children, 
+const TestProviders: React.FC<TestProvidersProps> = ({
+  children,
   queryClient,
-  initialRoute = '/' 
+  initialRoute = '/',
 }) => {
-  const testQueryClient = queryClient || new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-        gcTime: 0,
+  const testQueryClient =
+    queryClient ||
+    new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+          gcTime: 0,
+        },
+        mutations: {
+          retry: false,
+        },
       },
-      mutations: {
-        retry: false,
-      },
-    },
-  });
+    });
 
   // Mock location for router
   window.history.pushState({}, 'Test page', initialRoute);
@@ -75,8 +81,12 @@ export const render = (
   const Wrapper = wrapper || TestProviders;
 
   const result = rtlRender(ui, {
-    wrapper: (props) => (
-      <Wrapper queryClient={queryClient} initialRoute={initialRoute} {...props} />
+    wrapper: props => (
+      <Wrapper
+        queryClient={queryClient}
+        initialRoute={initialRoute}
+        {...props}
+      />
     ),
     ...renderOptions,
   });
@@ -129,7 +139,7 @@ export const createMockContact = (overrides = {}) => ({
 });
 
 // Mock API response
-export const createMockApiResponse = <T = any>(data: T, overrides = {}) => ({
+export const createMockApiResponse = <T = any,>(data: T, overrides = {}) => ({
   success: true,
   message: 'Success',
   data,
@@ -137,7 +147,10 @@ export const createMockApiResponse = <T = any>(data: T, overrides = {}) => ({
 });
 
 // Mock API error response
-export const createMockApiError = (message = 'Error occurred', status = 400) => ({
+export const createMockApiError = (
+  message = 'Error occurred',
+  status = 400
+) => ({
   success: false,
   message,
   status,
@@ -145,25 +158,26 @@ export const createMockApiError = (message = 'Error occurred', status = 400) => 
 });
 
 // Query client for tests
-export const createTestQueryClient = () => new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
-      gcTime: 0,
+export const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        gcTime: 0,
+      },
+      mutations: {
+        retry: false,
+      },
     },
-    mutations: {
-      retry: false,
+    logger: {
+      log: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
     },
-  },
-  logger: {
-    log: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  },
-});
+  });
 
 // Utility to wait for async operations
-export const waitForLoadingToFinish = () => 
+export const waitForLoadingToFinish = () =>
   new Promise(resolve => setTimeout(resolve, 0));
 
 // Mock form data
@@ -208,9 +222,14 @@ export const createMockHandlers = () => ({
 });
 
 // Test helpers for form interactions
-export const fillForm = async (user: ReturnType<typeof userEvent.setup>, formData: Record<string, string>) => {
+export const fillForm = async (
+  user: ReturnType<typeof userEvent.setup>,
+  formData: Record<string, string>
+) => {
   for (const [name, value] of Object.entries(formData)) {
-    const input = document.querySelector(`[name="${name}"]`) as HTMLInputElement;
+    const input = document.querySelector(
+      `[name="${name}"]`
+    ) as HTMLInputElement;
     if (input) {
       await user.clear(input);
       await user.type(input, value);
@@ -222,7 +241,7 @@ export const fillForm = async (user: ReturnType<typeof userEvent.setup>, formDat
 export const waitForElement = async (selector: string, timeout = 1000) => {
   return new Promise<Element>((resolve, reject) => {
     const startTime = Date.now();
-    
+
     const check = () => {
       const element = document.querySelector(selector);
       if (element) {
@@ -233,7 +252,7 @@ export const waitForElement = async (selector: string, timeout = 1000) => {
         setTimeout(check, 50);
       }
     };
-    
+
     check();
   });
 };
@@ -272,10 +291,10 @@ export const createMockNavigation = () => ({
 });
 
 // Test utilities for Material-UI components
-export const getByTestId = (testId: string) => 
+export const getByTestId = (testId: string) =>
   document.querySelector(`[data-testid="${testId}"]`);
 
-export const queryByTestId = (testId: string) => 
+export const queryByTestId = (testId: string) =>
   document.querySelector(`[data-testid="${testId}"]`);
 
 // Utility to create mock props
@@ -290,7 +309,7 @@ export const createMockProps = <T extends Record<string, any>>(
 // Mock timers utility
 export const createMockTimers = () => {
   vi.useFakeTimers();
-  
+
   return {
     advanceTimersByTime: vi.advanceTimersByTime,
     runAllTimers: vi.runAllTimers,
@@ -300,10 +319,46 @@ export const createMockTimers = () => {
   };
 };
 
+// Accessibility testing utilities
+export const checkA11y = async (container: HTMLElement, axeOptions?: any) => {
+  const { axe } = await import('jest-axe');
+  const results = await axe(container, axeOptions);
+  return results;
+};
+
+// Accessibility test helper with common rules
+export const testAccessibility = async (container: HTMLElement) => {
+  const results = await checkA11y(container, {
+    rules: {
+      // Common accessibility rules to test
+      'color-contrast': { enabled: true },
+      'keyboard-navigation': { enabled: true },
+      'focus-management': { enabled: true },
+      'aria-labels': { enabled: true },
+      'semantic-structure': { enabled: true },
+    },
+  });
+  expect(results).toHaveNoViolations();
+};
+
+// Keyboard navigation test helper
+export const testKeyboardNavigation = async (
+  user: ReturnType<typeof userEvent.setup>,
+  expectedFocusOrder: string[]
+) => {
+  for (let i = 0; i < expectedFocusOrder.length; i++) {
+    await user.tab();
+    const focusedElement = document.activeElement;
+    const expectedElement = document.querySelector(expectedFocusOrder[i]);
+    expect(focusedElement).toBe(expectedElement);
+  }
+};
+
 // Re-export commonly used testing utilities
 export * from '@testing-library/react';
 export { default as userEvent } from '@testing-library/user-event';
 export { vi } from 'vitest';
+export { axe, toHaveNoViolations } from 'jest-axe';
 
 // Export custom render as default
 export default render;

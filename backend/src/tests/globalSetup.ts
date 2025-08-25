@@ -1,7 +1,6 @@
 import { config } from 'dotenv';
 import { testDb } from './utils/testDb';
 import { redisConnection } from '../config/redis.config';
-import { logger } from '../utils/logger';
 
 /**
  * Global test setup - runs once before all tests
@@ -30,9 +29,13 @@ export default async function globalSetup() {
     process.env.REDIS_DB = process.env.TEST_REDIS_DB || '1';
 
     // JWT test secrets
-    process.env.JWT_SECRET = process.env.TEST_JWT_SECRET || 'test-jwt-secret-key-for-testing-only';
-    process.env.JWT_REFRESH_SECRET = process.env.TEST_JWT_REFRESH_SECRET || 'test-refresh-secret-key-for-testing-only';
-    process.env.ENCRYPTION_KEY = process.env.TEST_ENCRYPTION_KEY || 'test-encryption-key-32-chars-long';
+    process.env.JWT_SECRET =
+      process.env.TEST_JWT_SECRET || 'test-jwt-secret-key-for-testing-only';
+    process.env.JWT_REFRESH_SECRET =
+      process.env.TEST_JWT_REFRESH_SECRET ||
+      'test-refresh-secret-key-for-testing-only';
+    process.env.ENCRYPTION_KEY =
+      process.env.TEST_ENCRYPTION_KEY || 'test-encryption-key-32-chars-long';
 
     // Initialize test database
     console.log('📊 Initializing test database...');
@@ -40,12 +43,12 @@ export default async function globalSetup() {
 
     // Initialize Redis connection
     console.log('🔴 Connecting to test Redis...');
-    await redisConnection.initialize();
+    await redisConnection.connect();
 
     // Clean up any existing test data
     console.log('🧹 Cleaning up test environment...');
     await testDb.cleanup();
-    
+
     const redis = redisConnection.getClient();
     await redis.flushdb();
 
@@ -175,34 +178,5 @@ export async function setupTestSchema(): Promise<void> {
   } catch (error) {
     console.error('❌ Failed to create test database schema:', error);
     throw error;
-  }
-}
-
-/**
- * Utility function to wait for services to be ready
- */
-async function waitForServices(): Promise<void> {
-  const maxRetries = 30;
-  const retryDelay = 1000;
-
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      // Test database connection
-      await testDb.query('SELECT 1');
-      
-      // Test Redis connection
-      const redis = redisConnection.getClient();
-      await redis.ping();
-
-      console.log('✅ All services are ready');
-      return;
-    } catch (error) {
-      if (i === maxRetries - 1) {
-        throw new Error(`Services not ready after ${maxRetries} attempts: ${error}`);
-      }
-      
-      console.log(`⏳ Waiting for services... (${i + 1}/${maxRetries})`);
-      await new Promise(resolve => setTimeout(resolve, retryDelay));
-    }
   }
 }

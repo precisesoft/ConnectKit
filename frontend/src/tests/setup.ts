@@ -3,6 +3,7 @@ import { vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import { afterEach, beforeAll, afterAll } from 'vitest';
 import { server } from './mocks/server';
+import 'jest-axe/extend-expect';
 
 // Setup MSW
 beforeAll(() => {
@@ -15,10 +16,10 @@ beforeAll(() => {
 afterEach(() => {
   // Reset handlers between tests
   server.resetHandlers();
-  
+
   // Clean up DOM between tests
   cleanup();
-  
+
   // Clear all mocks
   vi.clearAllMocks();
 });
@@ -93,22 +94,7 @@ global.console = {
   error: vi.fn(),
 };
 
-// Mock react-router-dom
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual('react-router-dom');
-  return {
-    ...actual,
-    useNavigate: () => vi.fn(),
-    useLocation: () => ({
-      pathname: '/',
-      search: '',
-      hash: '',
-      state: null,
-    }),
-    useParams: () => ({}),
-    useSearchParams: () => [new URLSearchParams(), vi.fn()],
-  };
-});
+// Note: Router context is provided by test utils, no global mocking needed
 
 // Mock Material-UI theme
 vi.mock('@mui/material/styles', async () => {
@@ -177,28 +163,17 @@ vi.mock('@mui/material/styles', async () => {
   };
 });
 
-// Extend expect matchers
-expect.extend({
-  toBeInTheDocument: expect.any(Function),
-  toHaveClass: expect.any(Function),
-  toHaveAttribute: expect.any(Function),
-  toHaveStyle: expect.any(Function),
-  toHaveTextContent: expect.any(Function),
-  toBeVisible: expect.any(Function),
-  toBeDisabled: expect.any(Function),
-  toBeEnabled: expect.any(Function),
-  toHaveValue: expect.any(Function),
-  toBeChecked: expect.any(Function),
-  toHaveFocus: expect.any(Function),
-  toBeEmptyDOMElement: expect.any(Function),
-});
+// jest-dom matchers are automatically extended via the import at the top
 
 // Global test utilities
-export const waitFor = (callback: () => void | Promise<void>, options?: { timeout?: number }) => {
+export const waitFor = (
+  callback: () => void | Promise<void>,
+  options?: { timeout?: number }
+) => {
   return new Promise((resolve, reject) => {
     const timeout = options?.timeout || 1000;
     const startTime = Date.now();
-    
+
     const check = async () => {
       try {
         await callback();
@@ -211,7 +186,7 @@ export const waitFor = (callback: () => void | Promise<void>, options?: { timeou
         }
       }
     };
-    
+
     check();
   });
 };
