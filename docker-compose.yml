@@ -61,8 +61,8 @@ services:
   # Backend API
   backend:
     build:
-      context: ./backend
-      dockerfile: ../docker/backend/Dockerfile
+      context: .
+      dockerfile: ./docker/backend/Dockerfile
       target: development
     container_name: connectkit-backend
     restart: unless-stopped
@@ -110,8 +110,8 @@ services:
   # Frontend Application
   frontend:
     build:
-      context: ./frontend
-      dockerfile: ../docker/frontend/Dockerfile
+      context: .
+      dockerfile: ./docker/frontend/Dockerfile
       target: development
     container_name: connectkit-frontend
     restart: unless-stopped
