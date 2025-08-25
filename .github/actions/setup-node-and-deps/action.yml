@@ -51,17 +51,3 @@ runs:
       shell: bash
       working-directory: ./frontend
       run: npm ci
-
-    - name: Cache additional dependencies
-      if: inputs.cache-key-suffix != ''
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.npm
-          node_modules
-          backend/node_modules
-          frontend/node_modules
-        key: node-deps-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-${{ inputs.cache-key-suffix }}
-        restore-keys: |
-          node-deps-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-
-          node-deps-${{ runner.os }}-

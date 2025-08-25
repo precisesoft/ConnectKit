@@ -41,6 +41,10 @@ env:
   DOCKER_BUILDKIT: 1
   COMPLIANCE_MODE: "federal"
 
+  # Optimize cache compression for faster cleanup
+  ACTIONS_CACHE_COMPRESSION_LEVEL: "1" # Faster compression
+  SEGMENT_DOWNLOAD_TIMEOUT_MINS: "1" # Reduce timeout
+
   # Port allocation strategy to prevent conflicts
   # Core services
   BACKEND_PORT: 3001

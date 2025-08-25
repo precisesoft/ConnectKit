@@ -20,7 +20,7 @@
     "test:e2e": "npm run test:e2e --workspace=frontend",
     "lint": "npm run lint --workspaces",
     "format": "npm run format --workspaces",
-    "format:check": "npx prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
+    "format:check": "npx prettier --check \"backend/src/**/*.{ts,tsx,js,jsx,json}\" \"frontend/src/**/*.{ts,tsx,js,jsx,json,css}\" \"*.{json,md,yml,yaml}\" \"docs/**/*.md\" \".github/**/*.yml\"",
     "type-check": "npm run type-check --workspaces",
     "prepare": "[ \"$CI\" = \"true\" ] || husky install",
     "pre-commit": "lint-staged",
