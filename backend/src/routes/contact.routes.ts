@@ -36,10 +36,8 @@ router.post(
  * @desc    List contacts with pagination and filters
  * @access  Private
  */
-router.get(
-  '/',
-  validate(contactValidators.listContacts),
-  (req, res, next) => getContactController().listContacts(req, res, next)
+router.get('/', validate(contactValidators.listContacts), (req, res, next) =>
+  getContactController().listContacts(req, res, next)
 );
 
 /**
@@ -58,9 +56,8 @@ router.get(
  * @desc    Get favorite contacts
  * @access  Private
  */
-router.get(
-  '/favorites',
-  (req, res, next) => getContactController().getFavorites(req, res, next)
+router.get('/favorites', (req, res, next) =>
+  getContactController().getFavorites(req, res, next)
 );
 
 /**
@@ -68,9 +65,8 @@ router.get(
  * @desc    Get contact statistics
  * @access  Private
  */
-router.get(
-  '/stats',
-  (req, res, next) => getContactController().getContactStats(req, res, next)
+router.get('/stats', (req, res, next) =>
+  getContactController().getContactStats(req, res, next)
 );
 
 /**
@@ -78,9 +74,8 @@ router.get(
  * @desc    Get unique companies
  * @access  Private
  */
-router.get(
-  '/companies',
-  (req, res, next) => getContactController().getCompanies(req, res, next)
+router.get('/companies', (req, res, next) =>
+  getContactController().getCompanies(req, res, next)
 );
 
 /**
@@ -88,9 +83,8 @@ router.get(
  * @desc    Get unique tags
  * @access  Private
  */
-router.get(
-  '/tags',
-  (req, res, next) => getContactController().getTags(req, res, next)
+router.get('/tags', (req, res, next) =>
+  getContactController().getTags(req, res, next)
 );
 
 /**
@@ -110,9 +104,8 @@ router.get(
  * @desc    Find potential duplicate contacts
  * @access  Private
  */
-router.get(
-  '/duplicates',
-  (req, res, next) => getContactController().findDuplicates(req, res, next)
+router.get('/duplicates', (req, res, next) =>
+  getContactController().findDuplicates(req, res, next)
 );
 
 /**
@@ -131,10 +124,8 @@ router.get(
  * @desc    Get contact by ID
  * @access  Private
  */
-router.get(
-  '/:id',
-  validate(contactValidators.contactId),
-  (req, res, next) => getContactController().getContactById(req, res, next)
+router.get('/:id', validate(contactValidators.contactId), (req, res, next) =>
+  getContactController().getContactById(req, res, next)
 );
 
 /**
@@ -144,7 +135,10 @@ router.get(
  */
 router.put(
   '/:id',
-  validate([...contactValidators.contactId, ...contactValidators.updateContact]),
+  validate([
+    ...contactValidators.contactId,
+    ...contactValidators.updateContact,
+  ]),
   auditLogger('contact_update'),
   (req, res, next) => getContactController().updateContact(req, res, next)
 );

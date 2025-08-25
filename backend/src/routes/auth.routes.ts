@@ -11,14 +11,14 @@ const getAuthController = () => {
 };
 import { authValidators } from '../validators/auth.validator';
 import { validate } from '../middleware/validation.middleware';
-import { 
-  authenticate, 
-  optionalAuthenticate 
+import {
+  authenticate,
+  optionalAuthenticate,
 } from '../middleware/auth.middleware';
-import { 
-  authRateLimit, 
-  passwordResetRateLimit, 
-  emailVerificationRateLimit 
+import {
+  authRateLimit,
+  passwordResetRateLimit,
+  emailVerificationRateLimit,
 } from '../middleware/rateLimiter.middleware';
 import { auditLogger } from '../middleware/logger.middleware';
 
@@ -145,7 +145,8 @@ router.post(
   '/resend-verification',
   emailVerificationRateLimit,
   validate(authValidators.resendEmailVerification),
-  (req, res, next) => getAuthController().resendEmailVerification(req, res, next)
+  (req, res, next) =>
+    getAuthController().resendEmailVerification(req, res, next)
 );
 
 /**
@@ -153,10 +154,8 @@ router.post(
  * @desc    Get current user profile
  * @access  Private
  */
-router.get(
-  '/profile',
-  authenticate,
-  (req, res, next) => getAuthController().profile(req, res, next)
+router.get('/profile', authenticate, (req, res, next) =>
+  getAuthController().profile(req, res, next)
 );
 
 /**
@@ -175,10 +174,8 @@ router.post(
  * @desc    Get authentication status
  * @access  Public (with optional auth)
  */
-router.get(
-  '/status',
-  optionalAuthenticate,
-  (req, res, next) => getAuthController().status(req, res, next)
+router.get('/status', optionalAuthenticate, (req, res, next) =>
+  getAuthController().status(req, res, next)
 );
 
 /**
@@ -208,9 +205,8 @@ router.get(
  * @desc    Get password strength requirements
  * @access  Public
  */
-router.get(
-  '/password-requirements',
-  (req, res, next) => getAuthController().passwordRequirements(req, res, next)
+router.get('/password-requirements', (req, res, next) =>
+  getAuthController().passwordRequirements(req, res, next)
 );
 
 /**
@@ -218,10 +214,8 @@ router.get(
  * @desc    Get user sessions
  * @access  Private
  */
-router.get(
-  '/sessions',
-  authenticate,
-  (req, res, next) => getAuthController().sessions(req, res, next)
+router.get('/sessions', authenticate, (req, res, next) =>
+  getAuthController().sessions(req, res, next)
 );
 
 /**

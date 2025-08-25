@@ -120,14 +120,23 @@ export class TestFixtures {
   /**
    * Generate multiple test contacts
    */
-  static createContacts(count: number, userId?: string, overrides: Partial<any> = {}): any[] {
-    return Array.from({ length: count }, () => this.createContact(userId, overrides));
+  static createContacts(
+    count: number,
+    userId?: string,
+    overrides: Partial<any> = {}
+  ): any[] {
+    return Array.from({ length: count }, () =>
+      this.createContact(userId, overrides)
+    );
   }
 
   /**
    * Generate a favorite contact
    */
-  static createFavoriteContact(userId?: string, overrides: Partial<any> = {}): any {
+  static createFavoriteContact(
+    userId?: string,
+    overrides: Partial<any> = {}
+  ): any {
     return this.createContact(userId, {
       isFavorite: true,
       ...overrides,
@@ -137,7 +146,10 @@ export class TestFixtures {
   /**
    * Generate login credentials for a user
    */
-  static createLoginCredentials(user?: any): { email: string; password: string } {
+  static createLoginCredentials(user?: any): {
+    email: string;
+    password: string;
+  } {
     return {
       email: user?.email || faker.internet.email().toLowerCase(),
       password: user?.password || 'TestPass123!',
@@ -158,7 +170,7 @@ export class TestFixtures {
     };
 
     const data = { ...defaultData, ...overrides };
-    
+
     // Ensure passwords match if not explicitly set
     if (!overrides.confirmPassword && overrides.password) {
       data.confirmPassword = data.password;
@@ -172,7 +184,7 @@ export class TestFixtures {
    */
   static createPasswordChangeData(overrides: Partial<any> = {}): any {
     const newPassword = 'NewPass123!';
-    
+
     return {
       currentPassword: 'TestPass123!',
       newPassword,
@@ -193,9 +205,12 @@ export class TestFixtures {
   /**
    * Generate reset password data
    */
-  static createResetPasswordData(token?: string, overrides: Partial<any> = {}): any {
+  static createResetPasswordData(
+    token?: string,
+    overrides: Partial<any> = {}
+  ): any {
     const newPassword = 'ResetPass123!';
-    
+
     return {
       token: token || faker.string.uuid(),
       newPassword,
@@ -214,7 +229,7 @@ export class TestFixtures {
       username: user?.username || faker.internet.userName(),
       role: user?.role || UserRole.USER,
       iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + (60 * 60), // 1 hour
+      exp: Math.floor(Date.now() / 1000) + 60 * 60, // 1 hour
       jti: uuidv4(),
     };
   }
@@ -246,11 +261,13 @@ export class TestFixtures {
   /**
    * Generate test database seed data
    */
-  static createSeedData(options: {
-    usersCount?: number;
-    contactsPerUser?: number;
-    includeAdmin?: boolean;
-  } = {}): any {
+  static createSeedData(
+    options: {
+      usersCount?: number;
+      contactsPerUser?: number;
+      includeAdmin?: boolean;
+    } = {}
+  ): any {
     const {
       usersCount = 3,
       contactsPerUser = 5,
@@ -258,18 +275,21 @@ export class TestFixtures {
     } = options;
 
     const users = this.createUsers(usersCount);
-    
+
     if (includeAdmin) {
-      users.push(this.createAdminUser({
-        username: 'admin',
-        email: 'admin@connectkit.com',
-      }));
+      users.push(
+        this.createAdminUser({
+          username: 'admin',
+          email: 'admin@connectkit.com',
+        })
+      );
     }
 
     // Hash passwords for database storage
     const hashedUsers = users.map(user => ({
       ...user,
-      passwordHash: '$2b$10$rJZEXf4vG.yQ8Zx9MjY2nO8qh5B6Y9O2X1K4V3J7L8M9N0P2Q3R4S5T6', // hashed 'TestPass123!'
+      passwordHash:
+        '$2b$10$rJZEXf4vG.yQ8Zx9MjY2nO8qh5B6Y9O2X1K4V3J7L8M9N0P2Q3R4S5T6', // hashed 'TestPass123!'
     }));
 
     const contacts: any[] = [];
@@ -287,7 +307,10 @@ export class TestFixtures {
   /**
    * Generate performance test data
    */
-  static createPerformanceTestData(userCount: number, contactsPerUser: number): any {
+  static createPerformanceTestData(
+    userCount: number,
+    contactsPerUser: number
+  ): any {
     return this.createSeedData({
       usersCount: userCount,
       contactsPerUser,
@@ -320,11 +343,12 @@ export class TestFixtures {
     });
 
     const users = [regularUser, adminUser, lockedUser, unverifiedUser];
-    
+
     // Hash passwords
     const hashedUsers = users.map(user => ({
       ...user,
-      passwordHash: '$2b$10$rJZEXf4vG.yQ8Zx9MjY2nO8qh5B6Y9O2X1K4V3J7L8M9N0P2Q3R4S5T6',
+      passwordHash:
+        '$2b$10$rJZEXf4vG.yQ8Zx9MjY2nO8qh5B6Y9O2X1K4V3J7L8M9N0P2Q3R4S5T6',
     }));
 
     const contacts = [

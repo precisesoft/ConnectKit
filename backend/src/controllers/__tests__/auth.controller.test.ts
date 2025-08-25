@@ -37,7 +37,7 @@ describe('AuthController', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Create mock instances
     mockAuthService = createMockAuthService() as jest.Mocked<AuthService>;
     mockRequest = createMockRequest() as Request;
@@ -45,7 +45,9 @@ describe('AuthController', () => {
     mockNext = createMockNext();
 
     // Mock the constructor dependencies
-    (AuthService as jest.MockedClass<typeof AuthService>).mockImplementation(() => mockAuthService);
+    (AuthService as jest.MockedClass<typeof AuthService>).mockImplementation(
+      () => mockAuthService
+    );
 
     controller = new AuthController();
   });
@@ -68,7 +70,8 @@ describe('AuthController', () => {
           lastName: mockUser.lastName,
           role: mockUser.role,
         },
-        message: 'Registration successful. Please check your email to verify your account.',
+        message:
+          'Registration successful. Please check your email to verify your account.',
       };
 
       mockRequest.body = registrationData;
@@ -98,7 +101,9 @@ describe('AuthController', () => {
       mockAuthService.register.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(controller.register(mockRequest, mockResponse)).rejects.toThrow(error);
+      await expect(
+        controller.register(mockRequest, mockResponse)
+      ).rejects.toThrow(error);
       expect(mockAuthService.register).toHaveBeenCalledWith(registrationData);
     });
   });
@@ -147,7 +152,7 @@ describe('AuthController', () => {
     it('should set refresh token cookie when configured', async () => {
       // Arrange
       process.env.USE_REFRESH_COOKIE = 'true';
-      
+
       const loginData = createLoginCredentials();
       const mockUser = createUser();
       const mockResult = {
@@ -171,12 +176,16 @@ describe('AuthController', () => {
       await controller.login(mockRequest, mockResponse);
 
       // Assert
-      expect(mockResponse.cookie).toHaveBeenCalledWith('refreshToken', 'refresh-token', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
+      expect(mockResponse.cookie).toHaveBeenCalledWith(
+        'refreshToken',
+        'refresh-token',
+        {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+        }
+      );
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
         message: 'Login successful',
@@ -201,7 +210,9 @@ describe('AuthController', () => {
       mockAuthService.login.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(controller.login(mockRequest, mockResponse)).rejects.toThrow(error);
+      await expect(controller.login(mockRequest, mockResponse)).rejects.toThrow(
+        error
+      );
     });
 
     it('should handle account locked error', async () => {
@@ -215,7 +226,9 @@ describe('AuthController', () => {
       mockAuthService.login.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(controller.login(mockRequest, mockResponse)).rejects.toThrow(error);
+      await expect(controller.login(mockRequest, mockResponse)).rejects.toThrow(
+        error
+      );
     });
 
     it('should handle email not verified error', async () => {
@@ -228,7 +241,9 @@ describe('AuthController', () => {
       mockAuthService.login.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(controller.login(mockRequest, mockResponse)).rejects.toThrow(error);
+      await expect(controller.login(mockRequest, mockResponse)).rejects.toThrow(
+        error
+      );
     });
   });
 
@@ -236,7 +251,7 @@ describe('AuthController', () => {
     it('should refresh token successfully with request body', async () => {
       // Arrange
       process.env.USE_REFRESH_COOKIE = 'false';
-      
+
       const refreshToken = 'refresh-token';
       const mockResult = {
         accessToken: 'new-access-token',
@@ -250,7 +265,9 @@ describe('AuthController', () => {
       await controller.refreshToken(mockRequest, mockResponse);
 
       // Assert
-      expect(mockAuthService.refreshToken).toHaveBeenCalledWith({ refreshToken });
+      expect(mockAuthService.refreshToken).toHaveBeenCalledWith({
+        refreshToken,
+      });
       expect(mockResponse.status).toHaveBeenCalledWith(StatusCodes.OK);
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
@@ -268,7 +285,7 @@ describe('AuthController', () => {
     it('should refresh token successfully with cookie', async () => {
       // Arrange
       process.env.USE_REFRESH_COOKIE = 'true';
-      
+
       const refreshToken = 'refresh-token';
       const mockResult = {
         accessToken: 'new-access-token',
@@ -282,13 +299,19 @@ describe('AuthController', () => {
       await controller.refreshToken(mockRequest, mockResponse);
 
       // Assert
-      expect(mockAuthService.refreshToken).toHaveBeenCalledWith({ refreshToken });
-      expect(mockResponse.cookie).toHaveBeenCalledWith('refreshToken', 'new-refresh-token', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
+      expect(mockAuthService.refreshToken).toHaveBeenCalledWith({
+        refreshToken,
       });
+      expect(mockResponse.cookie).toHaveBeenCalledWith(
+        'refreshToken',
+        'new-refresh-token',
+        {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+        }
+      );
 
       // Cleanup
       delete process.env.USE_REFRESH_COOKIE;
@@ -300,7 +323,9 @@ describe('AuthController', () => {
       mockRequest.body = {};
 
       // Act & Assert
-      await expect(controller.refreshToken(mockRequest, mockResponse)).rejects.toThrow(ValidationError);
+      await expect(
+        controller.refreshToken(mockRequest, mockResponse)
+      ).rejects.toThrow(ValidationError);
 
       // Cleanup
       delete process.env.USE_REFRESH_COOKIE;
@@ -323,7 +348,11 @@ describe('AuthController', () => {
       await controller.logout(mockRequest, mockResponse);
 
       // Assert
-      expect(mockAuthService.logout).toHaveBeenCalledWith(user.id, accessToken, refreshToken);
+      expect(mockAuthService.logout).toHaveBeenCalledWith(
+        user.id,
+        accessToken,
+        refreshToken
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(StatusCodes.OK);
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
@@ -334,7 +363,7 @@ describe('AuthController', () => {
     it('should logout user with cookie refresh token', async () => {
       // Arrange
       process.env.USE_REFRESH_COOKIE = 'true';
-      
+
       const user = createUser();
       const accessToken = 'access-token';
       const refreshToken = 'refresh-token';
@@ -348,7 +377,11 @@ describe('AuthController', () => {
       await controller.logout(mockRequest, mockResponse);
 
       // Assert
-      expect(mockAuthService.logout).toHaveBeenCalledWith(user.id, accessToken, refreshToken);
+      expect(mockAuthService.logout).toHaveBeenCalledWith(
+        user.id,
+        accessToken,
+        refreshToken
+      );
       expect(mockResponse.clearCookie).toHaveBeenCalledWith('refreshToken');
 
       // Cleanup
@@ -362,7 +395,9 @@ describe('AuthController', () => {
       mockRequest.headers = {};
 
       // Act & Assert
-      await expect(controller.logout(mockRequest, mockResponse)).rejects.toThrow(ValidationError);
+      await expect(
+        controller.logout(mockRequest, mockResponse)
+      ).rejects.toThrow(ValidationError);
     });
   });
 
@@ -371,7 +406,8 @@ describe('AuthController', () => {
       // Arrange
       const email = 'test@example.com';
       const mockResult = {
-        message: 'If an account with that email exists, a password reset link has been sent.',
+        message:
+          'If an account with that email exists, a password reset link has been sent.',
       };
 
       mockRequest.body = { email };
@@ -433,7 +469,10 @@ describe('AuthController', () => {
       await controller.changePassword(mockRequest, mockResponse);
 
       // Assert
-      expect(mockAuthService.changePassword).toHaveBeenCalledWith(user.id, changeData);
+      expect(mockAuthService.changePassword).toHaveBeenCalledWith(
+        user.id,
+        changeData
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(StatusCodes.OK);
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
@@ -482,7 +521,9 @@ describe('AuthController', () => {
       await controller.resendEmailVerification(mockRequest, mockResponse);
 
       // Assert
-      expect(mockAuthService.resendEmailVerification).toHaveBeenCalledWith(email);
+      expect(mockAuthService.resendEmailVerification).toHaveBeenCalledWith(
+        email
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(StatusCodes.OK);
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
@@ -495,7 +536,9 @@ describe('AuthController', () => {
       mockRequest.body = {};
 
       // Act & Assert
-      await expect(controller.resendEmailVerification(mockRequest, mockResponse)).rejects.toThrow(ValidationError);
+      await expect(
+        controller.resendEmailVerification(mockRequest, mockResponse)
+      ).rejects.toThrow(ValidationError);
     });
   });
 
@@ -564,7 +607,9 @@ describe('AuthController', () => {
       mockRequest.body = {};
 
       // Act & Assert
-      await expect(controller.validateToken(mockRequest, mockResponse)).rejects.toThrow(ValidationError);
+      await expect(
+        controller.validateToken(mockRequest, mockResponse)
+      ).rejects.toThrow(ValidationError);
     });
   });
 
@@ -702,7 +747,9 @@ describe('AuthController', () => {
       mockRequest.params = {};
 
       // Act & Assert
-      await expect(controller.revokeSession(mockRequest, mockResponse)).rejects.toThrow(ValidationError);
+      await expect(
+        controller.revokeSession(mockRequest, mockResponse)
+      ).rejects.toThrow(ValidationError);
     });
   });
 

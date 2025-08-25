@@ -37,19 +37,22 @@ const queryClient = new QueryClient({
 });
 
 // Global error fallback component
-const ErrorFallback: React.FC<{ error: Error; resetErrorBoundary: () => void }> = ({
-  error,
-  resetErrorBoundary,
-}) => (
-  <div role="alert" style={{ 
-    padding: '20px', 
-    textAlign: 'center', 
-    minHeight: '100vh', 
-    display: 'flex', 
-    flexDirection: 'column', 
-    justifyContent: 'center', 
-    alignItems: 'center' 
-  }}>
+const ErrorFallback: React.FC<{
+  error: Error;
+  resetErrorBoundary: () => void;
+}> = ({ error, resetErrorBoundary }) => (
+  <div
+    role='alert'
+    style={{
+      padding: '20px',
+      textAlign: 'center',
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+    }}
+  >
     <h1>Something went wrong</h1>
     <ErrorMessage message={error.message} onRetry={resetErrorBoundary} />
   </div>
@@ -64,7 +67,7 @@ const root = ReactDOM.createRoot(rootElement);
 
 root.render(
   <React.StrictMode>
-    <ErrorBoundary 
+    <ErrorBoundary
       FallbackComponent={ErrorFallback}
       onError={(error, errorInfo) => {
         console.error('Application error:', error, errorInfo);
@@ -77,7 +80,7 @@ root.render(
           <BrowserRouter>
             <App />
             <ToastContainer
-              position="top-right"
+              position='top-right'
               autoClose={5000}
               hideProgressBar={false}
               newestOnTop={false}
@@ -86,7 +89,7 @@ root.render(
               pauseOnFocusLoss
               draggable
               pauseOnHover
-              theme="light"
+              theme='light'
             />
           </BrowserRouter>
           {__DEV__ && <ReactQueryDevtools initialIsOpen={false} />}

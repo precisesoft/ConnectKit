@@ -17,10 +17,18 @@ import appConfig from '../config/app.config';
 const router = Router();
 
 // Health check routes (no prefix)
-router.get('/health', (req, res, next) => getHealthController().health(req, res, next));
-router.get('/health/liveness', (req, res, next) => getHealthController().liveness(req, res, next));
-router.get('/health/readiness', (req, res, next) => getHealthController().readiness(req, res, next));
-router.get('/health/info', (req, res, next) => getHealthController().info(req, res, next));
+router.get('/health', (req, res, next) =>
+  getHealthController().health(req, res, next)
+);
+router.get('/health/liveness', (req, res, next) =>
+  getHealthController().liveness(req, res, next)
+);
+router.get('/health/readiness', (req, res, next) =>
+  getHealthController().readiness(req, res, next)
+);
+router.get('/health/info', (req, res, next) =>
+  getHealthController().info(req, res, next)
+);
 
 // API routes with version prefix
 const apiRouter = Router();
@@ -46,7 +54,9 @@ apiRouter.get('/', (req, res) => {
         contacts: `${appConfig.getApiUrl()}/contacts`,
       },
       documentation: {
-        swagger: appConfig.get('features').swagger ? `${appConfig.getApiUrl()}/docs` : null,
+        swagger: appConfig.get('features').swagger
+          ? `${appConfig.getApiUrl()}/docs`
+          : null,
         postman: `${appConfig.getApiUrl()}/docs/postman`,
       },
     },
@@ -79,7 +89,9 @@ router.get('/', (req, res) => {
     links: {
       health: '/health',
       api: appConfig.getApiUrl(),
-      documentation: appConfig.get('features').swagger ? `${appConfig.getApiUrl()}/docs` : null,
+      documentation: appConfig.get('features').swagger
+        ? `${appConfig.getApiUrl()}/docs`
+        : null,
     },
   });
 });

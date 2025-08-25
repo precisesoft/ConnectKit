@@ -9,7 +9,7 @@ This document provides comprehensive specifications for all React components in 
 ```
 Components/
 ├── atoms/              # Basic building blocks
-├── molecules/          # Simple component combinations  
+├── molecules/          # Simple component combinations
 ├── organisms/          # Complex component assemblies
 └── templates/          # Page-level layouts
 ```
@@ -36,11 +36,12 @@ ComponentName/
 
 ```typescript
 // src/components/atoms/Button/Button.types.ts
-export interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'color'> {
+export interface ButtonProps
+  extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "color"> {
   /** Button variant */
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'outline';
+  variant?: "primary" | "secondary" | "danger" | "ghost" | "outline";
   /** Button size */
-  size?: 'small' | 'medium' | 'large';
+  size?: "small" | "medium" | "large";
   /** Loading state */
   isLoading?: boolean;
   /** Full width button */
@@ -59,6 +60,7 @@ export interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonE
 ```
 
 **Implementation:**
+
 ```typescript
 // src/components/atoms/Button/Button.tsx
 import React from 'react';
@@ -73,7 +75,7 @@ const StyledButton = styled(MuiButton, {
   fontWeight: 600,
   borderRadius: 8,
   position: 'relative',
-  
+
   // Size variants
   ...(size === 'small' && {
     padding: '4px 16px',
@@ -90,18 +92,18 @@ const StyledButton = styled(MuiButton, {
     fontSize: '1.125rem',
     minHeight: 48,
   }),
-  
+
   // Loading state
   ...(isLoading && {
     color: 'transparent',
     pointerEvents: 'none',
   }),
-  
+
   // Full width
   ...(fullWidth && {
     width: '100%',
   }),
-  
+
   // Variant styles
   ...(variant === 'primary' && {
     background: theme.palette.gradient.primary,
@@ -112,7 +114,7 @@ const StyledButton = styled(MuiButton, {
       boxShadow: theme.shadows[4],
     },
   }),
-  
+
   ...(variant === 'danger' && {
     backgroundColor: theme.palette.error.main,
     color: theme.palette.error.contrastText,
@@ -120,7 +122,7 @@ const StyledButton = styled(MuiButton, {
       backgroundColor: theme.palette.error.dark,
     },
   }),
-  
+
   ...(variant === 'ghost' && {
     backgroundColor: 'transparent',
     color: theme.palette.text.primary,
@@ -129,7 +131,7 @@ const StyledButton = styled(MuiButton, {
       backgroundColor: theme.palette.action.hover,
     },
   }),
-  
+
   ...(variant === 'outline' && {
     backgroundColor: 'transparent',
     color: theme.palette.primary.main,
@@ -190,6 +192,7 @@ export const Button: React.FC<ButtonProps> = ({
 ```
 
 **Usage Examples:**
+
 ```typescript
 // Basic usage
 <Button>Click me</Button>
@@ -215,6 +218,7 @@ export const Button: React.FC<ButtonProps> = ({
 ```
 
 **Test Requirements:**
+
 - [ ] Renders with correct variant styles
 - [ ] Shows loading spinner when `isLoading` is true
 - [ ] Handles click events properly
@@ -229,11 +233,12 @@ export const Button: React.FC<ButtonProps> = ({
 
 ```typescript
 // src/components/atoms/Input/Input.types.ts
-export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
+export interface InputProps
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "size"> {
   /** Input variant */
-  variant?: 'outlined' | 'filled' | 'standard';
+  variant?: "outlined" | "filled" | "standard";
   /** Input size */
-  size?: 'small' | 'medium' | 'large';
+  size?: "small" | "medium" | "large";
   /** Label text */
   label?: string;
   /** Helper text */
@@ -258,6 +263,7 @@ export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElem
 ```
 
 **Implementation:**
+
 ```typescript
 // src/components/atoms/Input/Input.tsx
 import React, { forwardRef } from 'react';
@@ -311,27 +317,28 @@ Input.displayName = 'Input';
 ```
 
 **Usage Examples:**
+
 ```typescript
 // Basic input
 <Input label="First Name" />
 
 // With validation
-<Input 
-  label="Email" 
+<Input
+  label="Email"
   type="email"
   error={!!errors.email}
   errorMessage={errors.email?.message}
 />
 
 // With adornments
-<Input 
+<Input
   label="Search"
   startAdornment={<SearchIcon />}
   endAdornment={<ClearIcon />}
 />
 
 // Multiline
-<Input 
+<Input
   label="Notes"
   multiline
   rows={4}
@@ -340,6 +347,7 @@ Input.displayName = 'Input';
 ```
 
 **Test Requirements:**
+
 - [ ] Renders with correct label and placeholder
 - [ ] Shows error state and error message
 - [ ] Handles different input types (text, email, password, etc.)
@@ -356,11 +364,11 @@ Input.displayName = 'Input';
 // src/components/atoms/Loading/Loading.types.ts
 export interface LoadingProps {
   /** Loading variant */
-  variant?: 'spinner' | 'skeleton' | 'dots' | 'pulse';
+  variant?: "spinner" | "skeleton" | "dots" | "pulse";
   /** Size of the loading indicator */
-  size?: 'small' | 'medium' | 'large' | number;
+  size?: "small" | "medium" | "large" | number;
   /** Color of the loading indicator */
-  color?: 'primary' | 'secondary' | 'inherit';
+  color?: "primary" | "secondary" | "inherit";
   /** Text to display with loading */
   text?: string;
   /** Full screen overlay */
@@ -369,7 +377,7 @@ export interface LoadingProps {
   centered?: boolean;
   /** Skeleton variant specific props */
   skeleton?: {
-    variant?: 'text' | 'rectangular' | 'rounded' | 'circular';
+    variant?: "text" | "rectangular" | "rounded" | "circular";
     width?: number | string;
     height?: number | string;
     lines?: number;
@@ -378,16 +386,17 @@ export interface LoadingProps {
 ```
 
 **Implementation:**
+
 ```typescript
 // src/components/atoms/Loading/Loading.tsx
 import React from 'react';
-import { 
-  CircularProgress, 
-  LinearProgress, 
-  Skeleton, 
-  Box, 
-  Typography, 
-  Backdrop 
+import {
+  CircularProgress,
+  LinearProgress,
+  Skeleton,
+  Box,
+  Typography,
+  Backdrop
 } from '@mui/material';
 import { styled, keyframes } from '@mui/material/styles';
 import { LoadingProps } from './Loading.types';
@@ -538,6 +547,7 @@ export const Loading: React.FC<LoadingProps> = ({
 ```
 
 **Usage Examples:**
+
 ```typescript
 // Basic spinner
 <Loading />
@@ -554,17 +564,18 @@ export const Loading: React.FC<LoadingProps> = ({
 <Loading overlay text="Saving..." />
 
 // Skeleton for specific content
-<Loading 
-  variant="skeleton" 
+<Loading
+  variant="skeleton"
   skeleton={{
     variant: 'rectangular',
     width: 300,
     height: 200
-  }} 
+  }}
 />
 ```
 
 **Test Requirements:**
+
 - [ ] Renders correct variant
 - [ ] Shows text when provided
 - [ ] Overlay mode works
@@ -579,7 +590,7 @@ export const Loading: React.FC<LoadingProps> = ({
 // src/components/atoms/Avatar/Avatar.types.ts
 export interface AvatarProps {
   /** Avatar size */
-  size?: 'small' | 'medium' | 'large' | number;
+  size?: "small" | "medium" | "large" | number;
   /** Source URL for avatar image */
   src?: string;
   /** Alt text for avatar image */
@@ -587,19 +598,20 @@ export interface AvatarProps {
   /** Fallback text (initials) */
   children?: React.ReactNode;
   /** Avatar variant */
-  variant?: 'circular' | 'rounded' | 'square';
+  variant?: "circular" | "rounded" | "square";
   /** Background color when no image */
-  color?: 'primary' | 'secondary' | 'default';
+  color?: "primary" | "secondary" | "default";
   /** Click handler */
   onClick?: () => void;
   /** Show online status indicator */
   showStatus?: boolean;
   /** Online status */
-  status?: 'online' | 'offline' | 'away' | 'busy';
+  status?: "online" | "offline" | "away" | "busy";
 }
 ```
 
 **Implementation:**
+
 ```typescript
 // src/components/atoms/Avatar/Avatar.tsx
 import React from 'react';
@@ -665,19 +677,19 @@ const StyledAvatar = styled(MuiAvatar)<AvatarProps>(({ theme, size, color, onCli
     fontSize: avatarSize * 0.4,
     cursor: onClick ? 'pointer' : 'default',
     transition: theme.transitions.create(['transform', 'box-shadow']),
-    
+
     ...(onClick && {
       '&:hover': {
         transform: 'scale(1.05)',
         boxShadow: theme.shadows[4],
       },
     }),
-    
+
     ...(color === 'primary' && {
       backgroundColor: theme.palette.primary.main,
       color: theme.palette.primary.contrastText,
     }),
-    
+
     ...(color === 'secondary' && {
       backgroundColor: theme.palette.secondary.main,
       color: theme.palette.secondary.contrastText,
@@ -727,6 +739,7 @@ export const Avatar: React.FC<AvatarProps> = ({
 ```
 
 **Usage Examples:**
+
 ```typescript
 // Basic avatar with initials
 <Avatar>JD</Avatar>
@@ -753,6 +766,7 @@ export const Avatar: React.FC<AvatarProps> = ({
 ```
 
 **Test Requirements:**
+
 - [ ] Renders initials when no image provided
 - [ ] Displays image when src provided
 - [ ] Shows correct size for different size props
@@ -797,17 +811,18 @@ export interface SearchBoxProps {
 ```
 
 **Implementation:**
+
 ```typescript
 // src/components/molecules/SearchBox/SearchBox.tsx
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { 
-  Box, 
-  InputAdornment, 
-  IconButton, 
-  Popper, 
-  Paper, 
-  List, 
-  ListItem, 
+import {
+  Box,
+  InputAdornment,
+  IconButton,
+  Popper,
+  Paper,
+  List,
+  ListItem,
   ListItemText,
   ClickAwayListener
 } from '@mui/material';
@@ -854,7 +869,7 @@ export const SearchBox: React.FC<SearchBoxProps> = ({
     const newValue = event.target.value;
     setLocalValue(newValue);
     onChange?.(newValue);
-    
+
     if (showSuggestions && newValue) {
       setShowSuggestionsList(true);
     } else {
@@ -930,7 +945,7 @@ export const SearchBox: React.FC<SearchBoxProps> = ({
             </>
           }
         />
-        
+
         {showSuggestions && showSuggestionsList && filteredSuggestions.length > 0 && (
           <Popper
             open={true}
@@ -960,15 +975,16 @@ export const SearchBox: React.FC<SearchBoxProps> = ({
 ```
 
 **Usage Examples:**
+
 ```typescript
 // Basic search
-<SearchBox 
+<SearchBox
   placeholder="Search contacts..."
   onSearch={(value) => console.log('Searching:', value)}
 />
 
 // With suggestions
-<SearchBox 
+<SearchBox
   placeholder="Search..."
   showSuggestions
   suggestions={['John Doe', 'Jane Smith', 'Bob Johnson']}
@@ -976,7 +992,7 @@ export const SearchBox: React.FC<SearchBoxProps> = ({
 />
 
 // Controlled
-<SearchBox 
+<SearchBox
   value={searchTerm}
   onChange={setSearchTerm}
   onSearch={performSearch}
@@ -985,6 +1001,7 @@ export const SearchBox: React.FC<SearchBoxProps> = ({
 ```
 
 **Test Requirements:**
+
 - [ ] Triggers search on Enter key
 - [ ] Debounces input changes
 - [ ] Shows and hides suggestions
@@ -999,7 +1016,7 @@ export const SearchBox: React.FC<SearchBoxProps> = ({
 
 ```typescript
 // src/components/molecules/ContactCard/ContactCard.types.ts
-import { Contact } from '../../../types/contact.types';
+import { Contact } from "../../../types/contact.types";
 
 export interface ContactCardProps {
   /** Contact data */
@@ -1022,6 +1039,7 @@ export interface ContactCardProps {
 ```
 
 **Implementation:**
+
 ```typescript
 // src/components/molecules/ContactCard/ContactCard.tsx
 import React, { memo, useCallback } from 'react';
@@ -1126,21 +1144,21 @@ export const ContactCard = memo<ContactCardProps>(({
           <Avatar size={compact ? 'small' : 'medium'}>
             {initials}
           </Avatar>
-          
+
           <Box flexGrow={1} minWidth={0}>
-            <Typography 
-              variant={compact ? 'subtitle1' : 'h6'} 
+            <Typography
+              variant={compact ? 'subtitle1' : 'h6'}
               component="h3"
               noWrap
               data-testid="contact-name"
             >
               {fullName}
             </Typography>
-            
+
             {contact.title && contact.company && (
-              <Typography 
-                variant="body2" 
-                color="text.secondary" 
+              <Typography
+                variant="body2"
+                color="text.secondary"
                 noWrap
                 sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
               >
@@ -1161,7 +1179,7 @@ export const ContactCard = memo<ContactCardProps>(({
                 </Typography>
               </Box>
             )}
-            
+
             {primaryPhone && (
               <Box display="flex" alignItems="center" gap={1} mb={1}>
                 <PhoneIcon fontSize="small" color="action" />
@@ -1210,7 +1228,7 @@ export const ContactCard = memo<ContactCardProps>(({
               <ViewIcon />
             </IconButton>
           </Tooltip>
-          
+
           <Tooltip title="Edit contact">
             <IconButton
               size="small"
@@ -1223,7 +1241,7 @@ export const ContactCard = memo<ContactCardProps>(({
               <EditIcon />
             </IconButton>
           </Tooltip>
-          
+
           <Tooltip title="Delete contact">
             <IconButton
               size="small"
@@ -1255,6 +1273,7 @@ ContactCard.displayName = 'ContactCard';
 ```
 
 **Usage Examples:**
+
 ```typescript
 // Basic usage
 <ContactCard
@@ -1285,6 +1304,7 @@ ContactCard.displayName = 'ContactCard';
 ```
 
 **Test Requirements:**
+
 - [ ] Renders contact information correctly
 - [ ] Action buttons trigger correct handlers
 - [ ] Selection checkbox works when provided
@@ -1305,7 +1325,15 @@ export interface FormFieldProps {
   /** Field label */
   label?: string;
   /** Field type */
-  type?: 'text' | 'email' | 'password' | 'tel' | 'url' | 'number' | 'textarea' | 'select';
+  type?:
+    | "text"
+    | "email"
+    | "password"
+    | "tel"
+    | "url"
+    | "number"
+    | "textarea"
+    | "select";
   /** Placeholder text */
   placeholder?: string;
   /** Required field */
@@ -1321,9 +1349,13 @@ export interface FormFieldProps {
   /** Field value */
   value?: string;
   /** Change handler */
-  onChange?: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onChange?: (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => void;
   /** Blur handler */
-  onBlur?: (event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onBlur?: (
+    event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => void;
   /** Options for select type */
   options?: Array<{ value: string; label: string; disabled?: boolean }>;
   /** Multiline for textarea */
@@ -1340,14 +1372,15 @@ export interface FormFieldProps {
 ```
 
 **Implementation:**
+
 ```typescript
 // src/components/molecules/FormField/FormField.tsx
 import React, { forwardRef } from 'react';
-import { 
-  FormControl, 
-  FormLabel, 
-  FormHelperText, 
-  Select, 
+import {
+  FormControl,
+  FormLabel,
+  FormHelperText,
+  Select,
   MenuItem,
   InputLabel
 } from '@mui/material';
@@ -1394,9 +1427,9 @@ export const FormField = forwardRef<HTMLInputElement, FormFieldProps>(({
           label={label}
         >
           {options.map((option) => (
-            <MenuItem 
-              key={option.value} 
-              value={option.value} 
+            <MenuItem
+              key={option.value}
+              value={option.value}
               disabled={option.disabled}
             >
               {option.label}
@@ -1439,16 +1472,17 @@ FormField.displayName = 'FormField';
 ```
 
 **Usage Examples:**
+
 ```typescript
 // Basic text field
-<FormField 
+<FormField
   name="firstName"
   label="First Name"
   required
 />
 
 // Email field with validation
-<FormField 
+<FormField
   name="email"
   type="email"
   label="Email Address"
@@ -1457,7 +1491,7 @@ FormField.displayName = 'FormField';
 />
 
 // Select field
-<FormField 
+<FormField
   name="category"
   type="select"
   label="Category"
@@ -1469,7 +1503,7 @@ FormField.displayName = 'FormField';
 />
 
 // Textarea
-<FormField 
+<FormField
   name="notes"
   type="textarea"
   label="Notes"
@@ -1479,6 +1513,7 @@ FormField.displayName = 'FormField';
 ```
 
 **Test Requirements:**
+
 - [ ] Renders correct input type
 - [ ] Shows validation errors
 - [ ] Select options render correctly
@@ -1512,9 +1547,9 @@ export interface ContactListProps {
   /** Total number of items */
   totalItems?: number;
   /** View mode */
-  viewMode?: 'grid' | 'list';
+  viewMode?: "grid" | "list";
   /** View mode change handler */
-  onViewModeChange?: (mode: 'grid' | 'list') => void;
+  onViewModeChange?: (mode: "grid" | "list") => void;
   /** Show selection controls */
   showSelection?: boolean;
   /** Selected contact IDs */
@@ -1532,6 +1567,7 @@ export interface ContactListProps {
 ```
 
 **Implementation:**
+
 ```typescript
 // src/components/organisms/ContactList/ContactList.tsx
 import React, { useState, useCallback, useMemo } from 'react';
@@ -1586,7 +1622,7 @@ export const ContactList: React.FC<ContactListProps> = ({
   onBulkExport,
 }) => {
   const [bulkMenuAnchor, setBulkMenuAnchor] = useState<null | HTMLElement>(null);
-  
+
   const { data: contactsData } = useContacts({
     search: searchTerm,
     page,
@@ -1677,7 +1713,7 @@ export const ContactList: React.FC<ContactListProps> = ({
               onSearch={handleSearchChange}
             />
           </Box>
-          
+
           <Box display="flex" alignItems="center" gap={1}>
             {showSelection && selectedContacts.length > 0 && (
               <>
@@ -1703,7 +1739,7 @@ export const ContactList: React.FC<ContactListProps> = ({
                 </Menu>
               </>
             )}
-            
+
             <Tooltip title={viewMode === 'grid' ? 'List view' : 'Grid view'}>
               <IconButton
                 onClick={() => onViewModeChange?.(viewMode === 'grid' ? 'list' : 'grid')}
@@ -1714,7 +1750,7 @@ export const ContactList: React.FC<ContactListProps> = ({
             </Tooltip>
           </Box>
         </Box>
-        
+
         {showSelection && (
           <Box mt={2}>
             <Checkbox
@@ -1736,7 +1772,7 @@ export const ContactList: React.FC<ContactListProps> = ({
             {searchTerm ? 'No contacts found' : 'No contacts yet'}
           </Typography>
           <Typography variant="body2" color="text.secondary" paragraph>
-            {searchTerm 
+            {searchTerm
               ? 'Try adjusting your search criteria'
               : 'Start by adding your first contact'
             }
@@ -1809,6 +1845,7 @@ export const ContactList: React.FC<ContactListProps> = ({
 ```
 
 **Usage Examples:**
+
 ```typescript
 // Basic usage
 <ContactList
@@ -1842,6 +1879,7 @@ export const ContactList: React.FC<ContactListProps> = ({
 ```
 
 **Test Requirements:**
+
 - [ ] Renders loading state
 - [ ] Shows error messages
 - [ ] Displays empty state
@@ -1868,7 +1906,7 @@ export interface ContactFormProps {
   /** Loading state */
   isLoading?: boolean;
   /** Form mode */
-  mode?: 'create' | 'edit';
+  mode?: "create" | "edit";
   /** Show advanced fields */
   showAdvanced?: boolean;
   /** Available tags for autocomplete */
@@ -1879,12 +1917,14 @@ export interface ContactFormProps {
 ```
 
 **Implementation** (partial - already shown in previous document):
+
 ```typescript
 // This component is already fully specified in the FRONTEND-TDD-PLAN.md
 // Refer to the ContactForm implementation there for complete details
 ```
 
 **Test Requirements:**
+
 - [ ] Validates required fields
 - [ ] Shows/hides advanced fields
 - [ ] Tag autocomplete works
@@ -1924,6 +1964,7 @@ export interface DashboardLayoutProps {
 ```
 
 **Implementation:**
+
 ```typescript
 // src/components/templates/DashboardLayout/DashboardLayout.tsx
 import React from 'react';
@@ -2006,8 +2047,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         sx={{
           zIndex: (theme) => theme.zIndex.drawer + 1,
           ml: sidebarCollapsed ? `${collapsedDrawerWidth}px` : `${drawerWidth}px`,
-          width: sidebarCollapsed 
-            ? `calc(100% - ${collapsedDrawerWidth}px)` 
+          width: sidebarCollapsed
+            ? `calc(100% - ${collapsedDrawerWidth}px)`
             : `calc(100% - ${drawerWidth}px)`,
         }}
       >
@@ -2116,8 +2157,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           flexGrow: 1,
           p: 3,
           ml: sidebarCollapsed ? `${collapsedDrawerWidth}px` : `${drawerWidth}px`,
-          width: sidebarCollapsed 
-            ? `calc(100% - ${collapsedDrawerWidth}px)` 
+          width: sidebarCollapsed
+            ? `calc(100% - ${collapsedDrawerWidth}px)`
             : `calc(100% - ${drawerWidth}px)`,
         }}
       >
@@ -2157,6 +2198,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 ```
 
 **Usage Examples:**
+
 ```typescript
 // Basic layout
 <DashboardLayout title="Contacts">
@@ -2164,7 +2206,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 </DashboardLayout>
 
 // With actions
-<DashboardLayout 
+<DashboardLayout
   title="Add Contact"
   showBackButton
   onBackClick={() => navigate('/contacts')}
@@ -2178,7 +2220,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 </DashboardLayout>
 
 // With loading state
-<DashboardLayout 
+<DashboardLayout
   title="Dashboard"
   isLoading={isLoadingData}
 >
@@ -2187,6 +2229,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 ```
 
 **Test Requirements:**
+
 - [ ] Renders with correct title
 - [ ] Navigation items work
 - [ ] Breadcrumbs generate correctly
@@ -2201,6 +2244,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 ## Component Development Standards
 
 ### File Structure Convention
+
 ```
 ComponentName/
 ├── ComponentName.tsx           # Main implementation
@@ -2213,6 +2257,7 @@ ComponentName/
 ```
 
 ### TypeScript Standards
+
 - All props interfaces exported
 - Strict typing with no `any` types
 - Generic types where appropriate
@@ -2220,6 +2265,7 @@ ComponentName/
 - Forward refs for form components
 
 ### Testing Standards
+
 - Minimum 85% code coverage per component
 - Test all user interactions
 - Test all prop variations
@@ -2228,6 +2274,7 @@ ComponentName/
 - Visual regression tests for complex components
 
 ### Accessibility Standards
+
 - WCAG 2.1 AA compliance
 - Proper ARIA attributes
 - Keyboard navigation support
@@ -2236,6 +2283,7 @@ ComponentName/
 - Focus management
 
 ### Performance Standards
+
 - React.memo for expensive components
 - useCallback for event handlers
 - useMemo for expensive calculations

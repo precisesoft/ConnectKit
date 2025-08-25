@@ -9,7 +9,7 @@ import {
   ChangePasswordRequest,
   AuthResponse,
 } from '@services/types';
-import { showErrorNotification, showSuccessNotification } from '@store/uiStore';
+import { showSuccessNotification } from '@store/uiStore';
 
 /**
  * Custom hook for authentication operations
@@ -337,7 +337,7 @@ export const useAuth = () => {
    * Check if current user has specific permission
    */
   const hasPermission = useCallback(
-    (permission: string): boolean => {
+    (_permission: string): boolean => {
       if (!user) return false;
 
       // Admin users have all permissions

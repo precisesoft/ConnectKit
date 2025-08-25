@@ -190,6 +190,7 @@ ConnectKit/
 ## Technology Stack Specifications
 
 ### Frontend Stack
+
 ```json
 {
   "react": "^18.2.0",
@@ -210,6 +211,7 @@ ConnectKit/
 ```
 
 ### Backend Stack
+
 ```json
 {
   "node": ">=20.10.0",
@@ -232,6 +234,7 @@ ConnectKit/
 ```
 
 ### Testing Stack
+
 ```json
 {
   "jest": "^29.7.0",
@@ -247,6 +250,7 @@ ConnectKit/
 ```
 
 ### DevOps Stack
+
 ```json
 {
   "docker": ">=24.0.0",
@@ -260,6 +264,7 @@ ConnectKit/
 ## Development Environment Setup
 
 ### Prerequisites Checklist
+
 - [ ] Node.js 20.10.0+ installed
 - [ ] Docker Desktop 24.0.0+ installed
 - [ ] PostgreSQL 16+ installed (or Docker)
@@ -268,6 +273,7 @@ ConnectKit/
 - [ ] VS Code with recommended extensions
 
 ### Required VS Code Extensions
+
 ```json
 {
   "recommendations": [
@@ -285,6 +291,7 @@ ConnectKit/
 ```
 
 ### Environment Setup Script
+
 ```bash
 #!/bin/bash
 # scripts/setup.sh
@@ -329,6 +336,7 @@ echo "✅ Setup complete! Run 'npm run dev' to start development"
 ## Git Workflow and Branching Strategy
 
 ### Branch Structure
+
 ```
 main (protected)
 ├── develop (protected)
@@ -339,6 +347,7 @@ main (protected)
 ```
 
 ### Git Configuration
+
 ```bash
 # .gitignore
 node_modules/
@@ -364,6 +373,7 @@ Thumbs.db
 ```
 
 ### Commit Message Convention
+
 ```
 type(scope): description
 
@@ -387,6 +397,7 @@ docs(api): update OpenAPI specification
 ```
 
 ### Branch Protection Rules
+
 ```yaml
 # Required for main and develop branches
 branch_protection:
@@ -404,6 +415,7 @@ branch_protection:
 ## Docker Containerization Approach
 
 ### Multi-stage API Dockerfile
+
 ```dockerfile
 # apps/api/Dockerfile
 FROM node:20.10.0-alpine AS base
@@ -432,6 +444,7 @@ CMD ["node", "dist/app.js"]
 ```
 
 ### Frontend Dockerfile
+
 ```dockerfile
 # apps/web/Dockerfile
 FROM node:20.10.0-alpine AS base
@@ -455,9 +468,10 @@ CMD ["nginx", "-g", "daemon off;"]
 ```
 
 ### Docker Compose Development Setup
+
 ```yaml
 # infrastructure/docker/docker-compose.dev.yml
-version: '3.8'
+version: "3.8"
 services:
   postgres:
     image: postgres:16.1-alpine
@@ -469,14 +483,14 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    
+
   redis:
     image: redis:7.2.3-alpine
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
-  
+
   api:
     build:
       context: ../../apps/api
@@ -495,7 +509,7 @@ services:
     volumes:
       - ../../apps/api/src:/app/src
     command: npm run dev
-  
+
   web:
     build:
       context: ../../apps/web
@@ -514,6 +528,7 @@ volumes:
 ## Database Design and Security Configuration
 
 ### Core Database Schema
+
 ```sql
 -- Database initialization script
 -- infrastructure/database/init.sql
@@ -529,10 +544,10 @@ RETURNS trigger AS $$
 BEGIN
   IF TG_OP = 'DELETE' THEN
     INSERT INTO audit_log (
-      tenant_id, table_name, record_id, action, old_values, 
+      tenant_id, table_name, record_id, action, old_values,
       user_id, timestamp, ip_address
     ) VALUES (
-      OLD.tenant_id, TG_TABLE_NAME, OLD.id, TG_OP, 
+      OLD.tenant_id, TG_TABLE_NAME, OLD.id, TG_OP,
       to_jsonb(OLD), current_setting('app.current_user_id')::uuid,
       NOW(), inet_client_addr()
     );
@@ -668,7 +683,7 @@ CREATE TRIGGER contacts_audit_trigger
 CREATE OR REPLACE FUNCTION update_contact_search_vector()
 RETURNS trigger AS $$
 BEGIN
-  NEW.search_vector := 
+  NEW.search_vector :=
     setweight(to_tsvector('english', COALESCE(NEW.first_name, '')), 'A') ||
     setweight(to_tsvector('english', COALESCE(NEW.last_name, '')), 'A') ||
     setweight(to_tsvector('english', COALESCE(NEW.company, '')), 'B') ||
@@ -684,9 +699,10 @@ CREATE TRIGGER contacts_search_vector_trigger
 ```
 
 ### Database Connection Configuration
+
 ```typescript
 // apps/api/src/config/database.config.ts
-import { Pool, PoolConfig } from 'pg';
+import { Pool, PoolConfig } from "pg";
 
 interface DatabaseConfig {
   host: string;
@@ -701,20 +717,20 @@ interface DatabaseConfig {
 }
 
 export const getDatabaseConfig = (): DatabaseConfig => ({
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432'),
-  database: process.env.DB_NAME || 'connectkit',
-  username: process.env.DB_USER || 'connectkit',
-  password: process.env.DB_PASSWORD || '',
-  ssl: process.env.NODE_ENV === 'production',
-  maxConnections: parseInt(process.env.DB_MAX_CONNECTIONS || '20'),
-  idleTimeoutMs: parseInt(process.env.DB_IDLE_TIMEOUT || '30000'),
-  connectionTimeoutMs: parseInt(process.env.DB_CONNECTION_TIMEOUT || '5000'),
+  host: process.env.DB_HOST || "localhost",
+  port: parseInt(process.env.DB_PORT || "5432"),
+  database: process.env.DB_NAME || "connectkit",
+  username: process.env.DB_USER || "connectkit",
+  password: process.env.DB_PASSWORD || "",
+  ssl: process.env.NODE_ENV === "production",
+  maxConnections: parseInt(process.env.DB_MAX_CONNECTIONS || "20"),
+  idleTimeoutMs: parseInt(process.env.DB_IDLE_TIMEOUT || "30000"),
+  connectionTimeoutMs: parseInt(process.env.DB_CONNECTION_TIMEOUT || "5000"),
 });
 
 export const createDatabasePool = (): Pool => {
   const config = getDatabaseConfig();
-  
+
   const poolConfig: PoolConfig = {
     host: config.host,
     port: config.port,
@@ -725,7 +741,7 @@ export const createDatabasePool = (): Pool => {
     max: config.maxConnections,
     idleTimeoutMillis: config.idleTimeoutMs,
     connectionTimeoutMillis: config.connectionTimeoutMs,
-    application_name: 'ConnectKit-API',
+    application_name: "ConnectKit-API",
   };
 
   return new Pool(poolConfig);
@@ -735,6 +751,7 @@ export const createDatabasePool = (): Pool => {
 ## Environment Configuration Management
 
 ### Environment Variables Structure
+
 ```bash
 # .env.example
 # Application Configuration
@@ -802,49 +819,35 @@ MOCK_DATA_ENABLED=false
 ```
 
 ### Configuration Validation
+
 ```typescript
 // apps/api/src/config/app.config.ts
-import Joi from 'joi';
+import Joi from "joi";
 
 const configSchema = Joi.object({
   NODE_ENV: Joi.string()
-    .valid('development', 'staging', 'production')
-    .default('development'),
-  
-  APP_PORT: Joi.number()
-    .port()
-    .default(3000),
-  
-  APP_HOST: Joi.string()
-    .hostname()
-    .default('localhost'),
-  
-  JWT_SECRET: Joi.string()
-    .min(32)
-    .required(),
-  
+    .valid("development", "staging", "production")
+    .default("development"),
+
+  APP_PORT: Joi.number().port().default(3000),
+
+  APP_HOST: Joi.string().hostname().default("localhost"),
+
+  JWT_SECRET: Joi.string().min(32).required(),
+
   JWT_EXPIRES_IN: Joi.string()
     .pattern(/^\d+[smhd]$/)
-    .default('15m'),
-  
-  DB_HOST: Joi.string()
-    .required(),
-  
-  DB_PORT: Joi.number()
-    .port()
-    .default(5432),
-  
-  DB_NAME: Joi.string()
-    .required(),
-  
-  ENCRYPTION_KEY: Joi.string()
-    .length(32)
-    .required(),
-  
-  BCRYPT_SALT_ROUNDS: Joi.number()
-    .min(10)
-    .max(15)
-    .default(12),
+    .default("15m"),
+
+  DB_HOST: Joi.string().required(),
+
+  DB_PORT: Joi.number().port().default(5432),
+
+  DB_NAME: Joi.string().required(),
+
+  ENCRYPTION_KEY: Joi.string().length(32).required(),
+
+  BCRYPT_SALT_ROUNDS: Joi.number().min(10).max(15).default(12),
 });
 
 export const validateConfig = () => {
@@ -852,11 +855,11 @@ export const validateConfig = () => {
     allowUnknown: true,
     stripUnknown: true,
   });
-  
+
   if (error) {
     throw new Error(`Config validation error: ${error.message}`);
   }
-  
+
   return value;
 };
 
@@ -866,6 +869,7 @@ export const config = validateConfig();
 ## Initial CI/CD Pipeline Setup
 
 ### GitHub Actions Workflow
+
 ```yaml
 # .github/workflows/ci.yml
 name: Continuous Integration
@@ -884,25 +888,25 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20.10.0'
-          cache: 'npm'
-      
+          node-version: "20.10.0"
+          cache: "npm"
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run ESLint
         run: npm run lint
-      
+
       - name: Check Prettier formatting
         run: npm run format:check
-      
+
       - name: TypeScript type check
         run: npm run type-check
 
   test:
     name: Test Suite
     runs-on: ubuntu-latest
-    
+
     services:
       postgres:
         image: postgres:16.1
@@ -916,7 +920,7 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-      
+
       redis:
         image: redis:7.2
         options: >-
@@ -926,29 +930,29 @@ jobs:
           --health-retries 5
         ports:
           - 6379:6379
-    
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20.10.0'
-          cache: 'npm'
-      
+          node-version: "20.10.0"
+          cache: "npm"
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run unit tests
         run: npm run test:unit
         env:
           DATABASE_URL: postgresql://postgres:test_password@localhost:5432/connectkit_test
           REDIS_URL: redis://localhost:6379
-      
+
       - name: Run integration tests
         run: npm run test:integration
         env:
           DATABASE_URL: postgresql://postgres:test_password@localhost:5432/connectkit_test
           REDIS_URL: redis://localhost:6379
-      
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
@@ -962,22 +966,22 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20.10.0'
-          cache: 'npm'
-      
+          node-version: "20.10.0"
+          cache: "npm"
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run npm audit
         run: npm audit --audit-level high
-      
+
       - name: Run Snyk security scan
         uses: snyk/actions/node@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           args: --severity-threshold=high
-      
+
       - name: Run CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
@@ -991,23 +995,23 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20.10.0'
-          cache: 'npm'
-      
+          node-version: "20.10.0"
+          cache: "npm"
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Build API
         run: npm run build:api
-      
+
       - name: Build Web App
         run: npm run build:web
-      
+
       - name: Build Docker images
         run: |
           docker build -t connectkit-api:${{ github.sha }} ./apps/api
           docker build -t connectkit-web:${{ github.sha }} ./apps/web
-      
+
       - name: Run container security scan
         run: |
           docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
@@ -1016,6 +1020,7 @@ jobs:
 ```
 
 ### Quality Gates Configuration
+
 ```json
 {
   "quality_gates": {
@@ -1046,6 +1051,7 @@ jobs:
 ### Phase 1 Requirements Verification
 
 #### Infrastructure Setup
+
 - [ ] Docker containers configured and tested
 - [ ] Database schema implemented with RLS
 - [ ] Redis caching layer configured
@@ -1053,6 +1059,7 @@ jobs:
 - [ ] CI/CD pipeline functional
 
 #### Authentication System
+
 - [ ] JWT token implementation with refresh
 - [ ] Password hashing with bcrypt (12+ rounds)
 - [ ] Account lockout after failed attempts
@@ -1060,6 +1067,7 @@ jobs:
 - [ ] Multi-tenant user isolation
 
 #### API Foundation
+
 - [ ] Express server with TypeScript
 - [ ] Request validation middleware
 - [ ] Error handling middleware
@@ -1069,6 +1077,7 @@ jobs:
 - [ ] Health check endpoints
 
 #### Database Security
+
 - [ ] Row-level security policies active
 - [ ] Field-level encryption for PII
 - [ ] Audit logging for all operations
@@ -1076,6 +1085,7 @@ jobs:
 - [ ] Backup and recovery procedures
 
 #### Testing Framework
+
 - [ ] Unit test structure established
 - [ ] Integration test framework
 - [ ] Test database setup
@@ -1083,6 +1093,7 @@ jobs:
 - [ ] Coverage reporting (80%+ requirement)
 
 #### Development Tools
+
 - [ ] ESLint configuration with strict rules
 - [ ] Prettier formatting setup
 - [ ] Husky pre-commit hooks
@@ -1090,8 +1101,9 @@ jobs:
 - [ ] Development Docker compose
 
 ### Success Criteria
+
 - [ ] All tests passing with 80%+ coverage
-- [ ] Security scan passes with no high vulnerabilities  
+- [ ] Security scan passes with no high vulnerabilities
 - [ ] API response times under 200ms (95th percentile)
 - [ ] Database queries optimized with proper indexing
 - [ ] Authentication flow complete and secure

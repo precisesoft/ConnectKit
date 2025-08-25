@@ -67,7 +67,8 @@ export class TestServer {
         }
 
         const address = this.server!.address();
-        const actualPort = typeof address === 'object' ? address?.port : this.port;
+        const actualPort =
+          typeof address === 'object' ? address?.port : this.port;
         this.port = actualPort || 0;
 
         logger.info(`Test server started on port ${this.port}`);
@@ -84,7 +85,7 @@ export class TestServer {
       return;
     }
 
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       this.server!.close(() => {
         this.server = null;
         logger.info('Test server stopped');
@@ -127,7 +128,7 @@ export class TestServer {
   async reset(): Promise<void> {
     try {
       await testDb.reset();
-      
+
       // Clear Redis cache
       const redis = redisConnection.getClient();
       await redis.flushdb();
@@ -356,9 +357,11 @@ export class TestSession {
 // Helper functions
 export const createTestServer = () => TestServer.getInstance();
 
-export const createTestRequest = (app: express.Application) => new TestRequest(app);
+export const createTestRequest = (app: express.Application) =>
+  new TestRequest(app);
 
-export const createTestSession = (testRequest: TestRequest) => new TestSession(testRequest);
+export const createTestSession = (testRequest: TestRequest) =>
+  new TestSession(testRequest);
 
 // Export singleton for easy access
 export const testServer = TestServer.getInstance();

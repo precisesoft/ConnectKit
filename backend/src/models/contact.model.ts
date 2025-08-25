@@ -122,7 +122,7 @@ export class Contact {
       }
       this.email = data.email?.toLowerCase();
     }
-    
+
     if (data.phone !== undefined) {
       if (data.phone) {
         this.validatePhone(data.phone);
@@ -225,7 +225,7 @@ export class Contact {
       this.notes,
       ...this.tags,
     ].filter(Boolean);
-    
+
     return parts.join(' ').toLowerCase();
   }
 

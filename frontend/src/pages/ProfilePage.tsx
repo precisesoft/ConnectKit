@@ -16,7 +16,6 @@ import {
   Phone,
   Business,
   LocationOn,
-  Schedule,
 } from '@mui/icons-material';
 
 import { useAuth } from '@hooks/useAuth';
@@ -26,29 +25,36 @@ const ProfilePage: React.FC = () => {
   const { user, getUserDisplayName } = useAuth();
 
   if (!user) {
-    return <LoadingSpinner message="Loading profile..." />;
+    return <LoadingSpinner message='Loading profile...' />;
   }
 
   const handleEditProfile = () => {
     // Navigate to profile edit page
-    console.log('Edit profile');
+    // TODO: Implement edit profile functionality
   };
 
   const handleSettings = () => {
     // Navigate to settings page
-    console.log('Open settings');
+    // TODO: Implement settings navigation
   };
 
   return (
     <Box>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 3,
+        }}
+      >
+        <Typography variant='h4' component='h1' sx={{ fontWeight: 600 }}>
           Profile
         </Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Button
-            variant="outlined"
+            variant='outlined'
             startIcon={<Settings />}
             onClick={handleSettings}
             sx={{ textTransform: 'none' }}
@@ -56,7 +62,7 @@ const ProfilePage: React.FC = () => {
             Settings
           </Button>
           <Button
-            variant="contained"
+            variant='contained'
             startIcon={<Edit />}
             onClick={handleEditProfile}
             sx={{ textTransform: 'none' }}
@@ -81,23 +87,26 @@ const ProfilePage: React.FC = () => {
                   mr: 3,
                 }}
               >
-                {user.firstName[0]}{user.lastName[0]}
+                {user.firstName[0]}
+                {user.lastName[0]}
               </Avatar>
               <Box sx={{ flexGrow: 1 }}>
-                <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
+                <Typography variant='h5' gutterBottom sx={{ fontWeight: 600 }}>
                   {getUserDisplayName()}
                 </Typography>
-                
+
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <Email sx={{ fontSize: 20, mr: 1, color: 'text.secondary' }} />
-                  <Typography variant="body1" color="text.secondary">
+                  <Email
+                    sx={{ fontSize: 20, mr: 1, color: 'text.secondary' }}
+                  />
+                  <Typography variant='body1' color='text.secondary'>
                     {user.email}
                   </Typography>
                   {user.emailVerified && (
                     <Chip
-                      label="Verified"
-                      color="success"
-                      size="small"
+                      label='Verified'
+                      color='success'
+                      size='small'
                       sx={{ ml: 1 }}
                     />
                   )}
@@ -105,8 +114,10 @@ const ProfilePage: React.FC = () => {
 
                 {user.phone && (
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <Phone sx={{ fontSize: 20, mr: 1, color: 'text.secondary' }} />
-                    <Typography variant="body1" color="text.secondary">
+                    <Phone
+                      sx={{ fontSize: 20, mr: 1, color: 'text.secondary' }}
+                    />
+                    <Typography variant='body1' color='text.secondary'>
                       {user.phone}
                     </Typography>
                   </Box>
@@ -114,8 +125,10 @@ const ProfilePage: React.FC = () => {
 
                 {user.company && (
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <Business sx={{ fontSize: 20, mr: 1, color: 'text.secondary' }} />
-                    <Typography variant="body1" color="text.secondary">
+                    <Business
+                      sx={{ fontSize: 20, mr: 1, color: 'text.secondary' }}
+                    />
+                    <Typography variant='body1' color='text.secondary'>
                       {user.company}
                       {user.jobTitle && ` • ${user.jobTitle}`}
                     </Typography>
@@ -124,8 +137,10 @@ const ProfilePage: React.FC = () => {
 
                 {user.location && (
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <LocationOn sx={{ fontSize: 20, mr: 1, color: 'text.secondary' }} />
-                    <Typography variant="body1" color="text.secondary">
+                    <LocationOn
+                      sx={{ fontSize: 20, mr: 1, color: 'text.secondary' }}
+                    />
+                    <Typography variant='body1' color='text.secondary'>
                       {user.location}
                     </Typography>
                   </Box>
@@ -137,10 +152,14 @@ const ProfilePage: React.FC = () => {
               <>
                 <Divider sx={{ mb: 3 }} />
                 <Box>
-                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+                  <Typography
+                    variant='h6'
+                    gutterBottom
+                    sx={{ fontWeight: 600 }}
+                  >
                     About
                   </Typography>
-                  <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+                  <Typography variant='body1' sx={{ whiteSpace: 'pre-wrap' }}>
                     {user.bio}
                   </Typography>
                 </Box>
@@ -150,51 +169,50 @@ const ProfilePage: React.FC = () => {
 
           {/* Account Information */}
           <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+            <Typography variant='h6' gutterBottom sx={{ fontWeight: 600 }}>
               Account Information
             </Typography>
-            
+
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
+                <Typography variant='body2' color='text.secondary' gutterBottom>
                   Member Since
                 </Typography>
-                <Typography variant="body1">
+                <Typography variant='body1'>
                   {new Date(user.createdAt).toLocaleDateString()}
                 </Typography>
               </Grid>
 
               <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
+                <Typography variant='body2' color='text.secondary' gutterBottom>
                   Last Login
                 </Typography>
-                <Typography variant="body1">
-                  {user.lastLogin 
+                <Typography variant='body1'>
+                  {user.lastLogin
                     ? new Date(user.lastLogin).toLocaleDateString()
-                    : 'Never'
-                  }
+                    : 'Never'}
                 </Typography>
               </Grid>
 
               <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
+                <Typography variant='body2' color='text.secondary' gutterBottom>
                   Account Type
                 </Typography>
                 <Chip
                   label={user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                   color={user.role === 'admin' ? 'error' : 'primary'}
-                  size="small"
+                  size='small'
                 />
               </Grid>
 
               <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
+                <Typography variant='body2' color='text.secondary' gutterBottom>
                   Two-Factor Authentication
                 </Typography>
                 <Chip
                   label={user.twoFactorEnabled ? 'Enabled' : 'Disabled'}
                   color={user.twoFactorEnabled ? 'success' : 'warning'}
-                  size="small"
+                  size='small'
                 />
               </Grid>
             </Grid>
@@ -205,43 +223,41 @@ const ProfilePage: React.FC = () => {
         <Grid item xs={12} md={4}>
           {/* Preferences */}
           <Paper sx={{ p: 3, mb: 3 }}>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+            <Typography variant='h6' gutterBottom sx={{ fontWeight: 600 }}>
               Preferences
             </Typography>
-            
+
             <Box sx={{ mb: 2 }}>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
+              <Typography variant='body2' color='text.secondary' gutterBottom>
                 Language
               </Typography>
-              <Typography variant="body1">
+              <Typography variant='body1'>
                 {user.language || 'English (US)'}
               </Typography>
             </Box>
 
             <Box sx={{ mb: 2 }}>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
+              <Typography variant='body2' color='text.secondary' gutterBottom>
                 Timezone
               </Typography>
-              <Typography variant="body1">
-                {user.timezone || 'UTC'}
-              </Typography>
+              <Typography variant='body1'>{user.timezone || 'UTC'}</Typography>
             </Box>
 
             <Box>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
+              <Typography variant='body2' color='text.secondary' gutterBottom>
                 Notifications
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <Chip
-                  label="Email Notifications"
+                  label='Email Notifications'
                   color={user.emailNotifications ? 'success' : 'default'}
-                  size="small"
+                  size='small'
                   variant={user.emailNotifications ? 'filled' : 'outlined'}
                 />
                 <Chip
-                  label="Marketing Emails"
+                  label='Marketing Emails'
                   color={user.marketingEmails ? 'success' : 'default'}
-                  size="small"
+                  size='small'
                   variant={user.marketingEmails ? 'filled' : 'outlined'}
                 />
               </Box>
@@ -250,44 +266,52 @@ const ProfilePage: React.FC = () => {
 
           {/* Security */}
           <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+            <Typography variant='h6' gutterBottom sx={{ fontWeight: 600 }}>
               Security
             </Typography>
-            
+
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Button
                 fullWidth
-                variant="outlined"
+                variant='outlined'
                 sx={{ textTransform: 'none', justifyContent: 'flex-start' }}
-                onClick={() => console.log('Change password')}
+                onClick={() => {
+                  /* TODO: Implement change password */
+                }}
               >
                 Change Password
               </Button>
-              
+
               <Button
                 fullWidth
-                variant="outlined"
+                variant='outlined'
                 sx={{ textTransform: 'none', justifyContent: 'flex-start' }}
-                onClick={() => console.log('Two-factor auth')}
+                onClick={() => {
+                  /* TODO: Implement 2FA management */
+                }}
               >
                 {user.twoFactorEnabled ? 'Manage' : 'Enable'} 2FA
               </Button>
-              
+
               <Button
                 fullWidth
-                variant="outlined"
+                variant='outlined'
                 sx={{ textTransform: 'none', justifyContent: 'flex-start' }}
-                onClick={() => console.log('Active sessions')}
+                onClick={() => {
+                  /* TODO: Implement active sessions management */
+                }}
               >
                 Active Sessions
               </Button>
-              
+
               <Button
                 fullWidth
-                variant="outlined"
-                color="error"
+                variant='outlined'
+                color='error'
                 sx={{ textTransform: 'none', justifyContent: 'flex-start' }}
-                onClick={() => console.log('Delete account')}
+                onClick={() => {
+                  /* TODO: Implement account deletion */
+                }}
               >
                 Delete Account
               </Button>

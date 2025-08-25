@@ -1,7 +1,11 @@
 import { StatusCodes } from 'http-status-codes';
 import { testServer, TestRequest, TestSession } from '../utils/testServer';
 import { testDb } from '../utils/testDb';
-import { createUser, createRegistrationData, createLoginCredentials } from '../utils/fixtures';
+import {
+  createUser,
+  createRegistrationData,
+  createLoginCredentials,
+} from '../utils/fixtures';
 import { UserRole } from '../../models/user.model';
 
 describe('Auth Integration Tests', () => {
@@ -47,7 +51,9 @@ describe('Auth Integration Tests', () => {
       expect(response.body.data.user.id).toBeDefined();
 
       // Verify user was created in database
-      const userExists = await testDb.exists('users', 'email = $1', [registrationData.email]);
+      const userExists = await testDb.exists('users', 'email = $1', [
+        registrationData.email,
+      ]);
       expect(userExists).toBe(true);
     });
 
@@ -144,9 +150,7 @@ describe('Auth Integration Tests', () => {
         email: 'login@example.com',
       });
 
-      await request
-        .post('/api/auth/register')
-        .send(registrationData);
+      await request.post('/api/auth/register').send(registrationData);
 
       const loginData = {
         email: registrationData.email,
@@ -189,9 +193,7 @@ describe('Auth Integration Tests', () => {
         email: 'test@example.com',
       });
 
-      await request
-        .post('/api/auth/register')
-        .send(registrationData);
+      await request.post('/api/auth/register').send(registrationData);
 
       const loginData = {
         email: registrationData.email,
@@ -211,9 +213,7 @@ describe('Auth Integration Tests', () => {
         email: 'failtest@example.com',
       });
 
-      await request
-        .post('/api/auth/register')
-        .send(registrationData);
+      await request.post('/api/auth/register').send(registrationData);
 
       const invalidLoginData = {
         email: registrationData.email,
@@ -227,7 +227,9 @@ describe('Auth Integration Tests', () => {
         .expect(StatusCodes.UNAUTHORIZED);
 
       // Assert
-      const user = await testDb.getRecord('users', 'email = $1', [registrationData.email]);
+      const user = await testDb.getRecord('users', 'email = $1', [
+        registrationData.email,
+      ]);
       expect(user?.failed_login_attempts).toBe(1);
     });
 
@@ -237,9 +239,7 @@ describe('Auth Integration Tests', () => {
         email: 'locktest@example.com',
       });
 
-      await request
-        .post('/api/auth/register')
-        .send(registrationData);
+      await request.post('/api/auth/register').send(registrationData);
 
       const invalidLoginData = {
         email: registrationData.email,
@@ -255,7 +255,9 @@ describe('Auth Integration Tests', () => {
       }
 
       // Assert account is locked
-      const user = await testDb.getRecord('users', 'email = $1', [registrationData.email]);
+      const user = await testDb.getRecord('users', 'email = $1', [
+        registrationData.email,
+      ]);
       expect(user?.failed_login_attempts).toBe(5);
       expect(user?.locked_until).not.toBeNull();
 
@@ -293,7 +295,8 @@ describe('Auth Integration Tests', () => {
       expect(session.isAuthenticated()).toBe(true);
 
       // 3. Access protected route
-      const profileResponse = await session.getRequest()
+      const profileResponse = await session
+        .getRequest()
         .get('/api/auth/profile')
         .expect(StatusCodes.OK);
 
@@ -312,9 +315,7 @@ describe('Auth Integration Tests', () => {
       expect(session.isAuthenticated()).toBe(false);
 
       // 6. Verify access is denied after logout
-      await request
-        .get('/api/auth/profile')
-        .expect(StatusCodes.UNAUTHORIZED);
+      await request.get('/api/auth/profile').expect(StatusCodes.UNAUTHORIZED);
     });
   });
 
@@ -328,9 +329,7 @@ describe('Auth Integration Tests', () => {
         email: 'protected@example.com',
       });
 
-      await request
-        .post('/api/auth/register')
-        .send(registrationData);
+      await request.post('/api/auth/register').send(registrationData);
 
       await session.login(registrationData.email, registrationData.password);
     });
@@ -343,16 +342,15 @@ describe('Auth Integration Tests', () => {
 
     it('should allow access to protected routes with valid token', async () => {
       // Act & Assert
-      await session.getRequest()
+      await session
+        .getRequest()
         .get('/api/auth/profile')
         .expect(StatusCodes.OK);
     });
 
     it('should deny access to protected routes without token', async () => {
       // Act & Assert
-      await request
-        .get('/api/auth/profile')
-        .expect(StatusCodes.UNAUTHORIZED);
+      await request.get('/api/auth/profile').expect(StatusCodes.UNAUTHORIZED);
     });
 
     it('should deny access to protected routes with invalid token', async () => {
@@ -380,9 +378,7 @@ describe('Auth Integration Tests', () => {
         email: 'reset@example.com',
       });
 
-      await request
-        .post('/api/auth/register')
-        .send(registrationData);
+      await request.post('/api/auth/register').send(registrationData);
 
       // Act
       const response = await request
@@ -425,14 +421,13 @@ describe('Auth Integration Tests', () => {
         email: 'regular@example.com',
       });
 
-      await request
-        .post('/api/auth/register')
-        .send(userData);
+      await request.post('/api/auth/register').send(userData);
 
       await regularSession.login(userData.email, userData.password);
 
       // Act & Assert - Try to access admin route
-      await regularSession.getRequest()
+      await regularSession
+        .getRequest()
         .get('/api/users') // Admin-only route
         .expect(StatusCodes.FORBIDDEN);
 
@@ -452,15 +447,11 @@ describe('Auth Integration Tests', () => {
       // Simulate multiple rapid requests
       const requests = [];
       for (let i = 0; i < 10; i++) {
-        requests.push(
-          request
-            .post('/api/auth/login')
-            .send(loginData)
-        );
+        requests.push(request.post('/api/auth/login').send(loginData));
       }
 
       const responses = await Promise.all(requests);
-      
+
       // At least one should be rate limited (depending on implementation)
       const rateLimitedResponses = responses.filter(
         res => res.status === StatusCodes.TOO_MANY_REQUESTS

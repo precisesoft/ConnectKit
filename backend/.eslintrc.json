@@ -12,14 +12,12 @@
     "coverage",
     "*.config.js",
     "*.config.ts",
-    "**/*.ts",
-    "**/*.tsx"
+    "**/*.ts"
   ],
   "parserOptions": {
     "ecmaVersion": 2022,
     "sourceType": "module"
   },
-  "plugins": [],
   "rules": {
     "prefer-const": "error",
     "no-var": "error",

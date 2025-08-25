@@ -9,7 +9,10 @@ import appConfig from './config/app.config';
 
 // Middleware
 import { getSecurityMiddleware } from './middleware/security.middleware';
-import { generalRateLimit, rateLimitInfo } from './middleware/rateLimiter.middleware';
+import {
+  generalRateLimit,
+  rateLimitInfo,
+} from './middleware/rateLimiter.middleware';
 import { requestId, requestLogger } from './middleware/logger.middleware';
 import { sanitize } from './middleware/validation.middleware';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware';
@@ -42,73 +45,84 @@ export function createApp(): express.Application {
   app.use(rateLimitInfo);
 
   // CORS configuration
-  app.use(cors({
-    origin: (origin, callback) => {
-      const allowedOrigins = appConfig.getCorsOrigins();
-      
-      // Allow requests with no origin (mobile apps, Postman, etc.)
-      if (!origin) return callback(null, true);
-      
-      // Allow all origins in development
-      if (appConfig.isDevelopment()) {
-        return callback(null, true);
-      }
-      
-      // Check if origin is allowed
-      if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      
-      // Reject origin
-      callback(new Error(`Origin ${origin} not allowed by CORS policy`));
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: [
-      'Origin',
-      'X-Requested-With',
-      'Content-Type',
-      'Accept',
-      'Authorization',
-      'X-Request-ID',
-      'X-Forwarded-For',
-      'User-Agent'
-    ],
-    exposedHeaders: [
-      'X-Request-ID',
-      'X-RateLimit-Limit',
-      'X-RateLimit-Remaining',
-      'X-RateLimit-Reset'
-    ],
-  }));
+  app.use(
+    cors({
+      origin: (origin, callback) => {
+        const allowedOrigins = appConfig.getCorsOrigins();
+
+        // Allow requests with no origin (mobile apps, Postman, etc.)
+        if (!origin) return callback(null, true);
+
+        // Allow all origins in development
+        if (appConfig.isDevelopment()) {
+          return callback(null, true);
+        }
+
+        // Check if origin is allowed
+        if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+          return callback(null, true);
+        }
+
+        // Reject origin
+        callback(new Error(`Origin ${origin} not allowed by CORS policy`));
+      },
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: [
+        'Origin',
+        'X-Requested-With',
+        'Content-Type',
+        'Accept',
+        'Authorization',
+        'X-Request-ID',
+        'X-Forwarded-For',
+        'User-Agent',
+      ],
+      exposedHeaders: [
+        'X-Request-ID',
+        'X-RateLimit-Limit',
+        'X-RateLimit-Remaining',
+        'X-RateLimit-Reset',
+      ],
+    })
+  );
 
   // Body parsing middleware
-  app.use(express.json({ 
-    limit: appConfig.get('bodyLimit'),
-    strict: false,
-  }));
-  
-  app.use(express.urlencoded({ 
-    extended: true, 
-    limit: appConfig.get('bodyLimit'),
-    parameterLimit: appConfig.get('parameterLimit'),
-  }));
+  app.use(
+    express.json({
+      limit: appConfig.get('bodyLimit'),
+      strict: false,
+    })
+  );
+
+  app.use(
+    express.urlencoded({
+      extended: true,
+      limit: appConfig.get('bodyLimit'),
+      parameterLimit: appConfig.get('parameterLimit'),
+    })
+  );
 
   // Cookie parser
   app.use(cookieParser());
 
   // Compression
-  app.use(compression({
-    filter: (req, res) => {
-      // Don't compress if the request includes a cache-control no-transform directive
-      if (req.headers['cache-control'] && req.headers['cache-control'].includes('no-transform')) {
-        return false;
-      }
-      // Use compression filter function
-      return compression.filter(req, res);
-    },
-    threshold: 1024, // Only compress responses over 1KB
-  }));
+  app.use(
+    compression({
+      filter: (req, res) => {
+        // Don't compress if the request includes a cache-control no-transform directive
+        if (
+          req.headers['cache-control'] &&
+          req.headers['cache-control'].includes('no-transform')
+        ) {
+          return false;
+        }
+        // Use compression filter function
+        return compression.filter(req, res);
+      },
+      threshold: 1024, // Only compress responses over 1KB
+    })
+  );
 
   // Request sanitization
   app.use(sanitize);
@@ -152,9 +166,8 @@ export async function initializeApp(): Promise<express.Application> {
     scheduleCleanupTasks();
 
     logger.info('ConnectKit API application initialized successfully');
-    
-    return app;
 
+    return app;
   } catch (error) {
     logger.error('Failed to initialize application:', error);
     throw error;
@@ -166,15 +179,18 @@ export async function initializeApp(): Promise<express.Application> {
  */
 function scheduleCleanupTasks(): void {
   // Clean up expired tokens and unlock accounts every 5 minutes
-  setInterval(async () => {
-    try {
-      const { AuthService } = await import('./services/auth.service');
-      const authService = new AuthService();
-      await authService.cleanup();
-    } catch (error) {
-      logger.error('Cleanup task failed:', error);
-    }
-  }, 5 * 60 * 1000);
+  setInterval(
+    async () => {
+      try {
+        const { AuthService } = await import('./services/auth.service');
+        const authService = new AuthService();
+        await authService.cleanup();
+      } catch (error) {
+        logger.error('Cleanup task failed:', error);
+      }
+    },
+    5 * 60 * 1000
+  );
 
   logger.info('Cleanup tasks scheduled');
 }
@@ -198,7 +214,6 @@ export async function gracefulShutdown(signal: string): Promise<void> {
 
     logger.info('Graceful shutdown completed');
     process.exit(0);
-
   } catch (error) {
     logger.error('Error during graceful shutdown:', error);
     process.exit(1);

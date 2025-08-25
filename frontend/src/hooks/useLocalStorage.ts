@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 /**
  * Custom hook for managing localStorage with React state synchronization
  * Provides type-safe localStorage operations with automatic serialization
- * 
+ *
  * @param key - The localStorage key
  * @param initialValue - Initial value if key doesn't exist
  * @returns [value, setValue, removeValue]
@@ -28,14 +28,15 @@ export function useLocalStorage<T>(
     (value: T | ((prevValue: T) => T)) => {
       try {
         // Allow value to be a function so we have the same API as useState
-        const valueToStore = value instanceof Function ? value(storedValue) : value;
-        
+        const valueToStore =
+          value instanceof Function ? value(storedValue) : value;
+
         // Save to localStorage
         window.localStorage.setItem(key, JSON.stringify(valueToStore));
-        
+
         // Update state
         setStoredValue(valueToStore);
-        
+
         // Dispatch custom event for cross-tab synchronization
         window.dispatchEvent(
           new CustomEvent('local-storage', {
@@ -57,7 +58,7 @@ export function useLocalStorage<T>(
     try {
       window.localStorage.removeItem(key);
       setStoredValue(initialValue);
-      
+
       // Dispatch custom event for cross-tab synchronization
       window.dispatchEvent(
         new CustomEvent('local-storage', {
@@ -80,7 +81,10 @@ export function useLocalStorage<T>(
           const newValue = JSON.parse(e.newValue);
           setStoredValue(newValue);
         } catch (error) {
-          console.error(`Error parsing localStorage value for key "${key}":`, error);
+          console.error(
+            `Error parsing localStorage value for key "${key}":`,
+            error
+          );
         }
       } else if (e.key === key && e.newValue === null) {
         setStoredValue(initialValue);
@@ -99,13 +103,19 @@ export function useLocalStorage<T>(
 
     // Listen for storage events (from other tabs)
     window.addEventListener('storage', handleStorageChange);
-    
+
     // Listen for custom events (from same tab)
-    window.addEventListener('local-storage', handleCustomStorageChange as EventListener);
+    window.addEventListener(
+      'local-storage',
+      handleCustomStorageChange as EventListener
+    );
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('local-storage', handleCustomStorageChange as EventListener);
+      window.removeEventListener(
+        'local-storage',
+        handleCustomStorageChange as EventListener
+      );
     };
   }, [key, initialValue]);
 
@@ -121,14 +131,17 @@ export function useLocalStorageBoolean(
   initialValue = false
 ): [boolean, () => void, (value: boolean) => void] {
   const [value, setValue] = useLocalStorage(key, initialValue);
-  
+
   const toggle = useCallback(() => {
     setValue((prev: boolean) => !prev);
   }, [setValue]);
-  
-  const setBoolean = useCallback((newValue: boolean) => {
-    setValue(newValue);
-  }, [setValue]);
+
+  const setBoolean = useCallback(
+    (newValue: boolean) => {
+      setValue(newValue);
+    },
+    [setValue]
+  );
 
   return [value, toggle, setBoolean];
 }
@@ -151,21 +164,21 @@ export function useLocalStorageArray<T>(
 
   const addItem = useCallback(
     (item: T) => {
-      setItems((prev) => [...prev, item]);
+      setItems(prev => [...prev, item]);
     },
     [setItems]
   );
 
   const removeItem = useCallback(
     (item: T) => {
-      setItems((prev) => prev.filter((i) => i !== item));
+      setItems(prev => prev.filter(i => i !== item));
     },
     [setItems]
   );
 
   const updateItem = useCallback(
     (index: number, item: T) => {
-      setItems((prev) => {
+      setItems(prev => {
         const newItems = [...prev];
         newItems[index] = item;
         return newItems;
@@ -204,7 +217,7 @@ export function useLocalStorageObject<T extends Record<string, any>>(
 
   const updateData = useCallback(
     (updates: Partial<T>) => {
-      setData((prev) => ({ ...prev, ...updates }));
+      setData(prev => ({ ...prev, ...updates }));
     },
     [setData]
   );
@@ -238,12 +251,12 @@ export function useRecentItems<T>(
 
   const addRecentItem = useCallback(
     (item: T) => {
-      setRecentItems((prev) => {
+      setRecentItems(prev => {
         const itemId = getId(item);
-        
+
         // Remove existing item if present
-        const filteredItems = prev.filter((i) => getId(i) !== itemId);
-        
+        const filteredItems = prev.filter(i => getId(i) !== itemId);
+
         // Add to beginning and limit size
         return [item, ...filteredItems].slice(0, maxItems);
       });

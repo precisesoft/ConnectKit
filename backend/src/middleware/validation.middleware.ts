@@ -1,14 +1,17 @@
 import { Request, Response, NextFunction } from 'express';
-import { body, param, query, ValidationChain, validationResult } from 'express-validator';
-import { 
-  ValidationError, 
-  BadRequestError 
-} from '../utils/errors';
-import { 
+import {
+  body,
+  param,
+  query,
+  ValidationChain,
+  validationResult,
+} from 'express-validator';
+import { ValidationError, BadRequestError } from '../utils/errors';
+import {
   VALIDATION_PATTERNS,
   USER_CONSTANTS,
   CONTACT_CONSTANTS,
-  API_CONSTANTS 
+  API_CONSTANTS,
 } from '../utils/constants';
 import { logger } from '../utils/logger';
 
@@ -21,7 +24,7 @@ export const handleValidationErrors = (
   next: NextFunction
 ): void => {
   const errors = validationResult(req);
-  
+
   if (!errors.isEmpty()) {
     const formattedErrors = errors.array().map(error => ({
       field: error.param,
@@ -29,17 +32,17 @@ export const handleValidationErrors = (
       value: error.value,
       location: error.location,
     }));
-    
+
     logger.warn('Validation failed', {
       url: req.originalUrl,
       method: req.method,
       errors: formattedErrors,
       userId: (req as any).user?.id,
     });
-    
+
     throw new ValidationError('Request validation failed', formattedErrors);
   }
-  
+
   next();
 };
 
@@ -61,27 +64,41 @@ export const commonValidations = {
       .normalizeEmail()
       .isLength({ max: 255 })
       .withMessage('Email must not exceed 255 characters');
-    
+
     return optional ? validator.optional() : validator;
   },
 
   // Password validation
   password: (field: string = 'password') => {
     return body(field)
-      .isLength({ min: USER_CONSTANTS.MIN_PASSWORD_LENGTH, max: USER_CONSTANTS.MAX_PASSWORD_LENGTH })
-      .withMessage(`Password must be between ${USER_CONSTANTS.MIN_PASSWORD_LENGTH} and ${USER_CONSTANTS.MAX_PASSWORD_LENGTH} characters`)
+      .isLength({
+        min: USER_CONSTANTS.MIN_PASSWORD_LENGTH,
+        max: USER_CONSTANTS.MAX_PASSWORD_LENGTH,
+      })
+      .withMessage(
+        `Password must be between ${USER_CONSTANTS.MIN_PASSWORD_LENGTH} and ${USER_CONSTANTS.MAX_PASSWORD_LENGTH} characters`
+      )
       .matches(VALIDATION_PATTERNS.PASSWORD)
-      .withMessage('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character');
+      .withMessage(
+        'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
+      );
   },
 
   // Username validation
   username: (field: string = 'username', optional = false) => {
     let validator = body(field)
-      .isLength({ min: USER_CONSTANTS.MIN_USERNAME_LENGTH, max: USER_CONSTANTS.MAX_USERNAME_LENGTH })
-      .withMessage(`Username must be between ${USER_CONSTANTS.MIN_USERNAME_LENGTH} and ${USER_CONSTANTS.MAX_USERNAME_LENGTH} characters`)
+      .isLength({
+        min: USER_CONSTANTS.MIN_USERNAME_LENGTH,
+        max: USER_CONSTANTS.MAX_USERNAME_LENGTH,
+      })
+      .withMessage(
+        `Username must be between ${USER_CONSTANTS.MIN_USERNAME_LENGTH} and ${USER_CONSTANTS.MAX_USERNAME_LENGTH} characters`
+      )
       .matches(VALIDATION_PATTERNS.USERNAME)
-      .withMessage('Username can only contain letters, numbers, underscores, and hyphens');
-    
+      .withMessage(
+        'Username can only contain letters, numbers, underscores, and hyphens'
+      );
+
     return optional ? validator.optional() : validator;
   },
 
@@ -90,10 +107,14 @@ export const commonValidations = {
     let validator = body(field)
       .trim()
       .isLength({ min: 1, max: USER_CONSTANTS.MAX_NAME_LENGTH })
-      .withMessage(`${field} must be between 1 and ${USER_CONSTANTS.MAX_NAME_LENGTH} characters`)
+      .withMessage(
+        `${field} must be between 1 and ${USER_CONSTANTS.MAX_NAME_LENGTH} characters`
+      )
       .matches(/^[a-zA-Z\s'-]+$/)
-      .withMessage(`${field} can only contain letters, spaces, hyphens, and apostrophes`);
-    
+      .withMessage(
+        `${field} can only contain letters, spaces, hyphens, and apostrophes`
+      );
+
     return optional ? validator.optional() : validator;
   },
 
@@ -103,8 +124,10 @@ export const commonValidations = {
       .matches(VALIDATION_PATTERNS.PHONE)
       .withMessage('Phone number must be in international format')
       .isLength({ max: CONTACT_CONSTANTS.MAX_PHONE_LENGTH })
-      .withMessage(`Phone number must not exceed ${CONTACT_CONSTANTS.MAX_PHONE_LENGTH} characters`);
-    
+      .withMessage(
+        `Phone number must not exceed ${CONTACT_CONSTANTS.MAX_PHONE_LENGTH} characters`
+      );
+
     return optional ? validator.optional() : validator;
   },
 
@@ -114,7 +137,7 @@ export const commonValidations = {
       .trim()
       .isLength({ max: maxLength })
       .withMessage(`${field} must not exceed ${maxLength} characters`);
-    
+
     return optional ? validator.optional() : validator;
   },
 
@@ -123,7 +146,7 @@ export const commonValidations = {
     let validator = body(field)
       .isBoolean()
       .withMessage(`${field} must be a boolean value`);
-    
+
     return optional ? validator.optional() : validator;
   },
 
@@ -132,7 +155,7 @@ export const commonValidations = {
     let validator = body(field)
       .isArray({ max: maxItems })
       .withMessage(`${field} must be an array with at most ${maxItems} items`);
-    
+
     return optional ? validator.optional() : validator;
   },
 
@@ -148,8 +171,13 @@ export const commonValidations = {
   limit: (field: string = 'limit') => {
     return query(field)
       .optional()
-      .isInt({ min: API_CONSTANTS.MIN_PAGE_SIZE, max: API_CONSTANTS.MAX_PAGE_SIZE })
-      .withMessage(`Limit must be between ${API_CONSTANTS.MIN_PAGE_SIZE} and ${API_CONSTANTS.MAX_PAGE_SIZE}`)
+      .isInt({
+        min: API_CONSTANTS.MIN_PAGE_SIZE,
+        max: API_CONSTANTS.MAX_PAGE_SIZE,
+      })
+      .withMessage(
+        `Limit must be between ${API_CONSTANTS.MIN_PAGE_SIZE} and ${API_CONSTANTS.MAX_PAGE_SIZE}`
+      )
       .toInt();
   },
 
@@ -174,7 +202,9 @@ export const commonValidations = {
       .optional()
       .trim()
       .isLength({ max: API_CONSTANTS.MAX_SEARCH_LENGTH })
-      .withMessage(`Search query must not exceed ${API_CONSTANTS.MAX_SEARCH_LENGTH} characters`);
+      .withMessage(
+        `Search query must not exceed ${API_CONSTANTS.MAX_SEARCH_LENGTH} characters`
+      );
   },
 };
 
@@ -207,13 +237,12 @@ export const userValidations = {
       .notEmpty()
       .withMessage('Current password is required'),
     commonValidations.password('newPassword'),
-    body('confirmPassword')
-      .custom((value, { req }) => {
-        if (value !== req.body.newPassword) {
-          throw new Error('Passwords do not match');
-        }
-        return true;
-      }),
+    body('confirmPassword').custom((value, { req }) => {
+      if (value !== req.body.newPassword) {
+        throw new Error('Passwords do not match');
+      }
+      return true;
+    }),
   ],
 
   login: [
@@ -223,39 +252,36 @@ export const userValidations = {
       .isEmail()
       .withMessage('Must be a valid email address')
       .normalizeEmail(),
-    body('password')
-      .notEmpty()
-      .withMessage('Password is required'),
+    body('password').notEmpty().withMessage('Password is required'),
   ],
 
-  forgotPassword: [
-    commonValidations.email(),
-  ],
+  forgotPassword: [commonValidations.email()],
 
   resetPassword: [
-    body('token')
-      .notEmpty()
-      .withMessage('Reset token is required'),
+    body('token').notEmpty().withMessage('Reset token is required'),
     commonValidations.password('newPassword'),
-    body('confirmPassword')
-      .custom((value, { req }) => {
-        if (value !== req.body.newPassword) {
-          throw new Error('Passwords do not match');
-        }
-        return true;
-      }),
+    body('confirmPassword').custom((value, { req }) => {
+      if (value !== req.body.newPassword) {
+        throw new Error('Passwords do not match');
+      }
+      return true;
+    }),
   ],
 
   verifyEmail: [
-    body('token')
-      .notEmpty()
-      .withMessage('Verification token is required'),
+    body('token').notEmpty().withMessage('Verification token is required'),
   ],
 
   list: [
     commonValidations.page(),
     commonValidations.limit(),
-    commonValidations.sort('sort', ['firstName', 'lastName', 'email', 'createdAt', 'updatedAt']),
+    commonValidations.sort('sort', [
+      'firstName',
+      'lastName',
+      'email',
+      'createdAt',
+      'updatedAt',
+    ]),
     commonValidations.order(),
     commonValidations.search(),
     query('role')
@@ -278,19 +304,51 @@ export const contactValidations = {
     commonValidations.name('lastName'),
     commonValidations.email('email', true),
     commonValidations.phone('phone', true),
-    commonValidations.text('company', CONTACT_CONSTANTS.MAX_COMPANY_LENGTH, true),
-    commonValidations.text('jobTitle', CONTACT_CONSTANTS.MAX_JOB_TITLE_LENGTH, true),
-    commonValidations.text('addressLine1', CONTACT_CONSTANTS.MAX_ADDRESS_LENGTH, true),
-    commonValidations.text('addressLine2', CONTACT_CONSTANTS.MAX_ADDRESS_LENGTH, true),
+    commonValidations.text(
+      'company',
+      CONTACT_CONSTANTS.MAX_COMPANY_LENGTH,
+      true
+    ),
+    commonValidations.text(
+      'jobTitle',
+      CONTACT_CONSTANTS.MAX_JOB_TITLE_LENGTH,
+      true
+    ),
+    commonValidations.text(
+      'addressLine1',
+      CONTACT_CONSTANTS.MAX_ADDRESS_LENGTH,
+      true
+    ),
+    commonValidations.text(
+      'addressLine2',
+      CONTACT_CONSTANTS.MAX_ADDRESS_LENGTH,
+      true
+    ),
     commonValidations.text('city', CONTACT_CONSTANTS.MAX_CITY_LENGTH, true),
     commonValidations.text('state', CONTACT_CONSTANTS.MAX_STATE_LENGTH, true),
-    commonValidations.text('postalCode', CONTACT_CONSTANTS.MAX_POSTAL_CODE_LENGTH, true),
-    commonValidations.text('country', CONTACT_CONSTANTS.MAX_COUNTRY_LENGTH, true),
+    commonValidations.text(
+      'postalCode',
+      CONTACT_CONSTANTS.MAX_POSTAL_CODE_LENGTH,
+      true
+    ),
+    commonValidations.text(
+      'country',
+      CONTACT_CONSTANTS.MAX_COUNTRY_LENGTH,
+      true
+    ),
     commonValidations.text('notes', CONTACT_CONSTANTS.MAX_NOTES_LENGTH, true),
-    commonValidations.array('tags', CONTACT_CONSTANTS.MAX_TAGS_COUNT, true)
-      .custom((tags) => {
-        if (tags && tags.some((tag: string) => tag.length > CONTACT_CONSTANTS.MAX_TAG_LENGTH)) {
-          throw new Error(`Each tag must not exceed ${CONTACT_CONSTANTS.MAX_TAG_LENGTH} characters`);
+    commonValidations
+      .array('tags', CONTACT_CONSTANTS.MAX_TAGS_COUNT, true)
+      .custom(tags => {
+        if (
+          tags &&
+          tags.some(
+            (tag: string) => tag.length > CONTACT_CONSTANTS.MAX_TAG_LENGTH
+          )
+        ) {
+          throw new Error(
+            `Each tag must not exceed ${CONTACT_CONSTANTS.MAX_TAG_LENGTH} characters`
+          );
         }
         return true;
       }),
@@ -306,19 +364,51 @@ export const contactValidations = {
     commonValidations.name('lastName', true),
     commonValidations.email('email', true),
     commonValidations.phone('phone', true),
-    commonValidations.text('company', CONTACT_CONSTANTS.MAX_COMPANY_LENGTH, true),
-    commonValidations.text('jobTitle', CONTACT_CONSTANTS.MAX_JOB_TITLE_LENGTH, true),
-    commonValidations.text('addressLine1', CONTACT_CONSTANTS.MAX_ADDRESS_LENGTH, true),
-    commonValidations.text('addressLine2', CONTACT_CONSTANTS.MAX_ADDRESS_LENGTH, true),
+    commonValidations.text(
+      'company',
+      CONTACT_CONSTANTS.MAX_COMPANY_LENGTH,
+      true
+    ),
+    commonValidations.text(
+      'jobTitle',
+      CONTACT_CONSTANTS.MAX_JOB_TITLE_LENGTH,
+      true
+    ),
+    commonValidations.text(
+      'addressLine1',
+      CONTACT_CONSTANTS.MAX_ADDRESS_LENGTH,
+      true
+    ),
+    commonValidations.text(
+      'addressLine2',
+      CONTACT_CONSTANTS.MAX_ADDRESS_LENGTH,
+      true
+    ),
     commonValidations.text('city', CONTACT_CONSTANTS.MAX_CITY_LENGTH, true),
     commonValidations.text('state', CONTACT_CONSTANTS.MAX_STATE_LENGTH, true),
-    commonValidations.text('postalCode', CONTACT_CONSTANTS.MAX_POSTAL_CODE_LENGTH, true),
-    commonValidations.text('country', CONTACT_CONSTANTS.MAX_COUNTRY_LENGTH, true),
+    commonValidations.text(
+      'postalCode',
+      CONTACT_CONSTANTS.MAX_POSTAL_CODE_LENGTH,
+      true
+    ),
+    commonValidations.text(
+      'country',
+      CONTACT_CONSTANTS.MAX_COUNTRY_LENGTH,
+      true
+    ),
     commonValidations.text('notes', CONTACT_CONSTANTS.MAX_NOTES_LENGTH, true),
-    commonValidations.array('tags', CONTACT_CONSTANTS.MAX_TAGS_COUNT, true)
-      .custom((tags) => {
-        if (tags && tags.some((tag: string) => tag.length > CONTACT_CONSTANTS.MAX_TAG_LENGTH)) {
-          throw new Error(`Each tag must not exceed ${CONTACT_CONSTANTS.MAX_TAG_LENGTH} characters`);
+    commonValidations
+      .array('tags', CONTACT_CONSTANTS.MAX_TAGS_COUNT, true)
+      .custom(tags => {
+        if (
+          tags &&
+          tags.some(
+            (tag: string) => tag.length > CONTACT_CONSTANTS.MAX_TAG_LENGTH
+          )
+        ) {
+          throw new Error(
+            `Each tag must not exceed ${CONTACT_CONSTANTS.MAX_TAG_LENGTH} characters`
+          );
         }
         return true;
       }),
@@ -332,7 +422,14 @@ export const contactValidations = {
   list: [
     commonValidations.page(),
     commonValidations.limit(),
-    commonValidations.sort('sort', ['firstName', 'lastName', 'email', 'company', 'createdAt', 'updatedAt']),
+    commonValidations.sort('sort', [
+      'firstName',
+      'lastName',
+      'email',
+      'company',
+      'createdAt',
+      'updatedAt',
+    ]),
     commonValidations.order(),
     commonValidations.search(),
     query('status')
@@ -353,15 +450,13 @@ export const contactValidations = {
     body('contactIds')
       .isArray({ min: 1 })
       .withMessage('At least one contact ID is required')
-      .custom((ids) => {
+      .custom(ids => {
         if (ids.some((id: string) => !VALIDATION_PATTERNS.UUID.test(id))) {
           throw new Error('All contact IDs must be valid UUIDs');
         }
         return true;
       }),
-    body('updates')
-      .isObject()
-      .withMessage('Updates must be an object'),
+    body('updates').isObject().withMessage('Updates must be an object'),
   ],
 
   export: [
@@ -379,28 +474,25 @@ export const contactValidations = {
 /**
  * ID parameter validation
  */
-export const validateId = [
-  commonValidations.uuid('id'),
-];
+export const validateId = [commonValidations.uuid('id')];
 
-export const validateUserId = [
-  commonValidations.uuid('userId'),
-];
+export const validateUserId = [commonValidations.uuid('userId')];
 
 /**
  * Custom validation middleware factory
  */
 export const validate = (validations: ValidationChain[]) => {
-  return [
-    ...validations,
-    handleValidationErrors,
-  ];
+  return [...validations, handleValidationErrors];
 };
 
 /**
  * Sanitization middleware
  */
-export const sanitize = (req: Request, res: Response, next: NextFunction): void => {
+export const sanitize = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
   // Remove null prototype objects and functions
   const sanitizeObject = (obj: any): any => {
     if (obj === null || typeof obj !== 'object') {
@@ -429,11 +521,11 @@ export const sanitize = (req: Request, res: Response, next: NextFunction): void 
   if (req.body) {
     req.body = sanitizeObject(req.body);
   }
-  
+
   if (req.query) {
     req.query = sanitizeObject(req.query);
   }
-  
+
   if (req.params) {
     req.params = sanitizeObject(req.params);
   }

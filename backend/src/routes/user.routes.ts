@@ -11,11 +11,11 @@ const getUserController = () => {
 };
 import { userValidators } from '../validators/user.validator';
 import { validate } from '../middleware/validation.middleware';
-import { 
-  authenticate, 
-  authorize, 
-  adminOnly, 
-  managerOrAdmin 
+import {
+  authenticate,
+  authorize,
+  adminOnly,
+  managerOrAdmin,
 } from '../middleware/auth.middleware';
 import { auditLogger } from '../middleware/logger.middleware';
 import { UserRole } from '../models/user.model';
@@ -30,9 +30,8 @@ router.use(authenticate);
  * @desc    Get current user's profile
  * @access  Private
  */
-router.get(
-  '/me',
-  (req, res, next) => getUserController().getMyProfile(req, res, next)
+router.get('/me', (req, res, next) =>
+  getUserController().getMyProfile(req, res, next)
 );
 
 /**
@@ -76,10 +75,8 @@ router.get(
  * @desc    Get user statistics
  * @access  Private (Manager/Admin only)
  */
-router.get(
-  '/stats',
-  managerOrAdmin,
-  (req, res, next) => getUserController().getUserStats(req, res, next)
+router.get('/stats', managerOrAdmin, (req, res, next) =>
+  getUserController().getUserStats(req, res, next)
 );
 
 /**

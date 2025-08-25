@@ -36,13 +36,16 @@ describe('AuthService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Create mock instances
-    mockUserRepository = createMockUserRepository() as jest.Mocked<UserRepository>;
+    mockUserRepository =
+      createMockUserRepository() as jest.Mocked<UserRepository>;
     mockRedis = createMockRedis();
 
     // Mock the constructor dependencies
-    (UserRepository as jest.MockedClass<typeof UserRepository>).mockImplementation(() => mockUserRepository);
+    (
+      UserRepository as jest.MockedClass<typeof UserRepository>
+    ).mockImplementation(() => mockUserRepository);
 
     // Mock Redis connection
     jest.mock('../../config/redis.config', () => ({
@@ -72,14 +75,18 @@ describe('AuthService', () => {
       mockRedis.setex.mockResolvedValue('OK');
 
       // Mock user methods
-      const mockGenerateVerificationToken = jest.fn().mockReturnValue('verification-token');
+      const mockGenerateVerificationToken = jest
+        .fn()
+        .mockReturnValue('verification-token');
       newUser.generateVerificationToken = mockGenerateVerificationToken;
 
       // Act
       const result = await authService.register(registrationData);
 
       // Assert
-      expect(mockUserRepository.createUser).toHaveBeenCalledWith(registrationData);
+      expect(mockUserRepository.createUser).toHaveBeenCalledWith(
+        registrationData
+      );
       expect(mockGenerateVerificationToken).toHaveBeenCalled();
       expect(mockUserRepository.setVerificationToken).toHaveBeenCalledWith(
         newUser.id,
@@ -99,7 +106,8 @@ describe('AuthService', () => {
           lastName: newUser.lastName,
           role: newUser.role,
         },
-        message: 'Registration successful. Please check your email to verify your account.',
+        message:
+          'Registration successful. Please check your email to verify your account.',
       });
     });
 
@@ -107,12 +115,16 @@ describe('AuthService', () => {
       // Arrange
       const registrationData = createRegistrationData();
       const dbError = new Error('Database connection failed');
-      
+
       mockUserRepository.createUser.mockRejectedValue(dbError);
 
       // Act & Assert
-      await expect(authService.register(registrationData)).rejects.toThrow(dbError);
-      expect(mockUserRepository.createUser).toHaveBeenCalledWith(registrationData);
+      await expect(authService.register(registrationData)).rejects.toThrow(
+        dbError
+      );
+      expect(mockUserRepository.createUser).toHaveBeenCalledWith(
+        registrationData
+      );
     });
   });
 
@@ -121,7 +133,7 @@ describe('AuthService', () => {
       // Arrange
       const { testUser } = setupSuccessfulAuth();
       const loginCredentials = createLoginCredentials(testUser);
-      
+
       const mockUser = createUser(testUser);
       mockUser.verifyPassword = jest.fn().mockResolvedValue(true);
       mockUser.isLocked = jest.fn().mockReturnValue(false);
@@ -132,8 +144,10 @@ describe('AuthService', () => {
 
       // Mock token generation functions
       const mockGenerateAccessToken = jest.fn().mockReturnValue('access-token');
-      const mockGenerateRefreshToken = jest.fn().mockReturnValue('refresh-token');
-      
+      const mockGenerateRefreshToken = jest
+        .fn()
+        .mockReturnValue('refresh-token');
+
       jest.mock('../../middleware/auth.middleware', () => ({
         generateAccessToken: mockGenerateAccessToken,
         generateRefreshToken: mockGenerateRefreshToken,
@@ -143,9 +157,16 @@ describe('AuthService', () => {
       const result = await authService.login(loginCredentials);
 
       // Assert
-      expect(mockUserRepository.findByEmail).toHaveBeenCalledWith(loginCredentials.email);
-      expect(mockUser.verifyPassword).toHaveBeenCalledWith(loginCredentials.password);
-      expect(mockUserRepository.updateLoginInfo).toHaveBeenCalledWith(mockUser.id, true);
+      expect(mockUserRepository.findByEmail).toHaveBeenCalledWith(
+        loginCredentials.email
+      );
+      expect(mockUser.verifyPassword).toHaveBeenCalledWith(
+        loginCredentials.password
+      );
+      expect(mockUserRepository.updateLoginInfo).toHaveBeenCalledWith(
+        mockUser.id,
+        true
+      );
       expect(mockRedis.setex).toHaveBeenCalledWith(
         `refresh_token:${mockUser.id}`,
         7 * 24 * 60 * 60,
@@ -163,8 +184,12 @@ describe('AuthService', () => {
       mockUserRepository.findByEmail.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(authService.login(loginCredentials)).rejects.toThrow(InvalidCredentialsError);
-      expect(mockUserRepository.findByEmail).toHaveBeenCalledWith(loginCredentials.email);
+      await expect(authService.login(loginCredentials)).rejects.toThrow(
+        InvalidCredentialsError
+      );
+      expect(mockUserRepository.findByEmail).toHaveBeenCalledWith(
+        loginCredentials.email
+      );
     });
 
     it('should throw AccountLockedError for locked account', async () => {
@@ -174,12 +199,14 @@ describe('AuthService', () => {
         failedLoginAttempts: 5,
         lockedUntil: new Date(Date.now() + 30 * 60 * 1000),
       });
-      
+
       lockedUser.isLocked = jest.fn().mockReturnValue(true);
       mockUserRepository.findByEmail.mockResolvedValue(lockedUser);
 
       // Act & Assert
-      await expect(authService.login(loginCredentials)).rejects.toThrow(AccountLockedError);
+      await expect(authService.login(loginCredentials)).rejects.toThrow(
+        AccountLockedError
+      );
       expect(lockedUser.isLocked).toHaveBeenCalled();
     });
 
@@ -187,34 +214,43 @@ describe('AuthService', () => {
       // Arrange
       const loginCredentials = createLoginCredentials();
       const mockUser = createUser();
-      
+
       mockUser.isLocked = jest.fn().mockReturnValue(false);
       mockUser.verifyPassword = jest.fn().mockResolvedValue(false);
-      
+
       mockUserRepository.findByEmail.mockResolvedValue(mockUser);
       mockUserRepository.updateLoginInfo.mockResolvedValue(undefined);
 
       // Act & Assert
-      await expect(authService.login(loginCredentials)).rejects.toThrow(InvalidCredentialsError);
-      expect(mockUser.verifyPassword).toHaveBeenCalledWith(loginCredentials.password);
-      expect(mockUserRepository.updateLoginInfo).toHaveBeenCalledWith(mockUser.id, false);
+      await expect(authService.login(loginCredentials)).rejects.toThrow(
+        InvalidCredentialsError
+      );
+      expect(mockUser.verifyPassword).toHaveBeenCalledWith(
+        loginCredentials.password
+      );
+      expect(mockUserRepository.updateLoginInfo).toHaveBeenCalledWith(
+        mockUser.id,
+        false
+      );
     });
 
     it('should throw EmailNotVerifiedError for unverified email when required', async () => {
       // Arrange
       process.env.REQUIRE_EMAIL_VERIFICATION = 'true';
-      
+
       const loginCredentials = createLoginCredentials();
       const unverifiedUser = createUser({ isVerified: false });
-      
+
       unverifiedUser.isLocked = jest.fn().mockReturnValue(false);
       unverifiedUser.verifyPassword = jest.fn().mockResolvedValue(true);
-      
+
       mockUserRepository.findByEmail.mockResolvedValue(unverifiedUser);
 
       // Act & Assert
-      await expect(authService.login(loginCredentials)).rejects.toThrow(EmailNotVerifiedError);
-      
+      await expect(authService.login(loginCredentials)).rejects.toThrow(
+        EmailNotVerifiedError
+      );
+
       // Cleanup
       delete process.env.REQUIRE_EMAIL_VERIFICATION;
     });
@@ -226,12 +262,12 @@ describe('AuthService', () => {
       const refreshToken = 'valid-refresh-token';
       const userId = 'user-123';
       const mockUser = createUser({ id: userId });
-      
+
       const mockVerifyRefreshToken = jest.fn().mockResolvedValue({
         userId,
         jti: 'token-jti',
       });
-      
+
       jest.mock('../../middleware/auth.middleware', () => ({
         verifyRefreshToken: mockVerifyRefreshToken,
         blacklistToken: jest.fn().mockResolvedValue(undefined),
@@ -261,7 +297,7 @@ describe('AuthService', () => {
         userId: 'user-123',
         jti: 'token-jti',
       });
-      
+
       jest.mock('../../middleware/auth.middleware', () => ({
         verifyRefreshToken: mockVerifyRefreshToken,
       }));
@@ -269,7 +305,9 @@ describe('AuthService', () => {
       mockRedis.get.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(authService.refreshToken({ refreshToken })).rejects.toThrow(InvalidTokenError);
+      await expect(authService.refreshToken({ refreshToken })).rejects.toThrow(
+        InvalidTokenError
+      );
     });
 
     it('should throw InvalidTokenError for inactive user', async () => {
@@ -277,12 +315,12 @@ describe('AuthService', () => {
       const refreshToken = 'valid-refresh-token';
       const userId = 'user-123';
       const inactiveUser = createUser({ id: userId, isActive: false });
-      
+
       const mockVerifyRefreshToken = jest.fn().mockResolvedValue({
         userId,
         jti: 'token-jti',
       });
-      
+
       jest.mock('../../middleware/auth.middleware', () => ({
         verifyRefreshToken: mockVerifyRefreshToken,
       }));
@@ -291,7 +329,9 @@ describe('AuthService', () => {
       mockUserRepository.findByIdOrFail.mockResolvedValue(inactiveUser);
 
       // Act & Assert
-      await expect(authService.refreshToken({ refreshToken })).rejects.toThrow(InvalidTokenError);
+      await expect(authService.refreshToken({ refreshToken })).rejects.toThrow(
+        InvalidTokenError
+      );
     });
   });
 
@@ -301,16 +341,16 @@ describe('AuthService', () => {
       const userId = 'user-123';
       const accessToken = 'access-token';
       const refreshToken = 'refresh-token';
-      
+
       const mockBlacklistToken = jest.fn().mockResolvedValue(undefined);
       const mockJwtDecode = jest.fn().mockReturnValue({
         jti: 'access-jti',
       });
-      
+
       jest.mock('../../middleware/auth.middleware', () => ({
         blacklistToken: mockBlacklistToken,
       }));
-      
+
       jest.mock('jsonwebtoken', () => ({
         decode: mockJwtDecode,
       }));
@@ -329,7 +369,7 @@ describe('AuthService', () => {
       // Arrange
       const userId = 'user-123';
       const accessToken = 'access-token';
-      
+
       const mockJwtDecode = jest.fn().mockReturnValue(null);
       jest.mock('jsonwebtoken', () => ({
         decode: mockJwtDecode,
@@ -347,7 +387,7 @@ describe('AuthService', () => {
       // Arrange
       const email = 'test@example.com';
       const mockUser = createUser({ email });
-      
+
       mockUserRepository.findByEmail.mockResolvedValue(mockUser);
       mockUserRepository.setPasswordResetToken.mockResolvedValue(undefined);
       mockRedis.setex.mockResolvedValue('OK');
@@ -375,7 +415,9 @@ describe('AuthService', () => {
         60 * 60,
         expect.stringContaining(mockUser.id)
       );
-      expect(result.message).toBe('If an account with that email exists, a password reset link has been sent.');
+      expect(result.message).toBe(
+        'If an account with that email exists, a password reset link has been sent.'
+      );
     });
 
     it('should return generic message for non-existent user', async () => {
@@ -387,7 +429,9 @@ describe('AuthService', () => {
       const result = await authService.forgotPassword({ email });
 
       // Assert
-      expect(result.message).toBe('If an account with that email exists, a password reset link has been sent.');
+      expect(result.message).toBe(
+        'If an account with that email exists, a password reset link has been sent.'
+      );
     });
   });
 
@@ -396,13 +440,15 @@ describe('AuthService', () => {
       // Arrange
       const resetData = createResetPasswordData('valid-token');
       const mockUser = createUser();
-      
-      mockRedis.get.mockResolvedValue(JSON.stringify({
-        userId: mockUser.id,
-        email: mockUser.email,
-        createdAt: new Date().toISOString(),
-      }));
-      
+
+      mockRedis.get.mockResolvedValue(
+        JSON.stringify({
+          userId: mockUser.id,
+          email: mockUser.email,
+          createdAt: new Date().toISOString(),
+        })
+      );
+
       mockUserRepository.findByPasswordResetToken.mockResolvedValue(mockUser);
       mockUserRepository.resetPassword.mockResolvedValue(undefined);
       mockRedis.del.mockResolvedValue(1);
@@ -415,13 +461,19 @@ describe('AuthService', () => {
       const result = await authService.resetPassword(resetData);
 
       // Assert
-      expect(mockRedis.get).toHaveBeenCalledWith(`password_reset:${resetData.token}`);
-      expect(mockUserRepository.findByPasswordResetToken).toHaveBeenCalledWith(resetData.token);
+      expect(mockRedis.get).toHaveBeenCalledWith(
+        `password_reset:${resetData.token}`
+      );
+      expect(mockUserRepository.findByPasswordResetToken).toHaveBeenCalledWith(
+        resetData.token
+      );
       expect(mockUserRepository.resetPassword).toHaveBeenCalledWith(
         resetData.token,
         expect.any(String)
       );
-      expect(mockRedis.del).toHaveBeenCalledWith(`password_reset:${resetData.token}`);
+      expect(mockRedis.del).toHaveBeenCalledWith(
+        `password_reset:${resetData.token}`
+      );
       expect(mockBlacklistAllUserTokens).toHaveBeenCalledWith(mockUser.id);
       expect(result.message).toContain('reset');
     });
@@ -432,7 +484,9 @@ describe('AuthService', () => {
       mockRedis.get.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(authService.resetPassword(resetData)).rejects.toThrow(InvalidTokenError);
+      await expect(authService.resetPassword(resetData)).rejects.toThrow(
+        InvalidTokenError
+      );
     });
 
     it('should throw InvalidCredentialsError for password mismatch', async () => {
@@ -443,7 +497,9 @@ describe('AuthService', () => {
       });
 
       // Act & Assert
-      await expect(authService.resetPassword(resetData)).rejects.toThrow(InvalidCredentialsError);
+      await expect(authService.resetPassword(resetData)).rejects.toThrow(
+        InvalidCredentialsError
+      );
     });
   });
 
@@ -453,7 +509,7 @@ describe('AuthService', () => {
       const userId = 'user-123';
       const changeData = createPasswordChangeData();
       const mockUser = createUser({ id: userId });
-      
+
       mockUser.verifyPassword = jest.fn().mockResolvedValue(true);
       mockUserRepository.findByIdOrFail.mockResolvedValue(mockUser);
       mockUserRepository.changePassword.mockResolvedValue(undefined);
@@ -467,8 +523,13 @@ describe('AuthService', () => {
 
       // Assert
       expect(mockUserRepository.findByIdOrFail).toHaveBeenCalledWith(userId);
-      expect(mockUser.verifyPassword).toHaveBeenCalledWith(changeData.currentPassword);
-      expect(mockUserRepository.changePassword).toHaveBeenCalledWith(userId, expect.any(String));
+      expect(mockUser.verifyPassword).toHaveBeenCalledWith(
+        changeData.currentPassword
+      );
+      expect(mockUserRepository.changePassword).toHaveBeenCalledWith(
+        userId,
+        expect.any(String)
+      );
       expect(mockBlacklistAllUserTokens).toHaveBeenCalledWith(userId);
       expect(result.message).toBe('Password changed successfully');
     });
@@ -478,12 +539,14 @@ describe('AuthService', () => {
       const userId = 'user-123';
       const changeData = createPasswordChangeData();
       const mockUser = createUser({ id: userId });
-      
+
       mockUser.verifyPassword = jest.fn().mockResolvedValue(false);
       mockUserRepository.findByIdOrFail.mockResolvedValue(mockUser);
 
       // Act & Assert
-      await expect(authService.changePassword(userId, changeData)).rejects.toThrow(InvalidCredentialsError);
+      await expect(
+        authService.changePassword(userId, changeData)
+      ).rejects.toThrow(InvalidCredentialsError);
     });
 
     it('should throw InvalidCredentialsError for password mismatch', async () => {
@@ -495,7 +558,9 @@ describe('AuthService', () => {
       });
 
       // Act & Assert
-      await expect(authService.changePassword(userId, changeData)).rejects.toThrow(InvalidCredentialsError);
+      await expect(
+        authService.changePassword(userId, changeData)
+      ).rejects.toThrow(InvalidCredentialsError);
     });
   });
 
@@ -504,13 +569,15 @@ describe('AuthService', () => {
       // Arrange
       const token = 'valid-token';
       const mockUser = createUser();
-      
-      mockRedis.get.mockResolvedValue(JSON.stringify({
-        userId: mockUser.id,
-        email: mockUser.email,
-        createdAt: new Date().toISOString(),
-      }));
-      
+
+      mockRedis.get.mockResolvedValue(
+        JSON.stringify({
+          userId: mockUser.id,
+          email: mockUser.email,
+          createdAt: new Date().toISOString(),
+        })
+      );
+
       mockUserRepository.verifyEmail.mockResolvedValue(mockUser);
       mockRedis.del.mockResolvedValue(1);
 
@@ -530,7 +597,9 @@ describe('AuthService', () => {
       mockRedis.get.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(authService.verifyEmail({ token })).rejects.toThrow(InvalidTokenError);
+      await expect(authService.verifyEmail({ token })).rejects.toThrow(
+        InvalidTokenError
+      );
     });
   });
 
@@ -543,8 +612,11 @@ describe('AuthService', () => {
         email: 'test@example.com',
         jti: 'token-jti',
       };
-      const mockUser = createUser({ id: mockPayload.sub, email: mockPayload.email });
-      
+      const mockUser = createUser({
+        id: mockPayload.sub,
+        email: mockPayload.email,
+      });
+
       const mockJwtVerify = jest.fn().mockReturnValue(mockPayload);
       jest.mock('jsonwebtoken', () => ({
         verify: mockJwtVerify,
@@ -574,7 +646,7 @@ describe('AuthService', () => {
         sub: 'user-123',
         jti: 'token-jti',
       };
-      
+
       const mockJwtVerify = jest.fn().mockReturnValue(mockPayload);
       jest.mock('jsonwebtoken', () => ({
         verify: mockJwtVerify,
@@ -598,7 +670,7 @@ describe('AuthService', () => {
         jti: 'token-jti',
       };
       const inactiveUser = createUser({ id: mockPayload.sub, isActive: false });
-      
+
       const mockJwtVerify = jest.fn().mockReturnValue(mockPayload);
       jest.mock('jsonwebtoken', () => ({
         verify: mockJwtVerify,
@@ -617,11 +689,11 @@ describe('AuthService', () => {
     it('should return invalid for invalid token', async () => {
       // Arrange
       const token = 'invalid-token';
-      
+
       const mockJwtVerify = jest.fn().mockImplementation(() => {
         throw new Error('Invalid token');
       });
-      
+
       jest.mock('jsonwebtoken', () => ({
         verify: mockJwtVerify,
       }));

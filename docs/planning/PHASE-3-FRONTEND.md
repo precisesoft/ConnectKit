@@ -136,27 +136,32 @@ frontend/
 ## Core Technologies and Stack
 
 ### Frontend Framework
+
 - **React 18.2**: Latest stable with Concurrent Features
 - **TypeScript 5.3**: Strict mode for type safety
 - **Vite 5.0**: Fast build tool with HMR
 
 ### UI Library and Styling
+
 - **Material-UI v5.15**: Component library with theming
 - **Emotion**: CSS-in-JS solution
 - **Material Icons**: Comprehensive icon set
 - **Custom Design System**: Extended MUI theme
 
 ### State Management
+
 - **Zustand 4.4**: Lightweight state management
 - **React Query v5**: Server state management and caching
 - **React Hook Form**: Form state and validation
 
 ### Routing and Navigation
+
 - **React Router v6**: Declarative routing
 - **Route-based code splitting**: Lazy loading
 - **Protected routes**: Authentication guards
 
 ### Development and Testing
+
 - **Vitest**: Fast unit testing framework
 - **React Testing Library**: Component testing
 - **Playwright**: End-to-end testing
@@ -278,11 +283,11 @@ export const ContactCard: React.FC<ContactCardProps> = ({
             </Typography>
           </Box>
         </Box>
-        
+
         <Typography variant="body2" color="text.secondary" gutterBottom>
           {contact.email[0]}
         </Typography>
-        
+
         <Box mt={2}>
           {contact.tags.map((tag) => (
             <Chip
@@ -295,7 +300,7 @@ export const ContactCard: React.FC<ContactCardProps> = ({
           ))}
         </Box>
       </CardContent>
-      
+
       <CardActions>
         <Button size="small" onClick={() => onView(contact)}>
           View
@@ -443,10 +448,10 @@ export const ContactList: React.FC<ContactListProps> = ({
 
 ```typescript
 // src/stores/authStore.ts
-import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
-import { User } from '../types/user.types';
-import { authApi } from '../services/api/auth.api';
+import { create } from "zustand";
+import { devtools, persist } from "zustand/middleware";
+import { User } from "../types/user.types";
+import { authApi } from "../services/api/auth.api";
 
 interface AuthState {
   user: User | null;
@@ -539,7 +544,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
               user: null,
               token: null,
               isAuthenticated: false,
-              error: 'Session expired',
+              error: "Session expired",
             });
           }
         },
@@ -547,15 +552,15 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         clearError: () => set({ error: null }),
       }),
       {
-        name: 'auth-storage',
+        name: "auth-storage",
         partialize: (state) => ({
           token: state.token,
           user: state.user,
         }),
-      }
+      },
     ),
-    { name: 'AuthStore' }
-  )
+    { name: "AuthStore" },
+  ),
 );
 ```
 
@@ -563,9 +568,9 @@ export const useAuthStore = create<AuthState & AuthActions>()(
 
 ```typescript
 // src/hooks/useContacts.ts
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { contactsApi } from '../services/api/contacts.api';
-import { Contact, ContactCreateData } from '../types/contact.types';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { contactsApi } from "../services/api/contacts.api";
+import { Contact, ContactCreateData } from "../types/contact.types";
 
 export const useContacts = (params?: {
   search?: string;
@@ -573,7 +578,7 @@ export const useContacts = (params?: {
   limit?: number;
 }) => {
   return useQuery({
-    queryKey: ['contacts', params],
+    queryKey: ["contacts", params],
     queryFn: () => contactsApi.getContacts(params),
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 10, // 10 minutes
@@ -582,7 +587,7 @@ export const useContacts = (params?: {
 
 export const useContact = (id: string) => {
   return useQuery({
-    queryKey: ['contacts', id],
+    queryKey: ["contacts", id],
     queryFn: () => contactsApi.getContact(id),
     enabled: !!id,
   });
@@ -595,7 +600,7 @@ export const useCreateContact = () => {
     mutationFn: (data: ContactCreateData) => contactsApi.createContact(data),
     onSuccess: () => {
       // Invalidate contacts list
-      queryClient.invalidateQueries({ queryKey: ['contacts'] });
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
     },
   });
 };
@@ -608,8 +613,8 @@ export const useUpdateContact = () => {
       contactsApi.updateContact(id, data),
     onSuccess: (_, { id }) => {
       // Invalidate both the specific contact and the contacts list
-      queryClient.invalidateQueries({ queryKey: ['contacts', id] });
-      queryClient.invalidateQueries({ queryKey: ['contacts'] });
+      queryClient.invalidateQueries({ queryKey: ["contacts", id] });
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
     },
   });
 };
@@ -620,7 +625,7 @@ export const useDeleteContact = () => {
   return useMutation({
     mutationFn: (id: string) => contactsApi.deleteContact(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contacts'] });
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
     },
   });
 };
@@ -871,10 +876,10 @@ export const ContactForm: React.FC<ContactFormProps> = ({
 
 ```typescript
 // src/styles/theme.ts
-import { createTheme, ThemeOptions } from '@mui/material/styles';
-import { Components } from '@mui/material/styles/components';
+import { createTheme, ThemeOptions } from "@mui/material/styles";
+import { Components } from "@mui/material/styles/components";
 
-declare module '@mui/material/styles' {
+declare module "@mui/material/styles" {
   interface Palette {
     gradient: {
       primary: string;
@@ -912,95 +917,95 @@ declare module '@mui/material/styles' {
 
 const baseThemeOptions: ThemeOptions = {
   palette: {
-    mode: 'light',
+    mode: "light",
     primary: {
-      main: '#1976d2',
-      light: '#42a5f5',
-      dark: '#1565c0',
-      contrastText: '#ffffff',
+      main: "#1976d2",
+      light: "#42a5f5",
+      dark: "#1565c0",
+      contrastText: "#ffffff",
     },
     secondary: {
-      main: '#dc004e',
-      light: '#ff5983',
-      dark: '#9a0036',
-      contrastText: '#ffffff',
+      main: "#dc004e",
+      light: "#ff5983",
+      dark: "#9a0036",
+      contrastText: "#ffffff",
     },
     error: {
-      main: '#d32f2f',
-      light: '#ef5350',
-      dark: '#c62828',
+      main: "#d32f2f",
+      light: "#ef5350",
+      dark: "#c62828",
     },
     warning: {
-      main: '#ed6c02',
-      light: '#ff9800',
-      dark: '#e65100',
+      main: "#ed6c02",
+      light: "#ff9800",
+      dark: "#e65100",
     },
     info: {
-      main: '#0288d1',
-      light: '#03dac6',
-      dark: '#01579b',
+      main: "#0288d1",
+      light: "#03dac6",
+      dark: "#01579b",
     },
     success: {
-      main: '#2e7d32',
-      light: '#4caf50',
-      dark: '#1b5e20',
+      main: "#2e7d32",
+      light: "#4caf50",
+      dark: "#1b5e20",
     },
     background: {
-      default: '#fafafa',
-      paper: '#ffffff',
+      default: "#fafafa",
+      paper: "#ffffff",
     },
     gradient: {
-      primary: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
-      secondary: 'linear-gradient(45deg, #dc004e 30%, #ff5983 90%)',
+      primary: "linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)",
+      secondary: "linear-gradient(45deg, #dc004e 30%, #ff5983 90%)",
     },
   },
   typography: {
     fontFamily: [
-      'Inter',
-      '-apple-system',
-      'BlinkMacSystemFont',
+      "Inter",
+      "-apple-system",
+      "BlinkMacSystemFont",
       '"Segoe UI"',
-      'Roboto',
+      "Roboto",
       '"Helvetica Neue"',
-      'Arial',
-      'sans-serif',
-    ].join(','),
+      "Arial",
+      "sans-serif",
+    ].join(","),
     h1: {
-      fontSize: '2.5rem',
+      fontSize: "2.5rem",
       fontWeight: 600,
       lineHeight: 1.2,
     },
     h2: {
-      fontSize: '2rem',
+      fontSize: "2rem",
       fontWeight: 600,
       lineHeight: 1.3,
     },
     h3: {
-      fontSize: '1.75rem',
+      fontSize: "1.75rem",
       fontWeight: 600,
       lineHeight: 1.3,
     },
     h4: {
-      fontSize: '1.5rem',
+      fontSize: "1.5rem",
       fontWeight: 600,
       lineHeight: 1.4,
     },
     h5: {
-      fontSize: '1.25rem',
+      fontSize: "1.25rem",
       fontWeight: 600,
       lineHeight: 1.4,
     },
     h6: {
-      fontSize: '1.125rem',
+      fontSize: "1.125rem",
       fontWeight: 600,
       lineHeight: 1.4,
     },
     body1: {
-      fontSize: '1rem',
+      fontSize: "1rem",
       lineHeight: 1.5,
     },
     body2: {
-      fontSize: '0.875rem',
+      fontSize: "0.875rem",
       lineHeight: 1.57,
     },
   },
@@ -1020,28 +1025,28 @@ const components: Components = {
   MuiButton: {
     styleOverrides: {
       root: {
-        textTransform: 'none',
+        textTransform: "none",
         fontWeight: 600,
         borderRadius: 8,
-        padding: '8px 24px',
+        padding: "8px 24px",
       },
       sizeSmall: {
-        padding: '4px 16px',
-        fontSize: '0.875rem',
+        padding: "4px 16px",
+        fontSize: "0.875rem",
       },
       sizeLarge: {
-        padding: '12px 32px',
-        fontSize: '1rem',
+        padding: "12px 32px",
+        fontSize: "1rem",
       },
     },
   },
   MuiTextField: {
     defaultProps: {
-      variant: 'outlined',
+      variant: "outlined",
     },
     styleOverrides: {
       root: {
-        '& .MuiOutlinedInput-root': {
+        "& .MuiOutlinedInput-root": {
           borderRadius: 8,
         },
       },
@@ -1051,9 +1056,9 @@ const components: Components = {
     styleOverrides: {
       root: {
         borderRadius: 12,
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-        '&:hover': {
-          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.15)',
+        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+        "&:hover": {
+          boxShadow: "0 4px 16px rgba(0, 0, 0, 0.15)",
         },
       },
     },
@@ -1077,14 +1082,14 @@ export const darkTheme = createTheme({
   ...baseThemeOptions,
   palette: {
     ...baseThemeOptions.palette,
-    mode: 'dark',
+    mode: "dark",
     background: {
-      default: '#121212',
-      paper: '#1e1e1e',
+      default: "#121212",
+      paper: "#1e1e1e",
     },
     text: {
-      primary: '#ffffff',
-      secondary: 'rgba(255, 255, 255, 0.7)',
+      primary: "#ffffff",
+      secondary: "rgba(255, 255, 255, 0.7)",
     },
   },
   components,
@@ -1180,8 +1185,8 @@ export default App;
 
 ```typescript
 // src/components/molecules/ContactCard/ContactCard.tsx (optimized version)
-import React, { memo } from 'react';
-import { Contact } from '../../../types/contact.types';
+import React, { memo } from "react";
+import { Contact } from "../../../types/contact.types";
 
 interface ContactCardProps {
   contact: Contact;
@@ -1211,7 +1216,7 @@ export const ContactCard = memo<ContactCardProps>(
       prevProps.contact.id === nextProps.contact.id &&
       prevProps.contact.updatedAt === nextProps.contact.updatedAt
     );
-  }
+  },
 );
 ```
 
@@ -1257,9 +1262,13 @@ export const Button: React.FC<ButtonProps> = ({
 
 ```typescript
 // src/services/workers/sw.ts
-import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching';
-import { registerRoute } from 'workbox-routing';
-import { NetworkFirst, CacheFirst, StaleWhileRevalidate } from 'workbox-strategies';
+import { precacheAndRoute, cleanupOutdatedCaches } from "workbox-precaching";
+import { registerRoute } from "workbox-routing";
+import {
+  NetworkFirst,
+  CacheFirst,
+  StaleWhileRevalidate,
+} from "workbox-strategies";
 
 declare let self: ServiceWorkerGlobalScope;
 
@@ -1269,22 +1278,22 @@ cleanupOutdatedCaches();
 
 // Cache API responses
 registerRoute(
-  ({ request }) => request.destination === 'document',
+  ({ request }) => request.destination === "document",
   new NetworkFirst({
-    cacheName: 'pages',
+    cacheName: "pages",
     plugins: [
       {
         cacheKeyWillBeUsed: async ({ request }) => `${request.url}?version=1`,
       },
     ],
-  })
+  }),
 );
 
 // Cache API calls
 registerRoute(
-  ({ url }) => url.pathname.startsWith('/api/'),
+  ({ url }) => url.pathname.startsWith("/api/"),
   new NetworkFirst({
-    cacheName: 'api-cache',
+    cacheName: "api-cache",
     networkTimeoutSeconds: 3,
     plugins: [
       {
@@ -1293,17 +1302,17 @@ registerRoute(
         },
       },
     ],
-  })
+  }),
 );
 
 // Cache static assets
 registerRoute(
   ({ request }) =>
-    request.destination === 'image' ||
-    request.destination === 'script' ||
-    request.destination === 'style',
+    request.destination === "image" ||
+    request.destination === "script" ||
+    request.destination === "style",
   new CacheFirst({
-    cacheName: 'static-assets',
+    cacheName: "static-assets",
     plugins: [
       {
         cacheWillUpdate: async ({ response }) => {
@@ -1311,12 +1320,12 @@ registerRoute(
         },
       },
     ],
-  })
+  }),
 );
 
 // Background sync for offline actions
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'contact-sync') {
+self.addEventListener("sync", (event) => {
+  if (event.tag === "contact-sync") {
     event.waitUntil(syncOfflineActions());
   }
 });
@@ -1329,7 +1338,7 @@ async function syncOfflineActions() {
       await executeAction(action);
       await removeOfflineAction(action.id);
     } catch (error) {
-      console.error('Failed to sync action:', error);
+      console.error("Failed to sync action:", error);
     }
   }
 }
@@ -1471,43 +1480,43 @@ export class ErrorBoundary extends Component<Props, State> {
 
 ```typescript
 // vite.config.ts
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import { VitePWA } from 'vite-plugin-pwa';
-import { resolve } from 'path';
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import { VitePWA } from "vite-plugin-pwa";
+import { resolve } from "path";
 
 export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      registerType: "autoUpdate",
+      includeAssets: ["favicon.ico", "apple-touch-icon.png", "masked-icon.svg"],
       manifest: {
-        name: 'ConnectKit',
-        short_name: 'ConnectKit',
-        description: 'Enterprise Contact Management Platform',
-        theme_color: '#1976d2',
+        name: "ConnectKit",
+        short_name: "ConnectKit",
+        description: "Enterprise Contact Management Platform",
+        theme_color: "#1976d2",
         icons: [
           {
-            src: 'icon-192x192.png',
-            sizes: '192x192',
-            type: 'image/png',
+            src: "icon-192x192.png",
+            sizes: "192x192",
+            type: "image/png",
           },
           {
-            src: 'icon-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
+            src: "icon-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
           },
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/api\.connectkit\.com\//,
-            handler: 'NetworkFirst',
+            handler: "NetworkFirst",
             options: {
-              cacheName: 'api-cache',
+              cacheName: "api-cache",
               networkTimeoutSeconds: 10,
               expiration: {
                 maxEntries: 100,
@@ -1521,26 +1530,26 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': resolve(__dirname, './src'),
-      '@/components': resolve(__dirname, './src/components'),
-      '@/hooks': resolve(__dirname, './src/hooks'),
-      '@/services': resolve(__dirname, './src/services'),
-      '@/stores': resolve(__dirname, './src/stores'),
-      '@/types': resolve(__dirname, './src/types'),
-      '@/utils': resolve(__dirname, './src/utils'),
+      "@": resolve(__dirname, "./src"),
+      "@/components": resolve(__dirname, "./src/components"),
+      "@/hooks": resolve(__dirname, "./src/hooks"),
+      "@/services": resolve(__dirname, "./src/services"),
+      "@/stores": resolve(__dirname, "./src/stores"),
+      "@/types": resolve(__dirname, "./src/types"),
+      "@/utils": resolve(__dirname, "./src/utils"),
     },
   },
   build: {
-    target: 'esnext',
-    minify: 'esbuild',
+    target: "esnext",
+    minify: "esbuild",
     sourcemap: true,
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          ui: ['@mui/material', '@mui/icons-material', '@emotion/react'],
-          state: ['zustand', '@tanstack/react-query'],
-          forms: ['react-hook-form', '@hookform/resolvers', 'yup'],
+          vendor: ["react", "react-dom", "react-router-dom"],
+          ui: ["@mui/material", "@mui/icons-material", "@emotion/react"],
+          state: ["zustand", "@tanstack/react-query"],
+          forms: ["react-hook-form", "@hookform/resolvers", "yup"],
         },
       },
     },
@@ -1549,8 +1558,8 @@ export default defineConfig({
   server: {
     port: 3000,
     proxy: {
-      '/api': {
-        target: 'http://localhost:5000',
+      "/api": {
+        target: "http://localhost:5000",
         changeOrigin: true,
       },
     },
@@ -1597,6 +1606,7 @@ export default defineConfig({
 ## Implementation Timeline
 
 ### Phase 3.1: Foundation Setup (Week 1-2)
+
 - Project structure setup with atomic design pattern
 - Base components (atoms) implementation
 - Theme configuration and design system
@@ -1604,6 +1614,7 @@ export default defineConfig({
 - Basic routing and layout structure
 
 ### Phase 3.2: Authentication & Navigation (Week 3-4)
+
 - Authentication pages and forms
 - Protected route implementation
 - Navigation components and sidebar
@@ -1611,6 +1622,7 @@ export default defineConfig({
 - Login/logout functionality with JWT
 
 ### Phase 3.3: Contact Management Core (Week 5-7)
+
 - Contact list and card components
 - Contact form with validation
 - Search and filtering functionality
@@ -1618,6 +1630,7 @@ export default defineConfig({
 - Error handling and loading states
 
 ### Phase 3.4: Advanced Features (Week 8-10)
+
 - Dashboard with analytics
 - Advanced search and filters
 - Bulk operations (import/export)
@@ -1625,6 +1638,7 @@ export default defineConfig({
 - Notification system
 
 ### Phase 3.5: Performance & PWA (Week 11-12)
+
 - Performance optimization and lazy loading
 - PWA implementation with service worker
 - Offline functionality and background sync
@@ -1632,6 +1646,7 @@ export default defineConfig({
 - Accessibility improvements
 
 ### Phase 3.6: Testing & Polish (Week 13-14)
+
 - Comprehensive test coverage (unit, integration, E2E)
 - Visual regression testing
 - Performance testing and optimization
@@ -1641,12 +1656,14 @@ export default defineConfig({
 ## Quality Assurance
 
 ### Code Quality Standards
+
 - **TypeScript**: Strict mode enabled with comprehensive type coverage
 - **ESLint**: Enforced code standards with React and accessibility rules
 - **Prettier**: Consistent code formatting
 - **Husky**: Pre-commit hooks for quality gates
 
 ### Performance Benchmarks
+
 - **Initial Load**: < 3 seconds (3G connection)
 - **Largest Contentful Paint**: < 2.5 seconds
 - **First Input Delay**: < 100ms
@@ -1654,6 +1671,7 @@ export default defineConfig({
 - **Bundle Size**: < 1MB gzipped
 
 ### Browser Support
+
 - **Modern Browsers**: Chrome 90+, Firefox 90+, Safari 14+, Edge 90+
 - **Mobile**: iOS 14+, Android 10+
 - **Progressive Enhancement**: Graceful degradation for older browsers

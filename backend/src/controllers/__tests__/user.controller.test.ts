@@ -33,12 +33,14 @@ describe('UserController', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     mockUserService = createMockUserService() as jest.Mocked<UserService>;
     mockRequest = createMockRequest() as Request;
     mockResponse = createMockResponse() as Response;
 
-    (UserService as jest.MockedClass<typeof UserService>).mockImplementation(() => mockUserService);
+    (UserService as jest.MockedClass<typeof UserService>).mockImplementation(
+      () => mockUserService
+    );
     controller = new UserController();
   });
 
@@ -51,7 +53,7 @@ describe('UserController', () => {
       // Arrange
       const userId = 'user-123';
       const mockUser = createUser({ id: userId });
-      
+
       mockRequest.params = { id: userId };
       (mockRequest as any).user = mockUser;
       mockUserService.getUserById.mockResolvedValue(mockUser);
@@ -60,7 +62,9 @@ describe('UserController', () => {
       await controller.getUserById(mockRequest, mockResponse);
 
       // Assert
-      expect(mockUserService.getUserById).toHaveBeenCalledWith(userId, { useCache: true });
+      expect(mockUserService.getUserById).toHaveBeenCalledWith(userId, {
+        useCache: true,
+      });
       expect(mockResponse.status).toHaveBeenCalledWith(StatusCodes.OK);
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
@@ -72,13 +76,15 @@ describe('UserController', () => {
       // Arrange
       const userId = 'non-existent-user';
       const error = new NotFoundError('User not found');
-      
+
       mockRequest.params = { id: userId };
       (mockRequest as any).user = createUser();
       mockUserService.getUserById.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(controller.getUserById(mockRequest, mockResponse)).rejects.toThrow(error);
+      await expect(
+        controller.getUserById(mockRequest, mockResponse)
+      ).rejects.toThrow(error);
     });
   });
 
@@ -97,7 +103,7 @@ describe('UserController', () => {
           hasPrevious: false,
         },
       };
-      
+
       const adminUser = createAdminUser();
       mockRequest.query = { page: '1', limit: '10' };
       (mockRequest as any).user = adminUser;
@@ -125,7 +131,9 @@ describe('UserController', () => {
       (mockRequest as any).user = regularUser;
 
       // Act & Assert
-      await expect(controller.getUsers(mockRequest, mockResponse)).rejects.toThrow(ForbiddenError);
+      await expect(
+        controller.getUsers(mockRequest, mockResponse)
+      ).rejects.toThrow(ForbiddenError);
     });
   });
 
@@ -136,7 +144,7 @@ describe('UserController', () => {
       const updateData = { firstName: 'Updated', lastName: 'Name' };
       const mockUser = createUser({ id: userId });
       const updatedUser = { ...mockUser, ...updateData };
-      
+
       mockRequest.params = { id: userId };
       mockRequest.body = updateData;
       (mockRequest as any).user = mockUser;
@@ -146,7 +154,11 @@ describe('UserController', () => {
       await controller.updateUser(mockRequest, mockResponse);
 
       // Assert
-      expect(mockUserService.updateUser).toHaveBeenCalledWith(userId, updateData, mockUser.id);
+      expect(mockUserService.updateUser).toHaveBeenCalledWith(
+        userId,
+        updateData,
+        mockUser.id
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(StatusCodes.OK);
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
@@ -161,7 +173,7 @@ describe('UserController', () => {
       // Arrange
       const userId = 'user-123';
       const adminUser = createAdminUser();
-      
+
       mockRequest.params = { id: userId };
       (mockRequest as any).user = adminUser;
       mockUserService.deleteUser.mockResolvedValue(undefined);
@@ -170,7 +182,10 @@ describe('UserController', () => {
       await controller.deleteUser(mockRequest, mockResponse);
 
       // Assert
-      expect(mockUserService.deleteUser).toHaveBeenCalledWith(userId, adminUser.id);
+      expect(mockUserService.deleteUser).toHaveBeenCalledWith(
+        userId,
+        adminUser.id
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(StatusCodes.OK);
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
@@ -194,7 +209,7 @@ describe('UserController', () => {
         },
         recentSignups: 15,
       };
-      
+
       const adminUser = createAdminUser();
       (mockRequest as any).user = adminUser;
       mockUserService.getUserStats.mockResolvedValue(mockStats);

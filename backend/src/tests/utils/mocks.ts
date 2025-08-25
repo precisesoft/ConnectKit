@@ -97,7 +97,7 @@ export class TestMocks {
         'user-agent': 'test-agent',
       },
       ip: '127.0.0.1',
-      get: jest.fn((header) => {
+      get: jest.fn(header => {
         const headers: Record<string, string> = {
           'user-agent': 'test-agent',
           'content-type': 'application/json',
@@ -275,7 +275,7 @@ export class MockScenarios {
   } {
     const mockAuthService = TestMocks.createMockAuthService();
     const mockUserRepository = TestMocks.createMockUserRepository();
-    
+
     const testUser = {
       id: 'user-123',
       email: 'test@example.com',
@@ -347,7 +347,7 @@ export class MockScenarios {
     mockRedis: DeepMockProxy<Redis>;
   } {
     const mockRedis = TestMocks.createMockRedis();
-    
+
     const redisError = new Error('Redis connection failed');
     mockRedis.get.mockRejectedValue(redisError);
     mockRedis.set.mockRejectedValue(redisError);

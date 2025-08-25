@@ -88,11 +88,15 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({
 
   const handleContactSupport = () => {
     // In a real app, this might open a support modal or redirect to support page
-    const subject = encodeURIComponent(`Error Report: ${title || 'Application Error'}`);
+    const subject = encodeURIComponent(
+      `Error Report: ${title || 'Application Error'}`
+    );
     const body = encodeURIComponent(
       `Error Message: ${message}\n\nDetails: ${details || 'No additional details'}\n\nURL: ${window.location.href}\n\nUser Agent: ${navigator.userAgent}`
     );
-    window.open(`mailto:support@connectkit.com?subject=${subject}&body=${body}`);
+    window.open(
+      `mailto:support@connectkit.com?subject=${subject}&body=${body}`
+    );
   };
 
   const content = (
@@ -127,39 +131,35 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({
               opacity: 0.7,
             }}
           />
-          
+
           <Typography
-            variant="h5"
-            component="h1"
+            variant='h5'
+            component='h1'
             gutterBottom
-            color="text.primary"
+            color='text.primary'
             sx={{ fontWeight: 600 }}
           >
             {title || 'Something went wrong'}
           </Typography>
-          
-          <Typography
-            variant="body1"
-            color="text.secondary"
-            sx={{ mb: 3 }}
-          >
+
+          <Typography variant='body1' color='text.secondary' sx={{ mb: 3 }}>
             {message}
           </Typography>
 
           {details && (
             <Box sx={{ mb: 3, textAlign: 'left' }}>
               <Button
-                variant="text"
-                size="small"
+                variant='text'
+                size='small'
                 onClick={() => setShowErrorDetails(!showErrorDetails)}
                 sx={{ mb: 1 }}
               >
                 {showErrorDetails ? 'Hide' : 'Show'} Details
               </Button>
-              
+
               {showErrorDetails && (
                 <Paper
-                  variant="outlined"
+                  variant='outlined'
                   sx={{
                     p: 2,
                     backgroundColor: 'grey.50',
@@ -168,8 +168,8 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({
                   }}
                 >
                   <Typography
-                    variant="caption"
-                    component="pre"
+                    variant='caption'
+                    component='pre'
                     sx={{
                       fontFamily: 'monospace',
                       fontSize: '0.75rem',
@@ -194,7 +194,7 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({
           >
             {onRetry && (
               <Button
-                variant="contained"
+                variant='contained'
                 startIcon={<Refresh />}
                 onClick={onRetry}
                 sx={{ minWidth: 120 }}
@@ -202,10 +202,10 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({
                 {retryText}
               </Button>
             )}
-            
+
             {showHomeButton && (
               <Button
-                variant="outlined"
+                variant='outlined'
                 startIcon={<Home />}
                 onClick={handleGoHome}
                 sx={{ minWidth: 120 }}
@@ -213,10 +213,10 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({
                 Go Home
               </Button>
             )}
-            
+
             {showSupportButton && (
               <Button
-                variant="text"
+                variant='text'
                 startIcon={<ContactSupport />}
                 onClick={handleContactSupport}
                 sx={{ minWidth: 120 }}
@@ -238,19 +238,19 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
               {onRetry && (
                 <Button
-                  color="inherit"
-                  size="small"
+                  color='inherit'
+                  size='small'
                   startIcon={<Refresh />}
                   onClick={onRetry}
                 >
                   {retryText}
                 </Button>
               )}
-              
+
               {showSupportButton && (
                 <Button
-                  color="inherit"
-                  size="small"
+                  color='inherit'
+                  size='small'
                   startIcon={<ContactSupport />}
                   onClick={handleContactSupport}
                 >
@@ -261,24 +261,24 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({
           }
         >
           {title && <AlertTitle>{title}</AlertTitle>}
-          <Typography variant="body2">{message}</Typography>
-          
+          <Typography variant='body2'>{message}</Typography>
+
           {details && (
             <Box sx={{ mt: 1 }}>
               <Button
-                color="inherit"
-                size="small"
-                variant="text"
+                color='inherit'
+                size='small'
+                variant='text'
                 onClick={() => setShowErrorDetails(!showErrorDetails)}
                 sx={{ p: 0, minWidth: 'auto', fontSize: '0.75rem' }}
               >
                 {showErrorDetails ? 'Hide' : 'Show'} Details
               </Button>
-              
+
               {showErrorDetails && (
                 <Typography
-                  variant="caption"
-                  component="pre"
+                  variant='caption'
+                  component='pre'
                   sx={{
                     display: 'block',
                     mt: 1,

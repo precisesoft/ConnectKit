@@ -10,7 +10,7 @@ export interface Contact {
   phone?: string;
   company?: string;
   jobTitle?: string;
-  
+
   // Address information
   address?: {
     street?: string;
@@ -19,13 +19,13 @@ export interface Contact {
     zipCode?: string;
     country?: string;
   };
-  
+
   // Additional information
   notes?: string;
   tags?: string[];
   avatar?: string;
   website?: string;
-  
+
   // Social media
   socialMedia?: {
     linkedin?: string;
@@ -34,25 +34,33 @@ export interface Contact {
     instagram?: string;
     github?: string;
   };
-  
+
   // Relationship data
   isFavorite: boolean;
-  category?: 'personal' | 'business' | 'family' | 'friend' | 'colleague' | 'client' | 'vendor' | 'other';
+  category?:
+    | 'personal'
+    | 'business'
+    | 'family'
+    | 'friend'
+    | 'colleague'
+    | 'client'
+    | 'vendor'
+    | 'other';
   source?: 'manual' | 'import' | 'api' | 'referral';
-  
+
   // Custom fields
   customFields?: Record<string, any>;
-  
+
   // Metadata
   userId: string;
   createdAt: string;
   updatedAt: string;
   lastContactedAt?: string;
-  
+
   // Contact frequency and importance
   contactFrequency?: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'rarely';
   importance?: 'low' | 'medium' | 'high' | 'critical';
-  
+
   // Privacy and permissions
   isPrivate?: boolean;
   sharePermissions?: string[];
@@ -107,13 +115,13 @@ export interface ContactFilters {
   limit?: number;
 }
 
-export type ContactSortField = 
-  | 'firstName' 
-  | 'lastName' 
-  | 'email' 
-  | 'company' 
+export type ContactSortField =
+  | 'firstName'
+  | 'lastName'
+  | 'email'
+  | 'company'
   | 'jobTitle'
-  | 'createdAt' 
+  | 'createdAt'
   | 'updatedAt'
   | 'lastContactedAt'
   | 'importance';
@@ -134,28 +142,28 @@ export interface ContactStats {
   favorites: number;
   recentlyAdded: number;
   companies: number;
-  
+
   // Category breakdown
   byCategory: Record<Contact['category'] | 'uncategorized', number>;
-  
+
   // Tag statistics
   topTags: Array<{
     name: string;
     count: number;
   }>;
-  
-  // Company statistics  
+
+  // Company statistics
   topCompanies: Array<{
     name: string;
     count: number;
   }>;
-  
+
   // Contact frequency
   byFrequency: Record<Contact['contactFrequency'] | 'unset', number>;
-  
+
   // Importance levels
   byImportance: Record<Contact['importance'] | 'unset', number>;
-  
+
   // Growth statistics
   growthStats: {
     thisMonth: number;
@@ -164,11 +172,11 @@ export interface ContactStats {
     lastYear: number;
     percentageChange: number;
   };
-  
+
   // Contact patterns
   mostContactedDay: string;
   averageContactsPerMonth: number;
-  
+
   // Data quality
   dataQuality: {
     withEmail: number;
@@ -216,7 +224,14 @@ export interface ContactImportResult {
 // Bulk operations
 export interface BulkContactOperation {
   contactIds: string[];
-  operation: 'delete' | 'favorite' | 'unfavorite' | 'tag' | 'untag' | 'category' | 'export';
+  operation:
+    | 'delete'
+    | 'favorite'
+    | 'unfavorite'
+    | 'tag'
+    | 'untag'
+    | 'category'
+    | 'export';
   data?: {
     tags?: string[];
     category?: Contact['category'];
@@ -262,7 +277,17 @@ export interface ContactRelationship {
   id: string;
   sourceContactId: string;
   targetContactId: string;
-  relationship: 'colleague' | 'friend' | 'family' | 'client' | 'vendor' | 'referred_by' | 'referred_to' | 'manager' | 'direct_report' | 'other';
+  relationship:
+    | 'colleague'
+    | 'friend'
+    | 'family'
+    | 'client'
+    | 'vendor'
+    | 'referred_by'
+    | 'referred_to'
+    | 'manager'
+    | 'direct_report'
+    | 'other';
   description?: string;
   strength: 'weak' | 'medium' | 'strong';
   createdAt: string;

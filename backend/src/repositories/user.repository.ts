@@ -1,4 +1,8 @@
-import { BaseRepository, QueryOptions, PaginationResult } from './base.repository';
+import {
+  BaseRepository,
+  QueryOptions,
+  PaginationResult,
+} from './base.repository';
 import { User, CreateUserDTO, UserRole } from '../models/user.model';
 import { ConflictError, NotFoundError } from '../utils/errors';
 import { logger } from '../utils/logger';
@@ -32,7 +36,7 @@ export class UserRepository extends BaseRepository<User> {
       'is_verified',
       'created_at',
       'updated_at',
-      'last_login_at'
+      'last_login_at',
     ];
   }
 
@@ -48,7 +52,7 @@ export class UserRepository extends BaseRepository<User> {
     };
 
     const user = new User(userData, true); // Skip validation when mapping from DB
-    
+
     // Override properties with database values
     user.id = row.id;
     user.passwordHash = row.password_hash;
@@ -56,7 +60,9 @@ export class UserRepository extends BaseRepository<User> {
     user.isVerified = row.is_verified;
     user.verificationToken = row.verification_token;
     user.resetPasswordToken = row.reset_password_token;
-    user.resetPasswordExpires = row.reset_password_expires ? new Date(row.reset_password_expires) : null;
+    user.resetPasswordExpires = row.reset_password_expires
+      ? new Date(row.reset_password_expires)
+      : null;
     user.mfaEnabled = row.mfa_enabled;
     user.mfaSecret = row.mfa_secret;
     user.failedLoginAttempts = row.failed_login_attempts;
@@ -75,21 +81,27 @@ export class UserRepository extends BaseRepository<User> {
     if (entity.id !== undefined) row.id = entity.id;
     if (entity.email !== undefined) row.email = entity.email;
     if (entity.username !== undefined) row.username = entity.username;
-    if (entity.passwordHash !== undefined) row.password_hash = entity.passwordHash;
+    if (entity.passwordHash !== undefined)
+      row.password_hash = entity.passwordHash;
     if (entity.role !== undefined) row.role = entity.role;
     if (entity.firstName !== undefined) row.first_name = entity.firstName;
     if (entity.lastName !== undefined) row.last_name = entity.lastName;
     if (entity.phone !== undefined) row.phone = entity.phone;
     if (entity.isActive !== undefined) row.is_active = entity.isActive;
     if (entity.isVerified !== undefined) row.is_verified = entity.isVerified;
-    if (entity.verificationToken !== undefined) row.verification_token = entity.verificationToken;
-    if (entity.resetPasswordToken !== undefined) row.reset_password_token = entity.resetPasswordToken;
-    if (entity.resetPasswordExpires !== undefined) row.reset_password_expires = entity.resetPasswordExpires;
+    if (entity.verificationToken !== undefined)
+      row.verification_token = entity.verificationToken;
+    if (entity.resetPasswordToken !== undefined)
+      row.reset_password_token = entity.resetPasswordToken;
+    if (entity.resetPasswordExpires !== undefined)
+      row.reset_password_expires = entity.resetPasswordExpires;
     if (entity.mfaEnabled !== undefined) row.mfa_enabled = entity.mfaEnabled;
     if (entity.mfaSecret !== undefined) row.mfa_secret = entity.mfaSecret;
-    if (entity.failedLoginAttempts !== undefined) row.failed_login_attempts = entity.failedLoginAttempts;
+    if (entity.failedLoginAttempts !== undefined)
+      row.failed_login_attempts = entity.failedLoginAttempts;
     if (entity.lockedUntil !== undefined) row.locked_until = entity.lockedUntil;
-    if (entity.lastLoginAt !== undefined) row.last_login_at = entity.lastLoginAt;
+    if (entity.lastLoginAt !== undefined)
+      row.last_login_at = entity.lastLoginAt;
     if (entity.createdAt !== undefined) row.created_at = entity.createdAt;
     if (entity.updatedAt !== undefined) row.updated_at = entity.updatedAt;
     if (entity.deletedAt !== undefined) row.deleted_at = entity.deletedAt;
@@ -104,20 +116,24 @@ export class UserRepository extends BaseRepository<User> {
     // Check for existing email
     const existingEmail = await this.findByEmail(userData.email);
     if (existingEmail) {
-      throw new ConflictError(`User with email ${userData.email} already exists`);
+      throw new ConflictError(
+        `User with email ${userData.email} already exists`
+      );
     }
 
     // Check for existing username
     const existingUsername = await this.findByUsername(userData.username);
     if (existingUsername) {
-      throw new ConflictError(`User with username ${userData.username} already exists`);
+      throw new ConflictError(
+        `User with username ${userData.username} already exists`
+      );
     }
 
     const user = new User(userData);
     await user.hashPassword();
 
     const createdUser = await this.create(user);
-    
+
     logger.info('User created', {
       userId: createdUser.id,
       email: createdUser.email,
@@ -147,19 +163,19 @@ export class UserRepository extends BaseRepository<User> {
    */
   async findByEmailOrUsername(identifier: string): Promise<User | null> {
     const lowerIdentifier = identifier.toLowerCase();
-    
+
     const query = `
       SELECT * FROM ${this.tableName}
       WHERE (email = $1 OR username = $1) AND deleted_at IS NULL
       LIMIT 1
     `;
-    
+
     const result = await this.executeQuery(query, [lowerIdentifier]);
-    
+
     if (result.rows.length === 0) {
       return null;
     }
-    
+
     return this.mapRowToEntity(result.rows[0]);
   }
 
@@ -181,13 +197,13 @@ export class UserRepository extends BaseRepository<User> {
         AND deleted_at IS NULL
       LIMIT 1
     `;
-    
+
     const result = await this.executeQuery(query, [token]);
-    
+
     if (result.rows.length === 0) {
       return null;
     }
-    
+
     return this.mapRowToEntity(result.rows[0]);
   }
 
@@ -237,7 +253,7 @@ export class UserRepository extends BaseRepository<User> {
    */
   async verifyEmail(token: string): Promise<User> {
     const user = await this.findByVerificationToken(token);
-    
+
     if (!user) {
       throw new NotFoundError('Invalid or expired verification token');
     }
@@ -250,21 +266,25 @@ export class UserRepository extends BaseRepository<User> {
       WHERE id = $1
       RETURNING *
     `;
-    
+
     const result = await this.executeQuery(query, [user.id]);
-    
+
     logger.info('User email verified', {
       userId: user.id,
       email: user.email,
     });
-    
+
     return this.mapRowToEntity(result.rows[0]);
   }
 
   /**
    * Set password reset token
    */
-  async setPasswordResetToken(userId: string, token: string, expiresAt: Date): Promise<void> {
+  async setPasswordResetToken(
+    userId: string,
+    token: string,
+    expiresAt: Date
+  ): Promise<void> {
     const query = `
       UPDATE ${this.tableName}
       SET reset_password_token = $2,
@@ -280,7 +300,7 @@ export class UserRepository extends BaseRepository<User> {
    */
   async resetPassword(token: string, newPasswordHash: string): Promise<User> {
     const user = await this.findByPasswordResetToken(token);
-    
+
     if (!user) {
       throw new NotFoundError('Invalid or expired reset token');
     }
@@ -296,14 +316,14 @@ export class UserRepository extends BaseRepository<User> {
       WHERE id = $1
       RETURNING *
     `;
-    
+
     const result = await this.executeQuery(query, [user.id, newPasswordHash]);
-    
+
     logger.info('User password reset', {
       userId: user.id,
       email: user.email,
     });
-    
+
     return this.mapRowToEntity(result.rows[0]);
   }
 
@@ -317,24 +337,28 @@ export class UserRepository extends BaseRepository<User> {
       WHERE id = $1 AND deleted_at IS NULL
       RETURNING *
     `;
-    
+
     const result = await this.executeQuery(query, [userId, newPasswordHash]);
-    
+
     if (result.rows.length === 0) {
       throw new NotFoundError(`User with id ${userId} not found`);
     }
-    
+
     logger.info('User password changed', {
       userId,
     });
-    
+
     return this.mapRowToEntity(result.rows[0]);
   }
 
   /**
    * Update MFA settings
    */
-  async updateMfaSettings(userId: string, enabled: boolean, secret?: string): Promise<User> {
+  async updateMfaSettings(
+    userId: string,
+    enabled: boolean,
+    secret?: string
+  ): Promise<User> {
     const query = `
       UPDATE ${this.tableName}
       SET mfa_enabled = $2,
@@ -343,25 +367,32 @@ export class UserRepository extends BaseRepository<User> {
       WHERE id = $1 AND deleted_at IS NULL
       RETURNING *
     `;
-    
-    const result = await this.executeQuery(query, [userId, enabled, secret || null]);
-    
+
+    const result = await this.executeQuery(query, [
+      userId,
+      enabled,
+      secret || null,
+    ]);
+
     if (result.rows.length === 0) {
       throw new NotFoundError(`User with id ${userId} not found`);
     }
-    
+
     logger.info('User MFA settings updated', {
       userId,
       mfaEnabled: enabled,
     });
-    
+
     return this.mapRowToEntity(result.rows[0]);
   }
 
   /**
    * Get users by role
    */
-  async findByRole(role: UserRole, options: QueryOptions = {}): Promise<PaginationResult<User>> {
+  async findByRole(
+    role: UserRole,
+    options: QueryOptions = {}
+  ): Promise<PaginationResult<User>> {
     return await this.findAll({
       ...options,
       filters: { ...options.filters, role },
@@ -371,7 +402,9 @@ export class UserRepository extends BaseRepository<User> {
   /**
    * Get active users
    */
-  async findActive(options: QueryOptions = {}): Promise<PaginationResult<User>> {
+  async findActive(
+    options: QueryOptions = {}
+  ): Promise<PaginationResult<User>> {
     return await this.findAll({
       ...options,
       filters: { ...options.filters, is_active: true },
@@ -381,7 +414,9 @@ export class UserRepository extends BaseRepository<User> {
   /**
    * Get verified users
    */
-  async findVerified(options: QueryOptions = {}): Promise<PaginationResult<User>> {
+  async findVerified(
+    options: QueryOptions = {}
+  ): Promise<PaginationResult<User>> {
     return await this.findAll({
       ...options,
       filters: { ...options.filters, is_verified: true },
@@ -391,19 +426,21 @@ export class UserRepository extends BaseRepository<User> {
   /**
    * Get locked users
    */
-  async findLocked(options: QueryOptions = {}): Promise<PaginationResult<User>> {
+  async findLocked(
+    options: QueryOptions = {}
+  ): Promise<PaginationResult<User>> {
     const query = `
       SELECT * FROM ${this.tableName}
       WHERE locked_until > NOW() AND deleted_at IS NULL
       ORDER BY locked_until DESC
       LIMIT $1 OFFSET $2
     `;
-    
+
     const { limit = 10, offset = 0 } = options;
     const result = await this.executeQuery(query, [limit, offset]);
-    
+
     const items = result.rows.map((row: any) => this.mapRowToEntity(row));
-    
+
     // Get total count
     const countQuery = `
       SELECT COUNT(*) FROM ${this.tableName}
@@ -411,10 +448,10 @@ export class UserRepository extends BaseRepository<User> {
     `;
     const countResult = await this.executeQuery(countQuery);
     const total = parseInt(countResult.rows[0].count, 10);
-    
+
     const page = Math.floor(offset / limit) + 1;
     const totalPages = Math.ceil(total / limit);
-    
+
     return {
       items,
       total,
@@ -461,10 +498,10 @@ export class UserRepository extends BaseRepository<User> {
       FROM ${this.tableName}
       WHERE deleted_at IS NULL
     `;
-    
+
     const result = await this.executeQuery(statsQuery);
     const stats = result.rows[0];
-    
+
     return {
       total: parseInt(stats.total, 10),
       active: parseInt(stats.active, 10),
@@ -491,13 +528,13 @@ export class UserRepository extends BaseRepository<User> {
       WHERE reset_password_expires < NOW()
         AND reset_password_token IS NOT NULL
     `;
-    
+
     const result = await this.executeQuery(query);
-    
+
     logger.info('Cleaned up expired password reset tokens', {
       count: result.rowCount,
     });
-    
+
     return result.rowCount;
   }
 
@@ -513,13 +550,13 @@ export class UserRepository extends BaseRepository<User> {
       WHERE locked_until < NOW()
         AND locked_until IS NOT NULL
     `;
-    
+
     const result = await this.executeQuery(query);
-    
+
     logger.info('Unlocked expired user accounts', {
       count: result.rowCount,
     });
-    
+
     return result.rowCount;
   }
 }

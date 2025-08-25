@@ -7,13 +7,15 @@ ConnectKit is a modern contact management platform designed to help organization
 ## Who is ConnectKit for?
 
 ### Primary Users
+
 - **Sales Teams** - Track prospects, customers, and leads
-- **Marketing Teams** - Manage contact lists and campaign targets  
+- **Marketing Teams** - Manage contact lists and campaign targets
 - **Customer Success** - Maintain client relationship history
 - **Professional Services** - Organize client and vendor contacts
 - **Small to Enterprise Businesses** - Any organization needing contact management
 
 ### Key Benefits
+
 - **Centralized Contact Management** - All your contacts in one secure place
 - **Smart Organization** - Tag, categorize, and search contacts easily
 - **Team Collaboration** - Share contact lists and updates across your team
@@ -23,29 +25,34 @@ ConnectKit is a modern contact management platform designed to help organization
 ## Core Features
 
 ### Contact Management
+
 - **Complete Contact Profiles** - Store names, emails, phones, addresses, and custom information
-- **Smart Organization** - Use tags and categories to organize contacts your way  
+- **Smart Organization** - Use tags and categories to organize contacts your way
 - **Duplicate Prevention** - Automatically detect and help merge duplicate contacts
 - **Bulk Operations** - Import, export, and update multiple contacts at once
 - **Contact History** - Track all changes and interactions with contacts
 
 ### Search and Discovery
+
 - **Powerful Search** - Find contacts by name, company, email, or any field
 - **Advanced Filters** - Filter by tags, company, date ranges, and more
 - **Smart Suggestions** - Get contact recommendations based on your usage patterns
 
 ### Data Import and Export
+
 - **Easy Import** - Bring contacts from CSV files, other systems, or manual entry
 - **Flexible Export** - Export your data in multiple formats (CSV, Excel, vCard)
 - **Data Validation** - Automatic checking ensures your contact data stays clean
 
 ### Team Collaboration
+
 - **Shared Contact Lists** - Create team-accessible contact groups
 - **Permission Controls** - Control who can view, edit, or delete contacts
 - **Activity Tracking** - See who made changes and when
 - **Notes and Comments** - Add team notes and updates to contact records
 
 ### Security and Privacy
+
 - **Enterprise Security** - Bank-level encryption protects your data
 - **Access Controls** - Role-based permissions for different team members
 - **Audit Trail** - Complete history of all changes and access
@@ -53,8 +60,9 @@ ConnectKit is a modern contact management platform designed to help organization
 - **Secure Backups** - Your data is automatically backed up and protected
 
 ### Integration Capabilities
+
 - **Email Integration** - Connect with Gmail, Outlook, and other email providers
-- **CRM Integration** - Sync with Salesforce, HubSpot, and other CRM systems  
+- **CRM Integration** - Sync with Salesforce, HubSpot, and other CRM systems
 - **Communication Tools** - Connect with Slack, Microsoft Teams, and more
 - **Calendar Sync** - Integrate with Google Calendar and Outlook Calendar
 - **API Access** - Build custom integrations with our developer-friendly API
@@ -62,34 +70,43 @@ ConnectKit is a modern contact management platform designed to help organization
 ## Common Use Cases
 
 ### For Sales Teams
+
 **"I need to track all my prospects and customers in one place"**
+
 - Create detailed contact profiles with company information, notes, and custom fields
 - Tag contacts by deal stage, priority level, or any custom criteria
 - Track interaction history and follow-up reminders
 - Generate reports on contact activity and sales pipeline
 
 **"I want to avoid duplicate contacts and keep data clean"**
+
 - Automatic duplicate detection when adding new contacts
 - Merge duplicate contacts while preserving all information
 - Data validation to ensure email and phone formats are correct
 - Bulk cleanup tools to organize existing contact data
 
-### For Marketing Teams  
+### For Marketing Teams
+
 **"I need to segment contacts for targeted campaigns"**
+
 - Create contact lists based on tags, company size, industry, or custom criteria
 - Export contact lists in formats compatible with email marketing tools
 - Track campaign engagement and update contact records accordingly
 - Maintain compliance with privacy regulations and opt-out preferences
 
 ### For Customer Success
+
 **"I want to see the complete history of customer interactions"**
+
 - View chronological timeline of all contact interactions
 - Add notes and updates that the whole team can see
 - Set reminders for follow-up activities
 - Track customer lifecycle stages and important milestones
 
 ### For Professional Services
+
 **"I need to organize contacts by project and client"**
+
 - Group contacts by client organization or project
 - Track contact roles and responsibilities within each organization
 - Maintain vendor and supplier contact information
@@ -98,6 +115,7 @@ ConnectKit is a modern contact management platform designed to help organization
 ## Getting Started
 
 ### System Requirements
+
 ConnectKit is a web-based application that works on any modern device with an internet connection:
 
 - **Web Browsers**: Chrome, Firefox, Safari, Edge (latest versions)
@@ -106,12 +124,14 @@ ConnectKit is a web-based application that works on any modern device with an in
 - **No Software Installation**: Access ConnectKit through your web browser
 
 ### Account Setup
+
 1. **Sign Up**: Create your ConnectKit account with your email address
 2. **Team Invites**: Invite team members and set their permission levels
 3. **Data Import**: Upload your existing contacts from CSV files or other systems
 4. **Customization**: Set up tags, custom fields, and preferences for your organization
 
 ### Data Migration
+
 We make it easy to move your existing contact data into ConnectKit:
 
 - **CSV Import**: Upload contacts from Excel or Google Sheets
@@ -123,15 +143,19 @@ We make it easy to move your existing contact data into ConnectKit:
 ## Pricing and Plans
 
 ### Starter Plan
+
 **Perfect for small teams getting started**
+
 - Up to 1,000 contacts
 - Basic search and filtering
 - CSV import/export
 - Email support
 - 2 team members
 
-### Professional Plan  
+### Professional Plan
+
 **Ideal for growing businesses**
+
 - Up to 10,000 contacts
 - Advanced search and custom fields
 - CRM integrations
@@ -140,7 +164,9 @@ We make it easy to move your existing contact data into ConnectKit:
 - Unlimited team members
 
 ### Enterprise Plan
+
 **For large organizations with advanced needs**
+
 - Unlimited contacts
 - Advanced security and compliance
 - Custom integrations and API access
@@ -149,18 +175,21 @@ We make it easy to move your existing contact data into ConnectKit:
 - Custom training and onboarding
 
 ### Free Trial
+
 Try ConnectKit free for 14 days with full access to Professional Plan features. No credit card required.
 
 ## Support and Training
 
 ### Getting Help
+
 - **Help Center**: Comprehensive guides and tutorials
-- **Video Training**: Step-by-step video tutorials for all features  
+- **Video Training**: Step-by-step video tutorials for all features
 - **Email Support**: Responsive support team for all questions
 - **Live Chat**: Real-time help during business hours (Pro and Enterprise)
 - **Phone Support**: Direct phone access (Enterprise only)
 
 ### Training Resources
+
 - **Quick Start Guide**: Get up and running in 15 minutes
 - **Best Practices**: Learn how successful teams use ConnectKit
 - **Webinar Training**: Regular live training sessions
@@ -169,6 +198,7 @@ Try ConnectKit free for 14 days with full access to Professional Plan features. 
 ## Privacy and Security
 
 ### Your Data is Protected
+
 - **Industry-Standard Encryption**: Your data is encrypted both in storage and in transit
 - **Regular Backups**: Your contacts are automatically backed up multiple times daily
 - **Access Controls**: You control who on your team can access what information
@@ -176,6 +206,7 @@ Try ConnectKit free for 14 days with full access to Professional Plan features. 
 - **No Data Selling**: We never sell or share your contact data with third parties
 
 ### Data Ownership
+
 - **Your Data, Your Control**: You own all your contact data
 - **Easy Export**: Export your data at any time in standard formats
 - **Account Deletion**: Delete your account and all data at any time
@@ -186,7 +217,7 @@ Try ConnectKit free for 14 days with full access to Professional Plan features. 
 Ready to get started with ConnectKit? Here's how:
 
 1. **Sign Up**: Create your free trial account
-2. **Import Contacts**: Upload your existing contact data  
+2. **Import Contacts**: Upload your existing contact data
 3. **Invite Team**: Add team members and set permissions
 4. **Explore Features**: Try out search, tagging, and integrations
 5. **Get Support**: Contact us with any questions

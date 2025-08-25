@@ -54,7 +54,9 @@ export const isValidPassword = (password: string): boolean => {
   );
 };
 
-export const getPasswordStrength = (password: string): {
+export const getPasswordStrength = (
+  password: string
+): {
   score: number;
   feedback: string[];
   isStrong: boolean;
@@ -127,18 +129,26 @@ export const validateContactData = (data: {
   // First name validation
   if (!isRequired(data.firstName)) {
     errors.firstName = 'First name is required';
-  } else if (!minLength(data.firstName.trim(), CONTACT_VALIDATION.NAME_MIN_LENGTH)) {
+  } else if (
+    !minLength(data.firstName.trim(), CONTACT_VALIDATION.NAME_MIN_LENGTH)
+  ) {
     errors.firstName = `First name must be at least ${CONTACT_VALIDATION.NAME_MIN_LENGTH} character`;
-  } else if (!maxLength(data.firstName.trim(), CONTACT_VALIDATION.NAME_MAX_LENGTH)) {
+  } else if (
+    !maxLength(data.firstName.trim(), CONTACT_VALIDATION.NAME_MAX_LENGTH)
+  ) {
     errors.firstName = `First name must be less than ${CONTACT_VALIDATION.NAME_MAX_LENGTH} characters`;
   }
 
   // Last name validation
   if (!isRequired(data.lastName)) {
     errors.lastName = 'Last name is required';
-  } else if (!minLength(data.lastName.trim(), CONTACT_VALIDATION.NAME_MIN_LENGTH)) {
+  } else if (
+    !minLength(data.lastName.trim(), CONTACT_VALIDATION.NAME_MIN_LENGTH)
+  ) {
     errors.lastName = `Last name must be at least ${CONTACT_VALIDATION.NAME_MIN_LENGTH} character`;
-  } else if (!maxLength(data.lastName.trim(), CONTACT_VALIDATION.NAME_MAX_LENGTH)) {
+  } else if (
+    !maxLength(data.lastName.trim(), CONTACT_VALIDATION.NAME_MAX_LENGTH)
+  ) {
     errors.lastName = `Last name must be less than ${CONTACT_VALIDATION.NAME_MAX_LENGTH} characters`;
   }
 
@@ -146,7 +156,9 @@ export const validateContactData = (data: {
   if (data.email && data.email.trim()) {
     if (!isValidEmail(data.email)) {
       errors.email = 'Please enter a valid email address';
-    } else if (!maxLength(data.email.trim(), CONTACT_VALIDATION.EMAIL_MAX_LENGTH)) {
+    } else if (
+      !maxLength(data.email.trim(), CONTACT_VALIDATION.EMAIL_MAX_LENGTH)
+    ) {
       errors.email = `Email must be less than ${CONTACT_VALIDATION.EMAIL_MAX_LENGTH} characters`;
     }
   }
@@ -155,21 +167,27 @@ export const validateContactData = (data: {
   if (data.phone && data.phone.trim()) {
     if (!isValidPhone(data.phone)) {
       errors.phone = 'Please enter a valid phone number';
-    } else if (!maxLength(data.phone.trim(), CONTACT_VALIDATION.PHONE_MAX_LENGTH)) {
+    } else if (
+      !maxLength(data.phone.trim(), CONTACT_VALIDATION.PHONE_MAX_LENGTH)
+    ) {
       errors.phone = `Phone number must be less than ${CONTACT_VALIDATION.PHONE_MAX_LENGTH} characters`;
     }
   }
 
   // Company validation (optional)
   if (data.company && data.company.trim()) {
-    if (!maxLength(data.company.trim(), CONTACT_VALIDATION.COMPANY_MAX_LENGTH)) {
+    if (
+      !maxLength(data.company.trim(), CONTACT_VALIDATION.COMPANY_MAX_LENGTH)
+    ) {
       errors.company = `Company name must be less than ${CONTACT_VALIDATION.COMPANY_MAX_LENGTH} characters`;
     }
   }
 
   // Job title validation (optional)
   if (data.jobTitle && data.jobTitle.trim()) {
-    if (!maxLength(data.jobTitle.trim(), CONTACT_VALIDATION.JOB_TITLE_MAX_LENGTH)) {
+    if (
+      !maxLength(data.jobTitle.trim(), CONTACT_VALIDATION.JOB_TITLE_MAX_LENGTH)
+    ) {
       errors.jobTitle = `Job title must be less than ${CONTACT_VALIDATION.JOB_TITLE_MAX_LENGTH} characters`;
     }
   }
@@ -193,8 +211,9 @@ export const validateContactData = (data: {
     if (data.tags.length > CONTACT_VALIDATION.MAX_TAGS) {
       errors.tags = `Maximum ${CONTACT_VALIDATION.MAX_TAGS} tags allowed`;
     } else {
-      const invalidTag = data.tags.find(tag => 
-        !tag.trim() || tag.trim().length > CONTACT_VALIDATION.TAG_MAX_LENGTH
+      const invalidTag = data.tags.find(
+        tag =>
+          !tag.trim() || tag.trim().length > CONTACT_VALIDATION.TAG_MAX_LENGTH
       );
       if (invalidTag) {
         errors.tags = `Each tag must be 1-${CONTACT_VALIDATION.TAG_MAX_LENGTH} characters`;
@@ -243,22 +262,38 @@ export const validateUserProfile = (data: {
   }
 
   // Bio validation (optional)
-  if (data.bio && data.bio.trim() && !maxLength(data.bio.trim(), USER_VALIDATION.BIO_MAX_LENGTH)) {
+  if (
+    data.bio &&
+    data.bio.trim() &&
+    !maxLength(data.bio.trim(), USER_VALIDATION.BIO_MAX_LENGTH)
+  ) {
     errors.bio = `Bio must be less than ${USER_VALIDATION.BIO_MAX_LENGTH} characters`;
   }
 
   // Company validation (optional)
-  if (data.company && data.company.trim() && !maxLength(data.company.trim(), USER_VALIDATION.COMPANY_MAX_LENGTH)) {
+  if (
+    data.company &&
+    data.company.trim() &&
+    !maxLength(data.company.trim(), USER_VALIDATION.COMPANY_MAX_LENGTH)
+  ) {
     errors.company = `Company name must be less than ${USER_VALIDATION.COMPANY_MAX_LENGTH} characters`;
   }
 
   // Job title validation (optional)
-  if (data.jobTitle && data.jobTitle.trim() && !maxLength(data.jobTitle.trim(), USER_VALIDATION.JOB_TITLE_MAX_LENGTH)) {
+  if (
+    data.jobTitle &&
+    data.jobTitle.trim() &&
+    !maxLength(data.jobTitle.trim(), USER_VALIDATION.JOB_TITLE_MAX_LENGTH)
+  ) {
     errors.jobTitle = `Job title must be less than ${USER_VALIDATION.JOB_TITLE_MAX_LENGTH} characters`;
   }
 
   // Location validation (optional)
-  if (data.location && data.location.trim() && !maxLength(data.location.trim(), USER_VALIDATION.LOCATION_MAX_LENGTH)) {
+  if (
+    data.location &&
+    data.location.trim() &&
+    !maxLength(data.location.trim(), USER_VALIDATION.LOCATION_MAX_LENGTH)
+  ) {
     errors.location = `Location must be less than ${USER_VALIDATION.LOCATION_MAX_LENGTH} characters`;
   }
 
@@ -266,7 +301,9 @@ export const validateUserProfile = (data: {
   if (data.website && data.website.trim()) {
     if (!isValidUrl(data.website)) {
       errors.website = 'Please enter a valid website URL';
-    } else if (!maxLength(data.website.trim(), USER_VALIDATION.WEBSITE_MAX_LENGTH)) {
+    } else if (
+      !maxLength(data.website.trim(), USER_VALIDATION.WEBSITE_MAX_LENGTH)
+    ) {
       errors.website = `Website URL must be less than ${USER_VALIDATION.WEBSITE_MAX_LENGTH} characters`;
     }
   }
@@ -298,7 +335,8 @@ export const validateRegistration = (data: {
 
   // Password validation
   if (!isValidPassword(data.password)) {
-    errors.password = 'Password must be at least 8 characters and contain uppercase, lowercase, and number';
+    errors.password =
+      'Password must be at least 8 characters and contain uppercase, lowercase, and number';
   }
 
   // Confirm password validation
@@ -352,7 +390,8 @@ export const validatePasswordChange = (data: {
 
   // New password validation
   if (!isValidPassword(data.newPassword)) {
-    errors.newPassword = 'New password must be at least 8 characters and contain uppercase, lowercase, and number';
+    errors.newPassword =
+      'New password must be at least 8 characters and contain uppercase, lowercase, and number';
   }
 
   // Confirm password validation
@@ -403,16 +442,16 @@ export const sanitizeInput = (input: string): string => {
 export const formatPhoneNumber = (phone: string): string => {
   // Remove all non-digit characters except + at the beginning
   const cleaned = phone.replace(/[^\d+]/g, '');
-  
+
   // Basic US phone number formatting
   if (cleaned.length === 10) {
     return cleaned.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
   }
-  
+
   if (cleaned.length === 11 && cleaned.startsWith('1')) {
     return cleaned.replace(/(\d{1})(\d{3})(\d{3})(\d{4})/, '+$1 ($2) $3-$4');
   }
-  
+
   // Return as-is if doesn't match common patterns
   return cleaned;
 };

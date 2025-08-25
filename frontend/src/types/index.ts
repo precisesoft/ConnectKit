@@ -5,7 +5,7 @@
 // Export all user types
 export * from './user.types';
 
-// Export all contact types  
+// Export all contact types
 export * from './contact.types';
 
 // Common/shared types

@@ -32,7 +32,9 @@ export async function startServer(): Promise<Server> {
         endpoints: {
           health: '/health',
           api: appConfig.getApiUrl(),
-          docs: appConfig.get('features').swagger ? `${appConfig.getApiUrl()}/docs` : null,
+          docs: appConfig.get('features').swagger
+            ? `${appConfig.getApiUrl()}/docs`
+            : null,
         },
       });
 
@@ -85,7 +87,7 @@ export async function startServer(): Promise<Server> {
       logger.info(`Received ${signal}. Starting graceful shutdown...`);
 
       // Stop accepting new connections
-      server.close((error) => {
+      server.close(error => {
         if (error) {
           logger.error('Error closing server:', error);
         } else {
@@ -113,7 +115,7 @@ export async function startServer(): Promise<Server> {
         error: error.message,
         stack: error.stack,
       });
-      
+
       // Give logger time to write before exiting
       setTimeout(() => {
         process.exit(1);
@@ -126,7 +128,7 @@ export async function startServer(): Promise<Server> {
         stack: reason instanceof Error ? reason.stack : undefined,
         promise: promise.toString(),
       });
-      
+
       // Don't exit for unhandled rejections in production
       if (!appConfig.isProduction()) {
         setTimeout(() => {
@@ -136,7 +138,6 @@ export async function startServer(): Promise<Server> {
     });
 
     return server;
-
   } catch (error) {
     logger.error('Failed to start server:', error);
     process.exit(1);
@@ -167,13 +168,12 @@ export async function checkReadiness(): Promise<boolean> {
     // Check database connection
     const { databaseConnection } = await import('./config/database.config');
     const dbHealthy = await databaseConnection.healthCheck();
-    
+
     // Check Redis connection
     const { redisConnection } = await import('./config/redis.config');
     const redisHealthy = await redisConnection.healthCheck();
-    
+
     return dbHealthy && redisHealthy;
-    
   } catch (error) {
     logger.error('Readiness check failed:', error);
     return false;
@@ -182,7 +182,7 @@ export async function checkReadiness(): Promise<boolean> {
 
 // Only start server if this file is executed directly
 if (require.main === module) {
-  startServer().catch((error) => {
+  startServer().catch(error => {
     logger.error('Failed to start server:', error);
     process.exit(1);
   });

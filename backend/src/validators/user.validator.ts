@@ -3,9 +3,7 @@ import { commonValidations } from '../middleware/validation.middleware';
 
 export const userValidators = {
   // User ID parameter validation
-  userId: [
-    commonValidations.uuid('id'),
-  ],
+  userId: [commonValidations.uuid('id')],
 
   // Update user profile validation
   updateProfile: [
@@ -41,8 +39,16 @@ export const userValidators = {
     commonValidations.page(),
     commonValidations.limit(),
     commonValidations.sort('sort', [
-      'firstName', 'lastName', 'email', 'username', 'role', 
-      'isActive', 'isVerified', 'createdAt', 'updatedAt', 'lastLoginAt'
+      'firstName',
+      'lastName',
+      'email',
+      'username',
+      'role',
+      'isActive',
+      'isVerified',
+      'createdAt',
+      'updatedAt',
+      'lastLoginAt',
     ]),
     commonValidations.order(),
     commonValidations.search(),

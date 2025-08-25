@@ -1,5 +1,13 @@
-import { BaseRepository, QueryOptions, PaginationResult } from './base.repository';
-import { Contact, CreateContactDTO, ContactStatus } from '../models/contact.model';
+import {
+  BaseRepository,
+  QueryOptions,
+  PaginationResult,
+} from './base.repository';
+import {
+  Contact,
+  CreateContactDTO,
+  ContactStatus,
+} from '../models/contact.model';
 import { ConflictError, NotFoundError, ForbiddenError } from '../utils/errors';
 import { logger } from '../utils/logger';
 
@@ -39,7 +47,7 @@ export class ContactRepository extends BaseRepository<Contact> {
       'status',
       'is_favorite',
       'created_at',
-      'updated_at'
+      'updated_at',
     ];
   }
 
@@ -65,7 +73,7 @@ export class ContactRepository extends BaseRepository<Contact> {
     };
 
     const contact = new Contact(contactData);
-    
+
     // Override properties with database values
     contact.id = row.id;
     contact.metadata = row.metadata || {};
@@ -87,8 +95,10 @@ export class ContactRepository extends BaseRepository<Contact> {
     if (entity.phone !== undefined) row.phone = entity.phone;
     if (entity.company !== undefined) row.company = entity.company;
     if (entity.jobTitle !== undefined) row.job_title = entity.jobTitle;
-    if (entity.addressLine1 !== undefined) row.address_line1 = entity.addressLine1;
-    if (entity.addressLine2 !== undefined) row.address_line2 = entity.addressLine2;
+    if (entity.addressLine1 !== undefined)
+      row.address_line1 = entity.addressLine1;
+    if (entity.addressLine2 !== undefined)
+      row.address_line2 = entity.addressLine2;
     if (entity.city !== undefined) row.city = entity.city;
     if (entity.state !== undefined) row.state = entity.state;
     if (entity.postalCode !== undefined) row.postal_code = entity.postalCode;
@@ -97,7 +107,8 @@ export class ContactRepository extends BaseRepository<Contact> {
     if (entity.tags !== undefined) row.tags = entity.tags;
     if (entity.status !== undefined) row.status = entity.status;
     if (entity.isFavorite !== undefined) row.is_favorite = entity.isFavorite;
-    if (entity.metadata !== undefined) row.metadata = JSON.stringify(entity.metadata);
+    if (entity.metadata !== undefined)
+      row.metadata = JSON.stringify(entity.metadata);
     if (entity.createdAt !== undefined) row.created_at = entity.createdAt;
     if (entity.updatedAt !== undefined) row.updated_at = entity.updatedAt;
     if (entity.deletedAt !== undefined) row.deleted_at = entity.deletedAt;
@@ -111,7 +122,10 @@ export class ContactRepository extends BaseRepository<Contact> {
   async createContact(contactData: CreateContactDTO): Promise<Contact> {
     // Check for duplicate email within the same user
     if (contactData.email) {
-      const existingContact = await this.findByUserAndEmail(contactData.userId, contactData.email);
+      const existingContact = await this.findByUserAndEmail(
+        contactData.userId,
+        contactData.email
+      );
       if (existingContact) {
         throw new ConflictError(
           `Contact with email ${contactData.email} already exists for this user`
@@ -121,7 +135,7 @@ export class ContactRepository extends BaseRepository<Contact> {
 
     const contact = new Contact(contactData);
     const createdContact = await this.create(contact);
-    
+
     logger.info('Contact created', {
       contactId: createdContact.id,
       userId: createdContact.userId,
@@ -135,7 +149,10 @@ export class ContactRepository extends BaseRepository<Contact> {
   /**
    * Find contacts by user ID
    */
-  async findByUserId(userId: string, options: ContactSearchOptions = {}): Promise<PaginationResult<Contact>> {
+  async findByUserId(
+    userId: string,
+    options: ContactSearchOptions = {}
+  ): Promise<PaginationResult<Contact>> {
     return await this.findAll({
       ...options,
       filters: { ...options.filters, user_id: userId },
@@ -145,21 +162,30 @@ export class ContactRepository extends BaseRepository<Contact> {
   /**
    * Find contact by user ID and contact ID
    */
-  async findByUserAndId(userId: string, contactId: string): Promise<Contact | null> {
+  async findByUserAndId(
+    userId: string,
+    contactId: string
+  ): Promise<Contact | null> {
     return await this.findOne({ user_id: userId, id: contactId });
   }
 
   /**
    * Find contact by user ID and email
    */
-  async findByUserAndEmail(userId: string, email: string): Promise<Contact | null> {
+  async findByUserAndEmail(
+    userId: string,
+    email: string
+  ): Promise<Contact | null> {
     return await this.findOne({ user_id: userId, email: email.toLowerCase() });
   }
 
   /**
    * Find contact by user ID and phone
    */
-  async findByUserAndPhone(userId: string, phone: string): Promise<Contact | null> {
+  async findByUserAndPhone(
+    userId: string,
+    phone: string
+  ): Promise<Contact | null> {
     return await this.findOne({ user_id: userId, phone });
   }
 
@@ -168,15 +194,15 @@ export class ContactRepository extends BaseRepository<Contact> {
    */
   async verifyOwnership(contactId: string, userId: string): Promise<Contact> {
     const contact = await this.findById(contactId);
-    
+
     if (!contact) {
       throw new NotFoundError(`Contact with id ${contactId} not found`);
     }
-    
+
     if (contact.userId !== userId) {
       throw new ForbiddenError('Access denied to this contact');
     }
-    
+
     return contact;
   }
 
@@ -184,30 +210,33 @@ export class ContactRepository extends BaseRepository<Contact> {
    * Update contact with ownership check
    */
   async updateByUser(
-    contactId: string, 
-    userId: string, 
+    contactId: string,
+    userId: string,
     updates: Partial<Contact>
   ): Promise<Contact> {
     await this.verifyOwnership(contactId, userId);
-    
+
     // Check for email conflicts if updating email
     if (updates.email) {
-      const existingContact = await this.findByUserAndEmail(userId, updates.email);
+      const existingContact = await this.findByUserAndEmail(
+        userId,
+        updates.email
+      );
       if (existingContact && existingContact.id !== contactId) {
         throw new ConflictError(
           `Contact with email ${updates.email} already exists for this user`
         );
       }
     }
-    
+
     const updatedContact = await this.update(contactId, updates);
-    
+
     logger.info('Contact updated', {
       contactId,
       userId,
       name: updatedContact.getFullName(),
     });
-    
+
     return updatedContact;
   }
 
@@ -217,7 +246,7 @@ export class ContactRepository extends BaseRepository<Contact> {
   async deleteByUser(contactId: string, userId: string): Promise<void> {
     await this.verifyOwnership(contactId, userId);
     await this.softDelete(contactId);
-    
+
     logger.info('Contact deleted', {
       contactId,
       userId,
@@ -227,7 +256,10 @@ export class ContactRepository extends BaseRepository<Contact> {
   /**
    * Get favorite contacts for a user
    */
-  async findFavoritesByUser(userId: string, options: QueryOptions = {}): Promise<PaginationResult<Contact>> {
+  async findFavoritesByUser(
+    userId: string,
+    options: QueryOptions = {}
+  ): Promise<PaginationResult<Contact>> {
     return await this.findAll({
       ...options,
       filters: { ...options.filters, user_id: userId, is_favorite: true },
@@ -238,8 +270,8 @@ export class ContactRepository extends BaseRepository<Contact> {
    * Get contacts by status for a user
    */
   async findByUserAndStatus(
-    userId: string, 
-    status: ContactStatus, 
+    userId: string,
+    status: ContactStatus,
     options: QueryOptions = {}
   ): Promise<PaginationResult<Contact>> {
     return await this.findAll({
@@ -252,8 +284,8 @@ export class ContactRepository extends BaseRepository<Contact> {
    * Get contacts by company for a user
    */
   async findByUserAndCompany(
-    userId: string, 
-    company: string, 
+    userId: string,
+    company: string,
     options: QueryOptions = {}
   ): Promise<PaginationResult<Contact>> {
     return await this.findAll({
@@ -266,16 +298,16 @@ export class ContactRepository extends BaseRepository<Contact> {
    * Get contacts by tags for a user
    */
   async findByUserAndTags(
-    userId: string, 
-    tags: string[], 
+    userId: string,
+    tags: string[],
     options: QueryOptions = {}
   ): Promise<PaginationResult<Contact>> {
     const { limit = 10, offset = 0, sort, order = 'DESC' } = options;
-    
+
     // Build query to find contacts that have any of the specified tags
     const placeholders = tags.map((_, index) => `$${index + 2}`).join(', ');
     const orderByClause = this.buildOrderByClause(sort, order);
-    
+
     const query = `
       SELECT * FROM ${this.tableName}
       WHERE user_id = $1 
@@ -284,28 +316,28 @@ export class ContactRepository extends BaseRepository<Contact> {
       ${orderByClause}
       LIMIT $${tags.length + 2} OFFSET $${tags.length + 3}
     `;
-    
+
     const countQuery = `
       SELECT COUNT(*) FROM ${this.tableName}
       WHERE user_id = $1 
         AND deleted_at IS NULL
         AND tags && ARRAY[${placeholders}]
     `;
-    
+
     const params = [userId, ...tags];
-    
+
     // Execute queries
     const [dataResult, countResult] = await Promise.all([
       this.executeQuery(query, [...params, limit, offset]),
       this.executeQuery(countQuery, params),
     ]);
-    
+
     const items = dataResult.rows.map((row: any) => this.mapRowToEntity(row));
     const total = parseInt(countResult.rows[0].count, 10);
-    
+
     const page = Math.floor(offset / limit) + 1;
     const totalPages = Math.ceil(total / limit);
-    
+
     return {
       items,
       total,
@@ -325,7 +357,15 @@ export class ContactRepository extends BaseRepository<Contact> {
     searchTerm: string,
     options: ContactSearchOptions = {}
   ): Promise<PaginationResult<Contact>> {
-    const searchFields = ['first_name', 'last_name', 'email', 'phone', 'company', 'job_title', 'notes'];
+    const searchFields = [
+      'first_name',
+      'last_name',
+      'email',
+      'phone',
+      'company',
+      'job_title',
+      'notes',
+    ];
     return await this.search(searchTerm, searchFields, {
       ...options,
       filters: { ...options.filters, user_id: userId },
@@ -345,7 +385,7 @@ export class ContactRepository extends BaseRepository<Contact> {
         AND deleted_at IS NULL
       ORDER BY company
     `;
-    
+
     const result = await this.executeQuery(query, [userId]);
     return result.rows.map((row: any) => row.company);
   }
@@ -363,7 +403,7 @@ export class ContactRepository extends BaseRepository<Contact> {
         AND deleted_at IS NULL
       ORDER BY tag
     `;
-    
+
     const result = await this.executeQuery(query, [userId]);
     return result.rows.map((row: any) => row.tag);
   }
@@ -397,7 +437,7 @@ export class ContactRepository extends BaseRepository<Contact> {
       FROM ${this.tableName}
       WHERE user_id = $1 AND deleted_at IS NULL
     `;
-    
+
     const companiesQuery = `
       SELECT company, COUNT(*) as count
       FROM ${this.tableName}
@@ -409,7 +449,7 @@ export class ContactRepository extends BaseRepository<Contact> {
       ORDER BY count DESC
       LIMIT 5
     `;
-    
+
     const tagsQuery = `
       SELECT tag, COUNT(*) as count
       FROM (
@@ -424,15 +464,15 @@ export class ContactRepository extends BaseRepository<Contact> {
       ORDER BY count DESC
       LIMIT 10
     `;
-    
+
     const [statsResult, companiesResult, tagsResult] = await Promise.all([
       this.executeQuery(statsQuery, [userId]),
       this.executeQuery(companiesQuery, [userId]),
       this.executeQuery(tagsQuery, [userId]),
     ]);
-    
+
     const stats = statsResult.rows[0];
-    
+
     return {
       total: parseInt(stats.total, 10),
       active: parseInt(stats.active, 10),
@@ -471,22 +511,27 @@ export class ContactRepository extends BaseRepository<Contact> {
       SELECT id FROM ${this.tableName}
       WHERE id = ANY($1) AND user_id = $2 AND deleted_at IS NULL
     `;
-    
-    const verificationResult = await this.executeQuery(verificationQuery, [contactIds, userId]);
+
+    const verificationResult = await this.executeQuery(verificationQuery, [
+      contactIds,
+      userId,
+    ]);
     const validIds = verificationResult.rows.map((row: any) => row.id);
-    
+
     if (validIds.length !== contactIds.length) {
       const invalidIds = contactIds.filter(id => !validIds.includes(id));
-      throw new ForbiddenError(`Access denied to contacts: ${invalidIds.join(', ')}`);
+      throw new ForbiddenError(
+        `Access denied to contacts: ${invalidIds.join(', ')}`
+      );
     }
-    
+
     const results = await this.bulkUpdate(updates);
-    
+
     logger.info('Bulk contact update', {
       userId,
       updateCount: results.length,
     });
-    
+
     return results;
   }
 
@@ -506,12 +551,14 @@ export class ContactRepository extends BaseRepository<Contact> {
   /**
    * Duplicate contact detection
    */
-  async findPotentialDuplicates(userId: string): Promise<Array<{ 
-    contacts: Contact[]; 
-    reason: string; 
-  }>> {
+  async findPotentialDuplicates(userId: string): Promise<
+    Array<{
+      contacts: Contact[];
+      reason: string;
+    }>
+  > {
     const duplicateGroups: Array<{ contacts: Contact[]; reason: string }> = [];
-    
+
     // Find duplicates by email
     const emailDuplicatesQuery = `
       SELECT email, array_agg(id) as contact_ids
@@ -523,20 +570,20 @@ export class ContactRepository extends BaseRepository<Contact> {
       GROUP BY email
       HAVING COUNT(*) > 1
     `;
-    
+
     const emailResult = await this.executeQuery(emailDuplicatesQuery, [userId]);
-    
+
     for (const row of emailResult.rows) {
       const contacts = await Promise.all(
         row.contact_ids.map((id: string) => this.findById(id))
       );
-      
+
       duplicateGroups.push({
         contacts: contacts.filter(Boolean) as Contact[],
         reason: `Duplicate email: ${row.email}`,
       });
     }
-    
+
     // Find duplicates by phone
     const phoneDuplicatesQuery = `
       SELECT phone, array_agg(id) as contact_ids
@@ -548,20 +595,20 @@ export class ContactRepository extends BaseRepository<Contact> {
       GROUP BY phone
       HAVING COUNT(*) > 1
     `;
-    
+
     const phoneResult = await this.executeQuery(phoneDuplicatesQuery, [userId]);
-    
+
     for (const row of phoneResult.rows) {
       const contacts = await Promise.all(
         row.contact_ids.map((id: string) => this.findById(id))
       );
-      
+
       duplicateGroups.push({
         contacts: contacts.filter(Boolean) as Contact[],
         reason: `Duplicate phone: ${row.phone}`,
       });
     }
-    
+
     return duplicateGroups;
   }
 }

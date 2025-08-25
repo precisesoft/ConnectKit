@@ -20,7 +20,5 @@
     "orta.vscode-jest",
     "ms-vscode.test-adapter-converter"
   ],
-  "unwantedRecommendations": [
-    "ms-vscode.vscode-typescript"
-  ]
+  "unwantedRecommendations": ["ms-vscode.vscode-typescript"]
 }

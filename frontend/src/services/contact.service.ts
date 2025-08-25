@@ -21,10 +21,12 @@ export class ContactService {
   /**
    * Get paginated list of contacts with optional filters
    */
-  static async getContacts(filters?: ContactFilters): Promise<PaginatedResponse<Contact>> {
+  static async getContacts(
+    filters?: ContactFilters
+  ): Promise<PaginatedResponse<Contact>> {
     try {
       const params = new URLSearchParams();
-      
+
       if (filters) {
         Object.entries(filters).forEach(([key, value]) => {
           if (value !== undefined && value !== null && value !== '') {
@@ -40,7 +42,7 @@ export class ContactService {
       const response = await ApiClient.get<PaginatedResponse<Contact>>(
         `/contacts?${params.toString()}`
       );
-      
+
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Failed to fetch contacts');
       }
@@ -58,7 +60,7 @@ export class ContactService {
   static async getContact(id: string): Promise<Contact> {
     try {
       const response = await ApiClient.get<Contact>(`/contacts/${id}`);
-      
+
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Failed to fetch contact');
       }
@@ -73,10 +75,12 @@ export class ContactService {
   /**
    * Create a new contact
    */
-  static async createContact(contactData: CreateContactRequest): Promise<Contact> {
+  static async createContact(
+    contactData: CreateContactRequest
+  ): Promise<Contact> {
     try {
       const response = await ApiClient.post<Contact>('/contacts', contactData);
-      
+
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Failed to create contact');
       }
@@ -91,10 +95,13 @@ export class ContactService {
   /**
    * Update an existing contact
    */
-  static async updateContact(id: string, updates: UpdateContactRequest): Promise<Contact> {
+  static async updateContact(
+    id: string,
+    updates: UpdateContactRequest
+  ): Promise<Contact> {
     try {
       const response = await ApiClient.put<Contact>(`/contacts/${id}`, updates);
-      
+
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Failed to update contact');
       }
@@ -109,10 +116,16 @@ export class ContactService {
   /**
    * Partially update a contact (PATCH)
    */
-  static async patchContact(id: string, updates: Partial<UpdateContactRequest>): Promise<Contact> {
+  static async patchContact(
+    id: string,
+    updates: Partial<UpdateContactRequest>
+  ): Promise<Contact> {
     try {
-      const response = await ApiClient.patch<Contact>(`/contacts/${id}`, updates);
-      
+      const response = await ApiClient.patch<Contact>(
+        `/contacts/${id}`,
+        updates
+      );
+
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Failed to patch contact');
       }
@@ -130,7 +143,7 @@ export class ContactService {
   static async deleteContact(id: string): Promise<void> {
     try {
       const response = await ApiClient.delete<void>(`/contacts/${id}`);
-      
+
       if (!response.success) {
         throw new Error(response.message || 'Failed to delete contact');
       }
@@ -143,13 +156,15 @@ export class ContactService {
   /**
    * Delete multiple contacts
    */
-  static async deleteContacts(ids: string[]): Promise<{ deleted: number; failed: number }> {
+  static async deleteContacts(
+    ids: string[]
+  ): Promise<{ deleted: number; failed: number }> {
     try {
-      const response = await ApiClient.delete<{ deleted: number; failed: number }>(
-        '/contacts/batch',
-        { data: { ids } }
-      );
-      
+      const response = await ApiClient.delete<{
+        deleted: number;
+        failed: number;
+      }>('/contacts/batch', { data: { ids } });
+
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Failed to delete contacts');
       }
@@ -166,8 +181,10 @@ export class ContactService {
    */
   static async toggleFavorite(id: string): Promise<Contact> {
     try {
-      const response = await ApiClient.patch<Contact>(`/contacts/${id}/favorite`);
-      
+      const response = await ApiClient.patch<Contact>(
+        `/contacts/${id}/favorite`
+      );
+
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Failed to toggle favorite status');
       }
@@ -185,9 +202,11 @@ export class ContactService {
   static async getFavoriteContacts(): Promise<Contact[]> {
     try {
       const response = await ApiClient.get<Contact[]>('/contacts/favorites');
-      
+
       if (!response.success || !response.data) {
-        throw new Error(response.message || 'Failed to fetch favorite contacts');
+        throw new Error(
+          response.message || 'Failed to fetch favorite contacts'
+        );
       }
 
       return response.data;
@@ -200,10 +219,15 @@ export class ContactService {
   /**
    * Search contacts
    */
-  static async searchContacts(searchRequest: SearchRequest): Promise<SearchResult> {
+  static async searchContacts(
+    searchRequest: SearchRequest
+  ): Promise<SearchResult> {
     try {
-      const response = await ApiClient.post<SearchResult>('/contacts/search', searchRequest);
-      
+      const response = await ApiClient.post<SearchResult>(
+        '/contacts/search',
+        searchRequest
+      );
+
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Failed to search contacts');
       }
@@ -221,9 +245,11 @@ export class ContactService {
   static async getContactStats(): Promise<ContactStats> {
     try {
       const response = await ApiClient.get<ContactStats>('/contacts/stats');
-      
+
       if (!response.success || !response.data) {
-        throw new Error(response.message || 'Failed to fetch contact statistics');
+        throw new Error(
+          response.message || 'Failed to fetch contact statistics'
+        );
       }
 
       return response.data;
@@ -239,7 +265,7 @@ export class ContactService {
   static async getTags(): Promise<string[]> {
     try {
       const response = await ApiClient.get<string[]>('/contacts/tags');
-      
+
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Failed to fetch tags');
       }
@@ -257,7 +283,7 @@ export class ContactService {
   static async getCompanies(): Promise<string[]> {
     try {
       const response = await ApiClient.get<string[]>('/contacts/companies');
-      
+
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Failed to fetch companies');
       }
@@ -283,7 +309,7 @@ export class ContactService {
         file,
         onUploadProgress
       );
-      
+
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Failed to upload avatar');
       }
@@ -300,8 +326,10 @@ export class ContactService {
    */
   static async removeAvatar(contactId: string): Promise<void> {
     try {
-      const response = await ApiClient.delete<void>(`/contacts/${contactId}/avatar`);
-      
+      const response = await ApiClient.delete<void>(
+        `/contacts/${contactId}/avatar`
+      );
+
       if (!response.success) {
         throw new Error(response.message || 'Failed to remove avatar');
       }
@@ -318,7 +346,7 @@ export class ContactService {
     try {
       const params = new URLSearchParams();
       params.append('format', request.format);
-      
+
       if (request.filters) {
         Object.entries(request.filters).forEach(([key, value]) => {
           if (value !== undefined && value !== null && value !== '') {
@@ -332,7 +360,10 @@ export class ContactService {
       }
 
       const filename = `contacts-export-${new Date().toISOString().split('T')[0]}.${request.format}`;
-      await ApiClient.download(`/contacts/export?${params.toString()}`, filename);
+      await ApiClient.download(
+        `/contacts/export?${params.toString()}`,
+        filename
+      );
     } catch (error) {
       console.error('Export contacts error:', error);
       throw error;
@@ -363,7 +394,7 @@ export class ContactService {
         onUploadProgress,
         additionalData
       );
-      
+
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Failed to import contacts');
       }
@@ -380,8 +411,10 @@ export class ContactService {
    */
   static async getRecentContacts(limit = 10): Promise<Contact[]> {
     try {
-      const response = await ApiClient.get<Contact[]>(`/contacts/recent?limit=${limit}`);
-      
+      const response = await ApiClient.get<Contact[]>(
+        `/contacts/recent?limit=${limit}`
+      );
+
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Failed to fetch recent contacts');
       }
@@ -398,8 +431,10 @@ export class ContactService {
    */
   static async duplicateContact(id: string): Promise<Contact> {
     try {
-      const response = await ApiClient.post<Contact>(`/contacts/${id}/duplicate`);
-      
+      const response = await ApiClient.post<Contact>(
+        `/contacts/${id}/duplicate`
+      );
+
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Failed to duplicate contact');
       }
@@ -424,11 +459,14 @@ export class ContactService {
     }
   ): Promise<Contact> {
     try {
-      const response = await ApiClient.post<Contact>(`/contacts/${primaryId}/merge`, {
-        secondaryId,
-        options: mergeOptions,
-      });
-      
+      const response = await ApiClient.post<Contact>(
+        `/contacts/${primaryId}/merge`,
+        {
+          secondaryId,
+          options: mergeOptions,
+        }
+      );
+
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Failed to merge contacts');
       }

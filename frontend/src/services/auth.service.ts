@@ -6,9 +6,7 @@ import {
   ResetPasswordRequest,
   ChangePasswordRequest,
   AuthResponse,
-  RefreshTokenRequest,
   RefreshTokenResponse,
-  ApiResponse,
 } from './types';
 
 /**
@@ -20,8 +18,11 @@ export class AuthService {
    */
   static async login(credentials: LoginRequest): Promise<AuthResponse> {
     try {
-      const response = await ApiClient.post<AuthResponse>('/auth/login', credentials);
-      
+      const response = await ApiClient.post<AuthResponse>(
+        '/auth/login',
+        credentials
+      );
+
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Login failed');
       }
@@ -38,8 +39,11 @@ export class AuthService {
    */
   static async register(userData: RegisterRequest): Promise<AuthResponse> {
     try {
-      const response = await ApiClient.post<AuthResponse>('/auth/register', userData);
-      
+      const response = await ApiClient.post<AuthResponse>(
+        '/auth/register',
+        userData
+      );
+
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Registration failed');
       }
@@ -66,12 +70,17 @@ export class AuthService {
   /**
    * Refresh access token using refresh token
    */
-  static async refreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
+  static async refreshToken(
+    refreshToken: string
+  ): Promise<RefreshTokenResponse> {
     try {
-      const response = await ApiClient.post<RefreshTokenResponse>('/auth/refresh', {
-        refreshToken,
-      });
-      
+      const response = await ApiClient.post<RefreshTokenResponse>(
+        '/auth/refresh',
+        {
+          refreshToken,
+        }
+      );
+
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Token refresh failed');
       }
@@ -88,8 +97,11 @@ export class AuthService {
    */
   static async forgotPassword(request: ForgotPasswordRequest): Promise<void> {
     try {
-      const response = await ApiClient.post<void>('/auth/forgot-password', request);
-      
+      const response = await ApiClient.post<void>(
+        '/auth/forgot-password',
+        request
+      );
+
       if (!response.success) {
         throw new Error(response.message || 'Failed to send reset email');
       }
@@ -104,8 +116,11 @@ export class AuthService {
    */
   static async resetPassword(request: ResetPasswordRequest): Promise<void> {
     try {
-      const response = await ApiClient.post<void>('/auth/reset-password', request);
-      
+      const response = await ApiClient.post<void>(
+        '/auth/reset-password',
+        request
+      );
+
       if (!response.success) {
         throw new Error(response.message || 'Password reset failed');
       }
@@ -120,8 +135,11 @@ export class AuthService {
    */
   static async changePassword(request: ChangePasswordRequest): Promise<void> {
     try {
-      const response = await ApiClient.post<void>('/auth/change-password', request);
-      
+      const response = await ApiClient.post<void>(
+        '/auth/change-password',
+        request
+      );
+
       if (!response.success) {
         throw new Error(response.message || 'Password change failed');
       }
@@ -136,8 +154,10 @@ export class AuthService {
    */
   static async verifyEmail(token: string): Promise<void> {
     try {
-      const response = await ApiClient.post<void>('/auth/verify-email', { token });
-      
+      const response = await ApiClient.post<void>('/auth/verify-email', {
+        token,
+      });
+
       if (!response.success) {
         throw new Error(response.message || 'Email verification failed');
       }
@@ -153,9 +173,11 @@ export class AuthService {
   static async resendVerificationEmail(): Promise<void> {
     try {
       const response = await ApiClient.post<void>('/auth/resend-verification');
-      
+
       if (!response.success) {
-        throw new Error(response.message || 'Failed to resend verification email');
+        throw new Error(
+          response.message || 'Failed to resend verification email'
+        );
       }
     } catch (error) {
       console.error('Resend verification error:', error);
@@ -169,7 +191,7 @@ export class AuthService {
   static async getCurrentUser(): Promise<AuthResponse['user']> {
     try {
       const response = await ApiClient.get<AuthResponse['user']>('/auth/me');
-      
+
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Failed to get user profile');
       }
@@ -186,10 +208,13 @@ export class AuthService {
    */
   static async checkEmailAvailability(email: string): Promise<boolean> {
     try {
-      const response = await ApiClient.post<{ available: boolean }>('/auth/check-email', {
-        email,
-      });
-      
+      const response = await ApiClient.post<{ available: boolean }>(
+        '/auth/check-email',
+        {
+          email,
+        }
+      );
+
       if (!response.success) {
         throw new Error(response.message || 'Email availability check failed');
       }
@@ -205,14 +230,20 @@ export class AuthService {
   /**
    * Enable two-factor authentication
    */
-  static async enableTwoFactor(): Promise<{ qrCode: string; backupCodes: string[] }> {
+  static async enableTwoFactor(): Promise<{
+    qrCode: string;
+    backupCodes: string[];
+  }> {
     try {
-      const response = await ApiClient.post<{ qrCode: string; backupCodes: string[] }>(
-        '/auth/2fa/enable'
-      );
-      
+      const response = await ApiClient.post<{
+        qrCode: string;
+        backupCodes: string[];
+      }>('/auth/2fa/enable');
+
       if (!response.success || !response.data) {
-        throw new Error(response.message || 'Failed to enable two-factor authentication');
+        throw new Error(
+          response.message || 'Failed to enable two-factor authentication'
+        );
       }
 
       return response.data;
@@ -225,15 +256,19 @@ export class AuthService {
   /**
    * Verify and confirm two-factor authentication setup
    */
-  static async confirmTwoFactor(token: string): Promise<{ backupCodes: string[] }> {
+  static async confirmTwoFactor(
+    token: string
+  ): Promise<{ backupCodes: string[] }> {
     try {
       const response = await ApiClient.post<{ backupCodes: string[] }>(
         '/auth/2fa/confirm',
         { token }
       );
-      
+
       if (!response.success || !response.data) {
-        throw new Error(response.message || 'Two-factor authentication confirmation failed');
+        throw new Error(
+          response.message || 'Two-factor authentication confirmation failed'
+        );
       }
 
       return response.data;
@@ -248,10 +283,14 @@ export class AuthService {
    */
   static async disableTwoFactor(password: string): Promise<void> {
     try {
-      const response = await ApiClient.post<void>('/auth/2fa/disable', { password });
-      
+      const response = await ApiClient.post<void>('/auth/2fa/disable', {
+        password,
+      });
+
       if (!response.success) {
-        throw new Error(response.message || 'Failed to disable two-factor authentication');
+        throw new Error(
+          response.message || 'Failed to disable two-factor authentication'
+        );
       }
     } catch (error) {
       console.error('Disable 2FA error:', error);
@@ -268,7 +307,7 @@ export class AuthService {
         '/auth/2fa/backup-codes',
         { password }
       );
-      
+
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Failed to generate backup codes');
       }
@@ -283,24 +322,28 @@ export class AuthService {
   /**
    * Get list of active sessions
    */
-  static async getActiveSessions(): Promise<Array<{
-    id: string;
-    deviceInfo: string;
-    location?: string;
-    ipAddress: string;
-    lastActivity: string;
-    current: boolean;
-  }>> {
+  static async getActiveSessions(): Promise<
+    Array<{
+      id: string;
+      deviceInfo: string;
+      location?: string;
+      ipAddress: string;
+      lastActivity: string;
+      current: boolean;
+    }>
+  > {
     try {
-      const response = await ApiClient.get<Array<{
-        id: string;
-        deviceInfo: string;
-        location?: string;
-        ipAddress: string;
-        lastActivity: string;
-        current: boolean;
-      }>>('/auth/sessions');
-      
+      const response = await ApiClient.get<
+        Array<{
+          id: string;
+          deviceInfo: string;
+          location?: string;
+          ipAddress: string;
+          lastActivity: string;
+          current: boolean;
+        }>
+      >('/auth/sessions');
+
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Failed to get active sessions');
       }
@@ -317,8 +360,10 @@ export class AuthService {
    */
   static async revokeSession(sessionId: string): Promise<void> {
     try {
-      const response = await ApiClient.delete<void>(`/auth/sessions/${sessionId}`);
-      
+      const response = await ApiClient.delete<void>(
+        `/auth/sessions/${sessionId}`
+      );
+
       if (!response.success) {
         throw new Error(response.message || 'Failed to revoke session');
       }
@@ -334,7 +379,7 @@ export class AuthService {
   static async revokeAllSessions(): Promise<void> {
     try {
       const response = await ApiClient.delete<void>('/auth/sessions');
-      
+
       if (!response.success) {
         throw new Error(response.message || 'Failed to revoke sessions');
       }

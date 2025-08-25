@@ -146,7 +146,8 @@ export const UPLOAD_CONSTANTS = {
 // Validation patterns
 export const VALIDATION_PATTERNS = {
   EMAIL: /^[A-Za-z0-9._%-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$/,
-  PASSWORD: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+  PASSWORD:
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
   PHONE: /^\+?[1-9]\d{1,14}$/,
   USERNAME: /^[a-zA-Z0-9_-]+$/,
   UUID: /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
@@ -186,29 +187,30 @@ export const ERROR_MESSAGES = {
   TOKEN_INVALID: 'Invalid token',
   UNAUTHORIZED: 'Unauthorized access',
   FORBIDDEN: 'Access forbidden',
-  
+
   // Validation
   VALIDATION_FAILED: 'Validation failed',
   REQUIRED_FIELD: 'This field is required',
   INVALID_EMAIL: 'Invalid email format',
-  INVALID_PASSWORD: 'Password must be at least 8 characters with uppercase, lowercase, number, and special character',
+  INVALID_PASSWORD:
+    'Password must be at least 8 characters with uppercase, lowercase, number, and special character',
   INVALID_PHONE: 'Invalid phone number format',
   PASSWORD_MISMATCH: 'Passwords do not match',
-  
+
   // User
   USER_NOT_FOUND: 'User not found',
   USER_ALREADY_EXISTS: 'User already exists',
   USER_INACTIVE: 'User account is inactive',
-  
+
   // Contact
   CONTACT_NOT_FOUND: 'Contact not found',
   CONTACT_ALREADY_EXISTS: 'Contact already exists',
-  
+
   // Database
   DATABASE_ERROR: 'Database error occurred',
   CONNECTION_FAILED: 'Database connection failed',
   TRANSACTION_FAILED: 'Database transaction failed',
-  
+
   // General
   INTERNAL_ERROR: 'Internal server error',
   NOT_FOUND: 'Resource not found',
@@ -236,8 +238,10 @@ export const SUCCESS_MESSAGES = {
 export const CACHE_KEYS = {
   USER: (id: string) => `user:${id}`,
   CONTACT: (id: string) => `contact:${id}`,
-  USER_CONTACTS: (userId: string, page: number, limit: number) => `user:${userId}:contacts:${page}:${limit}`,
-  RATE_LIMIT: (identifier: string, action: string) => `ratelimit:${action}:${identifier}`,
+  USER_CONTACTS: (userId: string, page: number, limit: number) =>
+    `user:${userId}:contacts:${page}:${limit}`,
+  RATE_LIMIT: (identifier: string, action: string) =>
+    `ratelimit:${action}:${identifier}`,
   SESSION: (sessionId: string) => `session:${sessionId}`,
   EMAIL_VERIFICATION: (token: string) => `email_verification:${token}`,
   PASSWORD_RESET: (token: string) => `password_reset:${token}`,

@@ -55,8 +55,10 @@ export class HealthController {
     };
 
     // Determine overall status
-    const serviceStatuses = Object.values(healthCheck.services).map(service => service.status);
-    
+    const serviceStatuses = Object.values(healthCheck.services).map(
+      service => service.status
+    );
+
     if (serviceStatuses.some(status => status === 'unhealthy')) {
       healthCheck.status = 'unhealthy';
       res.status(StatusCodes.SERVICE_UNAVAILABLE);
@@ -77,46 +79,53 @@ export class HealthController {
   /**
    * Liveness probe (simple check to see if the app is running)
    */
-  liveness = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    res.status(StatusCodes.OK).json({
-      success: true,
-      message: 'Service is alive',
-      timestamp: new Date().toISOString(),
-    });
-  });
+  liveness = asyncHandler(
+    async (req: Request, res: Response): Promise<void> => {
+      res.status(StatusCodes.OK).json({
+        success: true,
+        message: 'Service is alive',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  );
 
   /**
    * Readiness probe (check if the app is ready to serve traffic)
    */
-  readiness = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const checks = await Promise.allSettled([
-      this.checkDatabase(),
-      this.checkRedis(),
-    ]);
+  readiness = asyncHandler(
+    async (req: Request, res: Response): Promise<void> => {
+      const checks = await Promise.allSettled([
+        this.checkDatabase(),
+        this.checkRedis(),
+      ]);
 
-    const allHealthy = checks.every(
-      check => check.status === 'fulfilled' && check.value.status === 'healthy'
-    );
+      const allHealthy = checks.every(
+        check =>
+          check.status === 'fulfilled' && check.value.status === 'healthy'
+      );
 
-    if (allHealthy) {
-      res.status(StatusCodes.OK).json({
-        success: true,
-        message: 'Service is ready',
-        timestamp: new Date().toISOString(),
-      });
-    } else {
-      res.status(StatusCodes.SERVICE_UNAVAILABLE).json({
-        success: false,
-        message: 'Service is not ready',
-        timestamp: new Date().toISOString(),
-        checks: checks.map((check, index) => ({
-          service: index === 0 ? 'database' : 'redis',
-          status: check.status === 'fulfilled' ? check.value.status : 'unhealthy',
-          error: check.status === 'rejected' ? check.reason?.message : undefined,
-        })),
-      });
+      if (allHealthy) {
+        res.status(StatusCodes.OK).json({
+          success: true,
+          message: 'Service is ready',
+          timestamp: new Date().toISOString(),
+        });
+      } else {
+        res.status(StatusCodes.SERVICE_UNAVAILABLE).json({
+          success: false,
+          message: 'Service is not ready',
+          timestamp: new Date().toISOString(),
+          checks: checks.map((check, index) => ({
+            service: index === 0 ? 'database' : 'redis',
+            status:
+              check.status === 'fulfilled' ? check.value.status : 'unhealthy',
+            error:
+              check.status === 'rejected' ? check.reason?.message : undefined,
+          })),
+        });
+      }
     }
-  });
+  );
 
   /**
    * Detailed system information
@@ -165,24 +174,25 @@ export class HealthController {
     error?: string;
   }> {
     const startTime = Date.now();
-    
+
     try {
       const isHealthy = await databaseConnection.healthCheck();
       const responseTime = Date.now() - startTime;
-      
+
       return {
         status: isHealthy ? 'healthy' : 'unhealthy',
         responseTime,
       };
     } catch (error) {
       const responseTime = Date.now() - startTime;
-      
+
       logger.error('Database health check failed', { error });
-      
+
       return {
         status: 'unhealthy',
         responseTime,
-        error: error instanceof Error ? error.message : 'Unknown database error',
+        error:
+          error instanceof Error ? error.message : 'Unknown database error',
       };
     }
   }
@@ -196,20 +206,20 @@ export class HealthController {
     error?: string;
   }> {
     const startTime = Date.now();
-    
+
     try {
       const isHealthy = await redisConnection.healthCheck();
       const responseTime = Date.now() - startTime;
-      
+
       return {
         status: isHealthy ? 'healthy' : 'unhealthy',
         responseTime,
       };
     } catch (error) {
       const responseTime = Date.now() - startTime;
-      
+
       logger.error('Redis health check failed', { error });
-      
+
       return {
         status: 'unhealthy',
         responseTime,
@@ -232,9 +242,10 @@ export class HealthController {
     percentage: number;
   } {
     const memUsage = process.memoryUsage();
-    const totalSystemMemory = parseInt(process.env.MEMORY_LIMIT || '512') * 1024 * 1024; // Default 512MB
+    const totalSystemMemory =
+      parseInt(process.env.MEMORY_LIMIT || '512') * 1024 * 1024; // Default 512MB
     const memoryPercentage = (memUsage.rss / totalSystemMemory) * 100;
-    
+
     return {
       status: memoryPercentage > 90 ? 'unhealthy' : 'healthy',
       usage: {

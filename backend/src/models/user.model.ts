@@ -87,9 +87,12 @@ export class User {
   }
 
   private validatePassword(password: string): void {
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     if (!passwordRegex.test(password)) {
-      throw new Error('Password must be at least 8 characters with uppercase, lowercase, number, and special character');
+      throw new Error(
+        'Password must be at least 8 characters with uppercase, lowercase, number, and special character'
+      );
     }
   }
 
@@ -111,12 +114,12 @@ export class User {
 
   incrementFailedLoginAttempts(): void {
     this.failedLoginAttempts++;
-    
+
     if (this.failedLoginAttempts >= 5) {
       // Lock account for 30 minutes
       this.lockedUntil = new Date(Date.now() + 30 * 60 * 1000);
     }
-    
+
     this.updatedAt = new Date();
   }
 
@@ -168,11 +171,11 @@ export class User {
     this.validatePassword(newPassword);
     this.password = newPassword;
     await this.hashPassword();
-    
+
     this.resetPasswordToken = null;
     this.resetPasswordExpires = null;
     this.updatedAt = new Date();
-    
+
     return true;
   }
 
@@ -181,7 +184,7 @@ export class User {
     if (data.lastName !== undefined) this.lastName = data.lastName;
     if (data.phone !== undefined) this.phone = data.phone;
     if (data.isActive !== undefined) this.isActive = data.isActive;
-    
+
     this.updatedAt = new Date();
   }
 

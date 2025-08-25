@@ -62,9 +62,22 @@ function generateUser() {
 function generateContact() {
   const timestamp = Date.now();
   const randomId = Math.random().toString(36).substring(7);
-  const companies = ['Tech Corp', 'Innovation Ltd', 'Future Systems', 'Digital Solutions', 'Smart Industries'];
-  const titles = ['Manager', 'Director', 'Engineer', 'Analyst', 'Specialist', 'Coordinator'];
-  
+  const companies = [
+    'Tech Corp',
+    'Innovation Ltd',
+    'Future Systems',
+    'Digital Solutions',
+    'Smart Industries',
+  ];
+  const titles = [
+    'Manager',
+    'Director',
+    'Engineer',
+    'Analyst',
+    'Specialist',
+    'Coordinator',
+  ];
+
   return {
     firstName: `Contact${randomId}`,
     lastName: `Test${timestamp}`,
@@ -82,21 +95,21 @@ const userData = {};
 
 export function setup() {
   console.log('Load test setup - checking service availability');
-  
+
   // Verify service is running
   const healthCheck = http.get(`${BASE_URL}/api/health`);
   if (healthCheck.status !== 200) {
     throw new Error(`Service not available: ${healthCheck.status}`);
   }
-  
+
   console.log(`Load test starting with ${MAX_USERS} max users for ${DURATION}`);
   return { baseUrl: BASE_URL };
 }
 
-export default function(data) {
+export default function (data) {
   const vuId = __VU;
   const iterationId = __ITER;
-  
+
   // Initialize user data for this VU if not exists
   if (!userData[vuId]) {
     userData[vuId] = {
@@ -107,13 +120,13 @@ export default function(data) {
   }
 
   const currentUser = userData[vuId];
-  
+
   // Scenario 1: User Authentication Flow (20% of requests)
   if (Math.random() < 0.2) {
     userAuthenticationFlow(currentUser);
   }
-  
-  // Scenario 2: Contact Management (60% of requests)  
+
+  // Scenario 2: Contact Management (60% of requests)
   else if (Math.random() < 0.8) {
     if (currentUser.authToken) {
       contactManagementFlow(currentUser);
@@ -122,7 +135,7 @@ export default function(data) {
       userAuthenticationFlow(currentUser);
     }
   }
-  
+
   // Scenario 3: Search and Filter Operations (20% of requests)
   else {
     if (currentUser.authToken) {
@@ -138,20 +151,24 @@ export default function(data) {
 
 function userAuthenticationFlow(currentUser) {
   let response;
-  
+
   // Register user if not already registered
   if (!currentUser.registered) {
-    response = http.post(`${BASE_URL}/api/auth/register`, JSON.stringify(currentUser.user), {
-      headers: { 'Content-Type': 'application/json' },
-    });
-    
+    response = http.post(
+      `${BASE_URL}/api/auth/register`,
+      JSON.stringify(currentUser.user),
+      {
+        headers: { 'Content-Type': 'application/json' },
+      },
+    );
+
     const registerSuccess = check(response, {
       'register status is 201': (r) => r.status === 201,
       'register response time acceptable': (r) => r.timings.duration < 1500,
     });
-    
+
     errorRate.add(!registerSuccess);
-    
+
     if (registerSuccess) {
       currentUser.registered = true;
       try {
@@ -161,20 +178,24 @@ function userAuthenticationFlow(currentUser) {
         console.error(`VU${__VU}: Failed to parse register response`);
       }
     }
-    
+
     sleep(0.5);
   }
-  
+
   // Login user
   const loginPayload = {
     email: currentUser.user.email,
     password: currentUser.user.password,
   };
-  
-  response = http.post(`${BASE_URL}/api/auth/login`, JSON.stringify(loginPayload), {
-    headers: { 'Content-Type': 'application/json' },
-  });
-  
+
+  response = http.post(
+    `${BASE_URL}/api/auth/login`,
+    JSON.stringify(loginPayload),
+    {
+      headers: { 'Content-Type': 'application/json' },
+    },
+  );
+
   const loginSuccess = check(response, {
     'login status is 200': (r) => r.status === 200,
     'login response time acceptable': (r) => r.timings.duration < 800,
@@ -187,9 +208,9 @@ function userAuthenticationFlow(currentUser) {
       }
     },
   });
-  
+
   errorRate.add(!loginSuccess);
-  
+
   if (loginSuccess) {
     try {
       const body = JSON.parse(response.body);
@@ -203,17 +224,17 @@ function userAuthenticationFlow(currentUser) {
 function contactManagementFlow(currentUser) {
   const headers = {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${currentUser.authToken}`,
+    Authorization: `Bearer ${currentUser.authToken}`,
   };
-  
+
   // Randomly choose contact operation
   const operations = ['create', 'read', 'update', 'delete'];
   const weights = [0.3, 0.4, 0.2, 0.1]; // 30% create, 40% read, 20% update, 10% delete
-  
+
   let operation = 'read'; // default
   const random = Math.random();
   let weightSum = 0;
-  
+
   for (let i = 0; i < operations.length; i++) {
     weightSum += weights[i];
     if (random <= weightSum) {
@@ -221,7 +242,7 @@ function contactManagementFlow(currentUser) {
       break;
     }
   }
-  
+
   switch (operation) {
     case 'create':
       createContact(currentUser, headers);
@@ -241,12 +262,16 @@ function contactManagementFlow(currentUser) {
 function createContact(currentUser, headers) {
   const contact = generateContact();
   const startTime = Date.now();
-  
-  const response = http.post(`${BASE_URL}/api/contacts`, JSON.stringify(contact), { headers });
-  
+
+  const response = http.post(
+    `${BASE_URL}/api/contacts`,
+    JSON.stringify(contact),
+    { headers },
+  );
+
   const duration = Date.now() - startTime;
   contactCreationTime.add(duration);
-  
+
   const success = check(response, {
     'create contact status is 201': (r) => r.status === 201,
     'create contact response time acceptable': (r) => r.timings.duration < 1000,
@@ -259,9 +284,9 @@ function createContact(currentUser, headers) {
       }
     },
   });
-  
+
   errorRate.add(!success);
-  
+
   if (success) {
     try {
       const body = JSON.parse(response.body);
@@ -283,9 +308,12 @@ function readContacts(currentUser, headers) {
   // Random pagination parameters
   const page = Math.floor(Math.random() * 5) + 1;
   const limit = [10, 20, 50][Math.floor(Math.random() * 3)];
-  
-  const response = http.get(`${BASE_URL}/api/contacts?page=${page}&limit=${limit}`, { headers });
-  
+
+  const response = http.get(
+    `${BASE_URL}/api/contacts?page=${page}&limit=${limit}`,
+    { headers },
+  );
+
   const success = check(response, {
     'read contacts status is 200': (r) => r.status === 200,
     'read contacts response time acceptable': (r) => r.timings.duration < 500,
@@ -298,7 +326,7 @@ function readContacts(currentUser, headers) {
       }
     },
   });
-  
+
   errorRate.add(!success);
 }
 
@@ -308,21 +336,28 @@ function updateContact(currentUser, headers) {
     createContact(currentUser, headers);
     return;
   }
-  
-  const contactId = currentUser.contacts[Math.floor(Math.random() * currentUser.contacts.length)];
+
+  const contactId =
+    currentUser.contacts[
+      Math.floor(Math.random() * currentUser.contacts.length)
+    ];
   const updates = {
     firstName: `Updated${Math.random().toString(36).substring(7)}`,
     jobTitle: `Updated Title ${Date.now()}`,
     notes: `Updated via load test at ${new Date().toISOString()}`,
   };
-  
-  const response = http.put(`${BASE_URL}/api/contacts/${contactId}`, JSON.stringify(updates), { headers });
-  
+
+  const response = http.put(
+    `${BASE_URL}/api/contacts/${contactId}`,
+    JSON.stringify(updates),
+    { headers },
+  );
+
   const success = check(response, {
     'update contact status is 200': (r) => r.status === 200,
     'update contact response time acceptable': (r) => r.timings.duration < 600,
   });
-  
+
   errorRate.add(!success);
 }
 
@@ -330,19 +365,21 @@ function deleteContact(currentUser, headers) {
   if (currentUser.contacts.length === 0) {
     return; // Nothing to delete
   }
-  
+
   const contactIndex = Math.floor(Math.random() * currentUser.contacts.length);
   const contactId = currentUser.contacts[contactIndex];
-  
-  const response = http.del(`${BASE_URL}/api/contacts/${contactId}`, null, { headers });
-  
+
+  const response = http.del(`${BASE_URL}/api/contacts/${contactId}`, null, {
+    headers,
+  });
+
   const success = check(response, {
     'delete contact status is 204': (r) => r.status === 204,
     'delete contact response time acceptable': (r) => r.timings.duration < 400,
   });
-  
+
   errorRate.add(!success);
-  
+
   if (success) {
     // Remove from tracking array
     currentUser.contacts.splice(contactIndex, 1);
@@ -351,49 +388,70 @@ function deleteContact(currentUser, headers) {
 
 function searchAndFilterFlow(currentUser) {
   const headers = {
-    'Authorization': `Bearer ${currentUser.authToken}`,
+    Authorization: `Bearer ${currentUser.authToken}`,
   };
-  
-  const searchTerms = ['test', 'user', 'contact', 'manager', 'tech', 'corp', 'john', 'jane'];
-  const searchTerm = searchTerms[Math.floor(Math.random() * searchTerms.length)];
+
+  const searchTerms = [
+    'test',
+    'user',
+    'contact',
+    'manager',
+    'tech',
+    'corp',
+    'john',
+    'jane',
+  ];
+  const searchTerm =
+    searchTerms[Math.floor(Math.random() * searchTerms.length)];
   const startTime = Date.now();
-  
+
   // Search contacts
-  let response = http.get(`${BASE_URL}/api/contacts?search=${searchTerm}&limit=20`, { headers });
-  
+  let response = http.get(
+    `${BASE_URL}/api/contacts?search=${searchTerm}&limit=20`,
+    { headers },
+  );
+
   const duration = Date.now() - startTime;
   contactSearchTime.add(duration);
-  
+
   let success = check(response, {
     'search contacts status is 200': (r) => r.status === 200,
     'search contacts response time acceptable': (r) => r.timings.duration < 400,
   });
-  
+
   errorRate.add(!success);
   sleep(0.5);
-  
+
   // Filter by company
   const companies = ['Tech Corp', 'Innovation Ltd', 'Future Systems'];
   const company = companies[Math.floor(Math.random() * companies.length)];
-  
-  response = http.get(`${BASE_URL}/api/contacts?company=${encodeURIComponent(company)}&limit=20`, { headers });
-  
+
+  response = http.get(
+    `${BASE_URL}/api/contacts?company=${encodeURIComponent(company)}&limit=20`,
+    { headers },
+  );
+
   success = check(response, {
     'filter by company status is 200': (r) => r.status === 200,
-    'filter by company response time acceptable': (r) => r.timings.duration < 400,
+    'filter by company response time acceptable': (r) =>
+      r.timings.duration < 400,
   });
-  
+
   errorRate.add(!success);
   sleep(0.5);
-  
+
   // Filter by status and favorite
-  response = http.get(`${BASE_URL}/api/contacts?status=active&isFavorite=true&limit=10`, { headers });
-  
+  response = http.get(
+    `${BASE_URL}/api/contacts?status=active&isFavorite=true&limit=10`,
+    { headers },
+  );
+
   success = check(response, {
     'filter by status status is 200': (r) => r.status === 200,
-    'filter by status response time acceptable': (r) => r.timings.duration < 400,
+    'filter by status response time acceptable': (r) =>
+      r.timings.duration < 400,
   });
-  
+
   errorRate.add(!success);
 }
 
@@ -403,9 +461,11 @@ export function teardown(data) {
 }
 
 export function handleSummary(data) {
-  const passedThresholds = Object.values(data.thresholds || {}).filter(t => t.ok).length;
+  const passedThresholds = Object.values(data.thresholds || {}).filter(
+    (t) => t.ok,
+  ).length;
   const totalThresholds = Object.keys(data.thresholds || {}).length;
-  
+
   return {
     'load-test-summary.html': htmlReport(data),
     'load-test-results.json': JSON.stringify(data, null, 2),
@@ -432,12 +492,15 @@ Custom Metrics:
 }
 
 function htmlReport(data) {
-  const thresholdResults = Object.entries(data.thresholds || {}).map(([name, threshold]) => 
-    `<tr class="${threshold.ok ? 'passed' : 'failed'}">
+  const thresholdResults = Object.entries(data.thresholds || {})
+    .map(
+      ([name, threshold]) =>
+        `<tr class="${threshold.ok ? 'passed' : 'failed'}">
       <td>${name}</td>
       <td>${threshold.ok ? '✓ PASSED' : '✗ FAILED'}</td>
-    </tr>`
-  ).join('');
+    </tr>`,
+    )
+    .join('');
 
   return `<!DOCTYPE html>
 <html>
@@ -502,7 +565,9 @@ function htmlReport(data) {
                     <td>${data.metrics.http_req_duration.values['p(95)'].toFixed(2)}ms</td>
                     <td>${data.metrics.http_req_duration.values['p(99)'].toFixed(2)}ms</td>
                 </tr>
-                ${data.metrics.contact_creation_duration ? `
+                ${
+                  data.metrics.contact_creation_duration
+                    ? `
                 <tr>
                     <td>Contact Creation</td>
                     <td>${data.metrics.contact_creation_duration.values.avg.toFixed(2)}ms</td>
@@ -511,8 +576,12 @@ function htmlReport(data) {
                     <td>${data.metrics.contact_creation_duration.values['p(90)'].toFixed(2)}ms</td>
                     <td>${data.metrics.contact_creation_duration.values['p(95)'].toFixed(2)}ms</td>
                     <td>${data.metrics.contact_creation_duration.values['p(99)'].toFixed(2)}ms</td>
-                </tr>` : ''}
-                ${data.metrics.contact_search_duration ? `
+                </tr>`
+                    : ''
+                }
+                ${
+                  data.metrics.contact_search_duration
+                    ? `
                 <tr>
                     <td>Contact Search</td>
                     <td>${data.metrics.contact_search_duration.values.avg.toFixed(2)}ms</td>
@@ -521,7 +590,9 @@ function htmlReport(data) {
                     <td>${data.metrics.contact_search_duration.values['p(90)'].toFixed(2)}ms</td>
                     <td>${data.metrics.contact_search_duration.values['p(95)'].toFixed(2)}ms</td>
                     <td>${data.metrics.contact_search_duration.values['p(99)'].toFixed(2)}ms</td>
-                </tr>` : ''}
+                </tr>`
+                    : ''
+                }
             </tbody>
         </table>
 

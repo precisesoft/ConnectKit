@@ -44,7 +44,7 @@ const loginSchema = yup.object().shape({
   rememberMe: yup.boolean(),
 });
 
-interface LoginFormData extends LoginRequest {}
+type LoginFormData = LoginRequest;
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -60,7 +60,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { login, isLoading } = useAuth();
-  
+
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
 
@@ -96,17 +96,17 @@ const LoginForm: React.FC<LoginFormProps> = ({
       }
     } catch (error: any) {
       console.error('Login error:', error);
-      
+
       const errorMessage = error.message || 'Login failed. Please try again.';
       setLoginError(errorMessage);
-      
+
       // Handle specific error types
       if (error.status === 401) {
-        setError('email', { 
-          message: 'Invalid email or password' 
+        setError('email', {
+          message: 'Invalid email or password',
         });
-        setError('password', { 
-          message: 'Invalid email or password' 
+        setError('password', {
+          message: 'Invalid email or password',
         });
       } else if (error.status === 422) {
         // Handle validation errors from server
@@ -136,10 +136,10 @@ const LoginForm: React.FC<LoginFormProps> = ({
   };
 
   return (
-    <Card 
+    <Card
       elevation={3}
-      sx={{ 
-        maxWidth: 400, 
+      sx={{
+        maxWidth: 400,
         width: '100%',
         mx: 'auto',
       }}
@@ -147,11 +147,11 @@ const LoginForm: React.FC<LoginFormProps> = ({
       <CardContent sx={{ p: 4 }}>
         {showTitle && (
           <Box sx={{ textAlign: 'center', mb: 3 }}>
-            <Typography 
-              variant="h4" 
-              component="h1"
+            <Typography
+              variant='h4'
+              component='h1'
               gutterBottom
-              sx={{ 
+              sx={{
                 fontWeight: 700,
                 color: 'primary.main',
                 mb: 1,
@@ -159,11 +159,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             >
               Welcome Back
             </Typography>
-            <Typography 
-              variant="body2" 
-              color="text.secondary"
-              sx={{ mb: 2 }}
-            >
+            <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
               Sign in to access your contacts
             </Typography>
           </Box>
@@ -171,8 +167,8 @@ const LoginForm: React.FC<LoginFormProps> = ({
 
         {/* Error Alert */}
         {loginError && (
-          <Alert 
-            severity="error" 
+          <Alert
+            severity='error'
             sx={{ mb: 3 }}
             onClose={() => setLoginError(null)}
           >
@@ -181,29 +177,25 @@ const LoginForm: React.FC<LoginFormProps> = ({
         )}
 
         {/* Login Form */}
-        <Box
-          component="form"
-          onSubmit={handleSubmit(onSubmit)}
-          noValidate
-        >
+        <Box component='form' onSubmit={handleSubmit(onSubmit)} noValidate>
           {/* Email Field */}
           <Controller
-            name="email"
+            name='email'
             control={control}
             render={({ field }) => (
               <TextField
                 {...field}
                 fullWidth
-                label="Email Address"
-                type="email"
-                autoComplete="email"
+                label='Email Address'
+                type='email'
+                autoComplete='email'
                 error={!!errors.email}
                 helperText={errors.email?.message}
                 disabled={isLoading || isSubmitting}
                 InputProps={{
                   startAdornment: (
-                    <InputAdornment position="start">
-                      <Email color="action" />
+                    <InputAdornment position='start'>
+                      <Email color='action' />
                     </InputAdornment>
                   ),
                 }}
@@ -214,30 +206,30 @@ const LoginForm: React.FC<LoginFormProps> = ({
 
           {/* Password Field */}
           <Controller
-            name="password"
+            name='password'
             control={control}
             render={({ field }) => (
               <TextField
                 {...field}
                 fullWidth
-                label="Password"
+                label='Password'
                 type={showPassword ? 'text' : 'password'}
-                autoComplete="current-password"
+                autoComplete='current-password'
                 error={!!errors.password}
                 helperText={errors.password?.message}
                 disabled={isLoading || isSubmitting}
                 InputProps={{
                   startAdornment: (
-                    <InputAdornment position="start">
-                      <Lock color="action" />
+                    <InputAdornment position='start'>
+                      <Lock color='action' />
                     </InputAdornment>
                   ),
                   endAdornment: (
-                    <InputAdornment position="end">
+                    <InputAdornment position='end'>
                       <IconButton
-                        aria-label="toggle password visibility"
+                        aria-label='toggle password visibility'
                         onClick={handleTogglePassword}
-                        edge="end"
+                        edge='end'
                         disabled={isLoading || isSubmitting}
                       >
                         {showPassword ? <VisibilityOff /> : <Visibility />}
@@ -260,7 +252,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             }}
           >
             <Controller
-              name="rememberMe"
+              name='rememberMe'
               control={control}
               render={({ field }) => (
                 <FormControlLabel
@@ -271,22 +263,18 @@ const LoginForm: React.FC<LoginFormProps> = ({
                       disabled={isLoading || isSubmitting}
                     />
                   }
-                  label={
-                    <Typography variant="body2">
-                      Remember me
-                    </Typography>
-                  }
+                  label={<Typography variant='body2'>Remember me</Typography>}
                 />
               )}
             />
-            
+
             <Link
-              component="button"
-              type="button"
-              variant="body2"
+              component='button'
+              type='button'
+              variant='body2'
               onClick={handleForgotPassword}
               disabled={isLoading || isSubmitting}
-              sx={{ 
+              sx={{
                 textDecoration: 'none',
                 '&:hover': {
                   textDecoration: 'underline',
@@ -299,43 +287,43 @@ const LoginForm: React.FC<LoginFormProps> = ({
 
           {/* Submit Button */}
           <Button
-            type="submit"
+            type='submit'
             fullWidth
-            variant="contained"
-            size="large"
+            variant='contained'
+            size='large'
             disabled={isLoading || isSubmitting}
             startIcon={
-              (isLoading || isSubmitting) ? (
+              isLoading || isSubmitting ? (
                 <CircularProgress size={20} />
               ) : (
                 <LoginIcon />
               )
             }
-            sx={{ 
+            sx={{
               mb: 3,
               py: 1.5,
               fontWeight: 600,
               textTransform: 'none',
             }}
           >
-            {(isLoading || isSubmitting) ? 'Signing In...' : 'Sign In'}
+            {isLoading || isSubmitting ? 'Signing In...' : 'Sign In'}
           </Button>
 
           {/* Register Link */}
           {showRegisterLink && (
             <>
               <Divider sx={{ mb: 3 }}>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant='body2' color='text.secondary'>
                   or
                 </Typography>
               </Divider>
-              
+
               <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="body2" color="text.secondary">
-                  Don't have an account?{' '}
+                <Typography variant='body2' color='text.secondary'>
+                  Don&apos;t have an account?{' '}
                   <Link
                     component={RouterLink}
-                    to="/register"
+                    to='/register'
                     sx={{
                       fontWeight: 600,
                       textDecoration: 'none',

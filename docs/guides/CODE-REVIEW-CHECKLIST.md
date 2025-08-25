@@ -9,6 +9,7 @@ This comprehensive code review checklist ensures consistency, quality, and secur
 Before submitting code for review, the author must verify:
 
 ### TDD Verification
+
 - [ ] **Tests Written First**: All new functionality was developed using TDD (Red-Green-Refactor)
 - [ ] **Test Coverage**: New code achieves minimum 80% test coverage (90% for service layer)
 - [ ] **Test Quality**: Tests are readable, maintainable, and test the right things
@@ -16,6 +17,7 @@ Before submitting code for review, the author must verify:
 - [ ] **Edge Cases**: Tests cover error conditions and boundary cases
 
 ### Code Quality
+
 - [ ] **Linting Passes**: ESLint checks pass with no errors or warnings
 - [ ] **Formatting**: Prettier formatting applied consistently
 - [ ] **TypeScript**: Strict mode compliance with no `any` types or suppressions
@@ -23,12 +25,14 @@ Before submitting code for review, the author must verify:
 - [ ] **No Console Logs**: Debug statements and console logs removed from production code
 
 ### Documentation
+
 - [ ] **Code Comments**: Complex business logic documented with clear comments
 - [ ] **API Documentation**: OpenAPI specifications updated for API changes
 - [ ] **README Updates**: Documentation updated if setup or usage changes
 - [ ] **Type Definitions**: All custom types properly documented
 
 ### Git Standards
+
 - [ ] **Commit Messages**: Follow conventional commit format
 - [ ] **Branch Naming**: Feature/fix branches follow naming convention
 - [ ] **Clean History**: Commits are logical and well-organized
@@ -39,18 +43,21 @@ Before submitting code for review, the author must verify:
 ### Functional Requirements Review
 
 #### Requirements Adherence
+
 - [ ] **User Story Completion**: Code addresses all acceptance criteria
 - [ ] **Business Logic**: Implementation matches business requirements
 - [ ] **API Contract**: Maintains backward compatibility unless explicitly breaking
 - [ ] **Feature Completeness**: All related functionality is included
 
 #### Error Handling
+
 - [ ] **Graceful Degradation**: Application handles errors without crashing
 - [ ] **User-Friendly Messages**: Error messages are helpful to end users
 - [ ] **Appropriate HTTP Status**: API endpoints return correct status codes
 - [ ] **Logging**: Errors are logged with sufficient context for debugging
 
 #### Edge Cases
+
 - [ ] **Input Validation**: All user inputs are validated and sanitized
 - [ ] **Boundary Conditions**: Code handles empty arrays, null values, max limits
 - [ ] **Concurrent Access**: Thread-safety considered for shared resources
@@ -61,30 +68,35 @@ Before submitting code for review, the author must verify:
 #### SOLID Principles Adherence
 
 **Single Responsibility Principle (SRP)**
+
 - [ ] **Class Purpose**: Each class has one clear responsibility
 - [ ] **Method Focus**: Methods perform single, well-defined tasks
 - [ ] **Service Separation**: Business logic separated from presentation logic
 - [ ] **Repository Pattern**: Data access logic isolated in repositories
 
 **Open/Closed Principle (OCP)**
+
 - [ ] **Extension Points**: Code is open for extension without modification
 - [ ] **Interface Usage**: Dependencies use interfaces rather than concrete classes
 - [ ] **Plugin Architecture**: New features can be added via configuration/plugins
 - [ ] **Strategy Pattern**: Algorithms can be swapped without changing client code
 
 **Liskov Substitution Principle (LSP)**
+
 - [ ] **Subclass Behavior**: Derived classes can replace base classes seamlessly
 - [ ] **Contract Preservation**: Subclasses maintain the same behavioral contracts
 - [ ] **Exception Handling**: Subclasses don't throw new exceptions not in base contract
 - [ ] **Preconditions**: Subclasses don't strengthen preconditions
 
 **Interface Segregation Principle (ISP)**
+
 - [ ] **Focused Interfaces**: Interfaces are specific to client needs
 - [ ] **No Fat Interfaces**: Classes don't depend on methods they don't use
 - [ ] **Role-Based Design**: Interfaces represent specific roles or capabilities
 - [ ] **Client Decoupling**: Changes to one interface don't affect unrelated clients
 
 **Dependency Inversion Principle (DIP)**
+
 - [ ] **Abstract Dependencies**: High-level modules depend on abstractions
 - [ ] **Dependency Injection**: Dependencies are injected rather than created
 - [ ] **Inversion of Control**: Framework manages object lifecycle and dependencies
@@ -93,24 +105,28 @@ Before submitting code for review, the author must verify:
 #### Clean Code Standards
 
 **Naming Conventions**
+
 - [ ] **Descriptive Names**: Variables and functions clearly express intent
 - [ ] **Consistent Vocabulary**: Same concepts use same terminology throughout
 - [ ] **Pronounceable Names**: Names can be spoken and discussed easily
 - [ ] **Searchable Names**: Important names are unique and searchable
 
 **Function Design**
+
 - [ ] **Small Functions**: Functions are small and focused (< 20 lines preferred)
 - [ ] **Single Level of Abstraction**: Each function operates at one level of abstraction
 - [ ] **Command/Query Separation**: Functions either do something or return something, not both
 - [ ] **No Side Effects**: Functions don't cause unexpected state changes
 
 **Class Design**
+
 - [ ] **Cohesion**: Class members work together toward a common purpose
 - [ ] **Encapsulation**: Internal state is properly hidden and protected
 - [ ] **Composition over Inheritance**: Favors composition for code reuse
 - [ ] **Minimal Interface**: Classes expose only what clients need
 
 **Comments and Documentation**
+
 - [ ] **Explain Why, Not What**: Comments explain reasoning, not implementation
 - [ ] **Legal Comments**: Copyright and license information where required
 - [ ] **Warning Comments**: Alert about consequences of changes
@@ -119,6 +135,7 @@ Before submitting code for review, the author must verify:
 ### Security Review (OWASP Top 10)
 
 #### 1. Injection Prevention
+
 - [ ] **Parameterized Queries**: All database queries use parameters, not string concatenation
 - [ ] **Input Sanitization**: User inputs are sanitized before processing
 - [ ] **Output Encoding**: Data is properly encoded for output context (HTML, JSON, etc.)
@@ -127,17 +144,18 @@ Before submitting code for review, the author must verify:
 ```typescript
 // ✅ Good: Parameterized query
 const contacts = await db.query(
-  'SELECT * FROM contacts WHERE tenant_id = $1 AND email = $2',
-  [tenantId, email]
+  "SELECT * FROM contacts WHERE tenant_id = $1 AND email = $2",
+  [tenantId, email],
 );
 
 // ❌ Bad: String concatenation
 const contacts = await db.query(
-  `SELECT * FROM contacts WHERE email = '${email}'`
+  `SELECT * FROM contacts WHERE email = '${email}'`,
 );
 ```
 
 #### 2. Authentication & Session Management
+
 - [ ] **Strong Passwords**: Password requirements enforce complexity
 - [ ] **Secure Session Management**: Sessions are properly created, managed, and destroyed
 - [ ] **Multi-Factor Authentication**: MFA implemented for sensitive operations
@@ -148,10 +166,11 @@ const contacts = await db.query(
 const hashedPassword = await bcrypt.hash(password, 12);
 
 // ❌ Bad: Weak hashing or plain text
-const hashedPassword = crypto.createHash('md5').update(password).digest('hex');
+const hashedPassword = crypto.createHash("md5").update(password).digest("hex");
 ```
 
 #### 3. Sensitive Data Exposure
+
 - [ ] **Encryption at Rest**: Sensitive data encrypted in database
 - [ ] **Encryption in Transit**: All communications use TLS 1.3
 - [ ] **Key Management**: Encryption keys properly managed and rotated
@@ -161,27 +180,29 @@ const hashedPassword = crypto.createHash('md5').update(password).digest('hex');
 // ✅ Good: Field-level encryption for PII
 interface Contact {
   id: string;
-  firstName: string;  // Not encrypted - not PII
-  emailEncrypted: string[];  // Encrypted PII
-  phoneEncrypted: string[];  // Encrypted PII
+  firstName: string; // Not encrypted - not PII
+  emailEncrypted: string[]; // Encrypted PII
+  phoneEncrypted: string[]; // Encrypted PII
 }
 
 // ❌ Bad: Sensitive data in plain text
 interface Contact {
   id: string;
   firstName: string;
-  email: string[];  // PII not encrypted
-  ssn: string;      // Highly sensitive, not encrypted
+  email: string[]; // PII not encrypted
+  ssn: string; // Highly sensitive, not encrypted
 }
 ```
 
 #### 4. XML External Entities (XXE)
+
 - [ ] **XML Parser Configuration**: XML parsers configured to prevent XXE
 - [ ] **File Upload Validation**: Uploaded files validated and scanned
 - [ ] **External Resource Access**: Restricted access to external resources
 - [ ] **Input Format Validation**: Strict validation of structured data formats
 
 #### 5. Broken Access Control
+
 - [ ] **Authorization Checks**: Every operation verifies user permissions
 - [ ] **Tenant Isolation**: Multi-tenant data properly isolated
 - [ ] **Resource-Level Security**: Users can only access their own resources
@@ -189,26 +210,30 @@ interface Contact {
 
 ```typescript
 // ✅ Good: Proper authorization check
-app.get('/api/contacts/:id', authMiddleware, async (req, res) => {
-  const contact = await contactService.findById(req.params.id, req.user.tenantId);
+app.get("/api/contacts/:id", authMiddleware, async (req, res) => {
+  const contact = await contactService.findById(
+    req.params.id,
+    req.user.tenantId,
+  );
   if (!contact) {
-    return res.status(404).json({ error: 'Contact not found' });
+    return res.status(404).json({ error: "Contact not found" });
   }
   // Additional permission check
   if (!canUserAccessContact(req.user, contact)) {
-    return res.status(403).json({ error: 'Access denied' });
+    return res.status(403).json({ error: "Access denied" });
   }
   res.json({ data: contact });
 });
 
 // ❌ Bad: Missing authorization
-app.get('/api/contacts/:id', async (req, res) => {
+app.get("/api/contacts/:id", async (req, res) => {
   const contact = await contactService.findById(req.params.id);
   res.json({ data: contact }); // No tenant or permission check
 });
 ```
 
 #### 6. Security Misconfiguration
+
 - [ ] **Secure Headers**: Security headers properly configured
 - [ ] **Default Credentials**: No default or weak credentials in production
 - [ ] **Error Messages**: Error messages don't expose sensitive information
@@ -216,25 +241,28 @@ app.get('/api/contacts/:id', async (req, res) => {
 
 ```typescript
 // ✅ Good: Security headers configured
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"]
-    }
-  },
-  hsts: {
-    maxAge: 31536000,
-    includeSubDomains: true
-  }
-}));
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
+      },
+    },
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+    },
+  }),
+);
 
 // ❌ Bad: No security headers
 app.use(express.json()); // Missing security middleware
 ```
 
 #### 7. Cross-Site Scripting (XSS)
+
 - [ ] **Input Validation**: All inputs validated on both client and server
 - [ ] **Output Encoding**: Data properly encoded for HTML context
 - [ ] **Content Security Policy**: CSP headers prevent inline scripts
@@ -243,37 +271,40 @@ app.use(express.json()); // Missing security middleware
 ```typescript
 // ✅ Good: Input validation and output encoding
 const createContact = [
-  body('firstName').trim().escape().isLength({ min: 1, max: 255 }),
-  body('email').isEmail().normalizeEmail(),
+  body("firstName").trim().escape().isLength({ min: 1, max: 255 }),
+  body("email").isEmail().normalizeEmail(),
   async (req: Request, res: Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
     // Process validated data
-  }
+  },
 ];
 
 // ❌ Bad: No validation or encoding
-app.post('/contacts', (req, res) => {
+app.post("/contacts", (req, res) => {
   const contact = req.body; // Unvalidated input
   res.json({ message: `Created ${contact.name}` }); // Potential XSS
 });
 ```
 
 #### 8. Insecure Deserialization
+
 - [ ] **Serialization Security**: Only trusted data is deserialized
 - [ ] **Input Validation**: Deserialized data is validated
 - [ ] **Type Safety**: Strong typing prevents object injection
 - [ ] **Immutable Objects**: Use immutable data structures where possible
 
 #### 9. Components with Known Vulnerabilities
+
 - [ ] **Dependency Scanning**: Dependencies scanned for vulnerabilities
 - [ ] **Regular Updates**: Dependencies kept up-to-date
 - [ ] **Vulnerability Tracking**: Known vulnerabilities documented and mitigated
 - [ ] **Supply Chain Security**: Dependencies from trusted sources only
 
 #### 10. Insufficient Logging & Monitoring
+
 - [ ] **Audit Logging**: All significant operations logged
 - [ ] **Security Events**: Authentication and authorization events logged
 - [ ] **Log Protection**: Logs protected from tampering and unauthorized access
@@ -281,39 +312,44 @@ app.post('/contacts', (req, res) => {
 
 ```typescript
 // ✅ Good: Comprehensive audit logging
-async function createContact(contactData: CreateContactRequest, userId: string): Promise<Contact> {
-  logger.info('Creating contact', {
+async function createContact(
+  contactData: CreateContactRequest,
+  userId: string,
+): Promise<Contact> {
+  logger.info("Creating contact", {
     userId,
     tenantId: contactData.tenantId,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 
   try {
     const contact = await contactRepository.create(contactData);
-    
+
     await auditLogger.log({
-      action: 'CONTACT_CREATED',
+      action: "CONTACT_CREATED",
       userId,
       resourceId: contact.id,
-      resourceType: 'contact',
+      resourceType: "contact",
       tenantId: contactData.tenantId,
-      metadata: { contactName: `${contact.firstName} ${contact.lastName}` }
+      metadata: { contactName: `${contact.firstName} ${contact.lastName}` },
     });
 
     return contact;
   } catch (error) {
-    logger.error('Failed to create contact', {
+    logger.error("Failed to create contact", {
       userId,
       tenantId: contactData.tenantId,
       error: error.message,
-      stack: error.stack
+      stack: error.stack,
     });
     throw error;
   }
 }
 
 // ❌ Bad: No logging or minimal logging
-async function createContact(contactData: CreateContactRequest): Promise<Contact> {
+async function createContact(
+  contactData: CreateContactRequest,
+): Promise<Contact> {
   return await contactRepository.create(contactData); // No logging at all
 }
 ```
@@ -321,6 +357,7 @@ async function createContact(contactData: CreateContactRequest): Promise<Contact
 ### Performance Review
 
 #### Database Performance
+
 - [ ] **Query Optimization**: Queries use appropriate indexes and are efficient
 - [ ] **N+1 Prevention**: No N+1 query problems in data fetching
 - [ ] **Connection Pooling**: Database connections properly pooled and managed
@@ -339,8 +376,13 @@ async function searchContacts(params: SearchParams): Promise<Contact[]> {
     ORDER BY rank DESC, c.created_at DESC
     LIMIT $3 OFFSET $4
   `;
-  
-  return await db.query(query, [params.q, params.tenantId, params.limit, params.offset]);
+
+  return await db.query(query, [
+    params.q,
+    params.tenantId,
+    params.limit,
+    params.offset,
+  ]);
 }
 
 // ❌ Bad: Inefficient query without indexes
@@ -356,6 +398,7 @@ async function searchContacts(query: string): Promise<Contact[]> {
 ```
 
 #### API Performance
+
 - [ ] **Response Times**: API responses under performance thresholds (< 200ms)
 - [ ] **Caching Strategy**: Appropriate caching for frequently accessed data
 - [ ] **Pagination**: Large result sets properly paginated
@@ -363,30 +406,31 @@ async function searchContacts(query: string): Promise<Contact[]> {
 
 ```typescript
 // ✅ Good: Caching and pagination
-app.get('/api/contacts', cache('5m'), async (req: Request, res: Response) => {
+app.get("/api/contacts", cache("5m"), async (req: Request, res: Response) => {
   const page = Math.max(1, parseInt(req.query.page as string) || 1);
   const limit = Math.min(100, parseInt(req.query.limit as string) || 20);
-  
+
   const result = await contactService.getContacts({
     tenantId: req.user.tenantId,
     page,
-    limit
+    limit,
   });
-  
+
   res.json({
     data: result.contacts,
-    pagination: result.pagination
+    pagination: result.pagination,
   });
 });
 
 // ❌ Bad: No caching or pagination limits
-app.get('/api/contacts', async (req: Request, res: Response) => {
+app.get("/api/contacts", async (req: Request, res: Response) => {
   const contacts = await contactService.getAllContacts(); // Could return millions
   res.json(contacts); // No caching, always hits database
 });
 ```
 
 #### Frontend Performance
+
 - [ ] **Bundle Size**: JavaScript bundles within size limits
 - [ ] **Lazy Loading**: Components and routes loaded on demand
 - [ ] **Memoization**: React components properly memoized
@@ -397,11 +441,11 @@ app.get('/api/contacts', async (req: Request, res: Response) => {
 import { lazy, memo, useMemo } from 'react';
 
 const ContactCard = memo(({ contact, onEdit, onDelete }) => {
-  const displayName = useMemo(() => 
-    `${contact.firstName} ${contact.lastName}`, 
+  const displayName = useMemo(() =>
+    `${contact.firstName} ${contact.lastName}`,
     [contact.firstName, contact.lastName]
   );
-  
+
   return (
     <Card>
       <CardContent>{displayName}</CardContent>
@@ -414,7 +458,7 @@ const LazyContactForm = lazy(() => import('./ContactForm'));
 // ❌ Bad: No memoization, always re-renders
 function ContactCard({ contact, onEdit, onDelete }) {
   const displayName = `${contact.firstName} ${contact.lastName}`; // Recalculated every render
-  
+
   return (
     <Card>
       <CardContent>{displayName}</CardContent>
@@ -426,12 +470,14 @@ function ContactCard({ contact, onEdit, onDelete }) {
 ### Accessibility Review (WCAG 2.1 AA)
 
 #### Keyboard Navigation
+
 - [ ] **Tab Order**: Logical tab order throughout the application
 - [ ] **Focus Indicators**: Clear focus indicators for all interactive elements
 - [ ] **Keyboard Shortcuts**: All functionality accessible via keyboard
 - [ ] **Focus Management**: Focus properly managed in dynamic content
 
 #### Screen Reader Support
+
 - [ ] **Semantic HTML**: Proper HTML semantics used throughout
 - [ ] **ARIA Labels**: ARIA labels provided for complex interactions
 - [ ] **Alt Text**: All images have appropriate alternative text
@@ -452,7 +498,7 @@ function ContactCard({ contact, onEdit, onDelete }) {
   <FormHelperText id="firstName-help">
     {errors.firstName || "Enter the contact's first name"}
   </FormHelperText>
-  
+
   <Button type="submit" aria-label="Save contact">
     Save
   </Button>
@@ -460,24 +506,26 @@ function ContactCard({ contact, onEdit, onDelete }) {
 
 // ❌ Bad: Inaccessible form
 <form onSubmit={handleSubmit}>
-  <input 
-    type="text" 
-    placeholder="First Name" 
+  <input
+    type="text"
+    placeholder="First Name"
     value={firstName}
     onChange={(e) => setFirstName(e.target.value)}
   /> {/* No label or aria attributes */}
-  
+
   <button type="submit">Save</button> {/* Generic label */}
 </form>
 ```
 
 #### Color and Contrast
+
 - [ ] **Color Contrast**: Text meets WCAG AA contrast requirements (4.5:1 ratio)
 - [ ] **Color Independence**: Information not conveyed by color alone
 - [ ] **High Contrast Mode**: Application works in high contrast mode
 - [ ] **Dark Mode**: Proper contrast maintained in dark themes
 
 #### Responsive Design
+
 - [ ] **Mobile Accessibility**: Touch targets at least 44px square
 - [ ] **Zoom Support**: Content readable at 200% zoom
 - [ ] **Orientation**: Works in both portrait and landscape modes
@@ -486,12 +534,14 @@ function ContactCard({ contact, onEdit, onDelete }) {
 ### Testing Review
 
 #### Test Coverage Verification
+
 - [ ] **Line Coverage**: Minimum 80% line coverage (90% for services)
 - [ ] **Branch Coverage**: All conditional branches tested
 - [ ] **Function Coverage**: All functions have at least one test
 - [ ] **Critical Path Testing**: All user workflows covered by tests
 
 #### Test Quality Assessment
+
 - [ ] **Test Names**: Tests clearly describe expected behavior
 - [ ] **Test Structure**: Arrange-Act-Assert pattern followed
 - [ ] **Test Independence**: Tests can run independently and in any order
@@ -499,52 +549,56 @@ function ContactCard({ contact, onEdit, onDelete }) {
 
 ```typescript
 // ✅ Good: Clear test structure and naming
-describe('ContactService', () => {
-  describe('createContact', () => {
-    it('should create contact with encrypted PII when valid data provided', async () => {
+describe("ContactService", () => {
+  describe("createContact", () => {
+    it("should create contact with encrypted PII when valid data provided", async () => {
       // Arrange
       const contactData = {
-        firstName: 'John',
-        lastName: 'Doe',
-        email: ['john@example.com'],
-        tenantId: 'tenant-123'
+        firstName: "John",
+        lastName: "Doe",
+        email: ["john@example.com"],
+        tenantId: "tenant-123",
       };
       mockRepository.findByEmail.mockResolvedValue(null);
-      mockEncryption.encryptArray.mockResolvedValue(['encrypted_email']);
+      mockEncryption.encryptArray.mockResolvedValue(["encrypted_email"]);
 
       // Act
       const result = await contactService.createContact(contactData);
 
       // Assert
       expect(result).toMatchObject({
-        firstName: 'John',
-        lastName: 'Doe'
+        firstName: "John",
+        lastName: "Doe",
       });
-      expect(mockEncryption.encryptArray).toHaveBeenCalledWith(['john@example.com']);
+      expect(mockEncryption.encryptArray).toHaveBeenCalledWith([
+        "john@example.com",
+      ]);
     });
 
-    it('should throw DuplicateEmailError when email already exists', async () => {
+    it("should throw DuplicateEmailError when email already exists", async () => {
       // Arrange
-      const contactData = { /* ... */ };
-      mockRepository.findByEmail.mockResolvedValue({ id: 'existing' });
+      const contactData = {
+        /* ... */
+      };
+      mockRepository.findByEmail.mockResolvedValue({ id: "existing" });
 
       // Act & Assert
-      await expect(contactService.createContact(contactData))
-        .rejects
-        .toThrow(DuplicateEmailError);
+      await expect(contactService.createContact(contactData)).rejects.toThrow(
+        DuplicateEmailError,
+      );
     });
   });
 });
 
 // ❌ Bad: Unclear test names and structure
-describe('ContactService', () => {
-  it('test create', async () => {
-    const data = { name: 'John' };
+describe("ContactService", () => {
+  it("test create", async () => {
+    const data = { name: "John" };
     const result = await service.create(data);
     expect(result).toBeTruthy(); // Vague assertion
   });
 
-  it('create fails', async () => {
+  it("create fails", async () => {
     // No clear arrange section
     mockRepo.find.mockResolvedValue(true);
     expect(() => service.create({})).toThrow(); // Missing await
@@ -553,6 +607,7 @@ describe('ContactService', () => {
 ```
 
 #### Mock Strategy Review
+
 - [ ] **Appropriate Mocking**: Only external dependencies mocked, not internal logic
 - [ ] **Mock Verification**: Mocks verify interactions, not just return values
 - [ ] **Test Doubles**: Appropriate use of mocks, stubs, and spies
@@ -561,15 +616,16 @@ describe('ContactService', () => {
 ### Documentation Review
 
 #### Code Documentation
+
 - [ ] **API Documentation**: All public methods documented with JSDoc
 - [ ] **Complex Logic**: Algorithms and business rules explained in comments
 - [ ] **Configuration**: Environment variables and configuration documented
 - [ ] **Examples**: Usage examples provided for complex APIs
 
-```typescript
+````typescript
 /**
  * Creates a new contact with encrypted PII data
- * 
+ *
  * @param contactData - The contact information to store
  * @param contactData.firstName - Contact's first name (required)
  * @param contactData.lastName - Contact's last name (required)
@@ -577,13 +633,13 @@ describe('ContactService', () => {
  * @param contactData.phone - Array of phone numbers (optional)
  * @param contactData.tenantId - Tenant ID for multi-tenant isolation
  * @param contactData.createdBy - ID of user creating the contact
- * 
+ *
  * @returns Promise resolving to the created contact with system-generated fields
- * 
+ *
  * @throws {ValidationError} When required fields are missing or invalid
  * @throws {DuplicateEmailError} When email already exists for the tenant
  * @throws {DatabaseError} When database operation fails
- * 
+ *
  * @example
  * ```typescript
  * const contact = await contactService.createContact({
@@ -599,9 +655,10 @@ describe('ContactService', () => {
 async createContact(contactData: CreateContactRequest): Promise<Contact> {
   // Implementation...
 }
-```
+````
 
 #### Architectural Documentation
+
 - [ ] **Design Decisions**: Major architectural decisions documented with rationale
 - [ ] **API Changes**: Breaking changes clearly documented
 - [ ] **Migration Guides**: Instructions for updating existing code
@@ -610,6 +667,7 @@ async createContact(contactData: CreateContactRequest): Promise<Contact> {
 ### Error Handling Review
 
 #### Error Types and Handling
+
 - [ ] **Custom Error Classes**: Specific error types for different failure scenarios
 - [ ] **Error Propagation**: Errors properly caught and re-thrown at appropriate levels
 - [ ] **User-Friendly Messages**: Error messages appropriate for end users
@@ -634,28 +692,30 @@ export class ContactService {
 
       // Create contact
       const contact = await this.repository.create(contactData);
-      
-      this.logger.info('Contact created', { contactId: contact.id });
-      return contact;
 
+      this.logger.info("Contact created", { contactId: contact.id });
+      return contact;
     } catch (error) {
-      if (error instanceof ValidationError || error instanceof DuplicateEmailError) {
+      if (
+        error instanceof ValidationError ||
+        error instanceof DuplicateEmailError
+      ) {
         // Re-throw known business errors
         throw error;
       }
 
       // Log unexpected errors with context
-      this.logger.error('Unexpected error creating contact', {
+      this.logger.error("Unexpected error creating contact", {
         error: error.message,
         stack: error.stack,
         contactData: {
           firstName: contactData.firstName,
           lastName: contactData.lastName,
           // Don't log PII like email
-        }
+        },
       });
 
-      throw new Error('Failed to create contact');
+      throw new Error("Failed to create contact");
     }
   }
 }
@@ -666,7 +726,7 @@ export class ContactService {
     try {
       return await this.repository.create(contactData);
     } catch (error) {
-      console.log('Error:', error); // Poor logging
+      console.log("Error:", error); // Poor logging
       throw error; // Re-throwing without context
     }
   }
@@ -674,6 +734,7 @@ export class ContactService {
 ```
 
 #### Logging Standards
+
 - [ ] **Log Levels**: Appropriate log levels (error, warn, info, debug)
 - [ ] **Structured Logging**: Logs include structured data for analysis
 - [ ] **Sensitive Data**: No PII or secrets in logs
@@ -682,12 +743,14 @@ export class ContactService {
 ### Database Review
 
 #### Schema Design
+
 - [ ] **Normalization**: Appropriate level of database normalization
 - [ ] **Indexes**: Proper indexes for query performance
 - [ ] **Constraints**: Database constraints enforce data integrity
 - [ ] **Audit Trails**: Change tracking implemented where required
 
 #### Data Security
+
 - [ ] **Row-Level Security**: Multi-tenant data isolation enforced
 - [ ] **Field Encryption**: PII data encrypted at field level
 - [ ] **Access Controls**: Database users have minimal required permissions
@@ -700,11 +763,11 @@ CREATE POLICY contacts_tenant_isolation ON contacts
     USING (tenant_id = current_setting('app.current_tenant_id')::uuid);
 
 -- ✅ Good: Proper indexing for performance
-CREATE INDEX CONCURRENTLY idx_contacts_search_vector 
+CREATE INDEX CONCURRENTLY idx_contacts_search_vector
 ON contacts USING gin(search_vector);
 
-CREATE INDEX CONCURRENTLY idx_contacts_tenant_created 
-ON contacts(tenant_id, created_at DESC) 
+CREATE INDEX CONCURRENTLY idx_contacts_tenant_created
+ON contacts(tenant_id, created_at DESC)
 WHERE is_deleted = false;
 
 -- ❌ Bad: No RLS, missing indexes
@@ -719,12 +782,14 @@ CREATE TABLE contacts (
 ## Review Process Guidelines
 
 ### Review Assignment
+
 - **Required Reviewers**: Minimum 2 reviewers for all changes
 - **Subject Matter Experts**: Include domain experts for complex changes
 - **Security Review**: Security team review for authentication/authorization changes
 - **Performance Review**: Performance team review for database schema changes
 
 ### Review Timeline
+
 - **Initial Review**: Within 24 hours of PR submission
 - **Response Time**: Authors respond to feedback within 24 hours
 - **Final Approval**: All feedback addressed before merge
@@ -733,29 +798,35 @@ CREATE TABLE contacts (
 ### Review Comments Guidelines
 
 #### Providing Feedback
+
 - **Be Specific**: Point to exact lines and provide concrete suggestions
 - **Explain Reasoning**: Include why a change is needed
 - **Provide Examples**: Show correct implementation when suggesting changes
 - **Be Constructive**: Focus on code improvement, not personal criticism
 
 #### Comment Categories
+
 ```markdown
 **Critical**: Must be fixed before merge
+
 - Security vulnerabilities
 - Functional correctness issues
 - Data integrity problems
 
 **Major**: Should be fixed before merge
+
 - Performance issues
 - Maintainability concerns
 - Design pattern violations
 
 **Minor**: Nice to have improvements
+
 - Code style suggestions
 - Optimization opportunities
 - Documentation enhancements
 
 **Nitpick**: Optional improvements
+
 - Variable naming suggestions
 - Comment improvements
 - Minor refactoring opportunities
@@ -763,16 +834,19 @@ CREATE TABLE contacts (
 
 #### Example Review Comments
 
-```markdown
+````markdown
 **Critical**: SQL Injection Vulnerability
+
 ```typescript
 // This is vulnerable to SQL injection
 const query = `SELECT * FROM contacts WHERE name = '${name}'`;
 ```
+````
 
 Please use parameterized queries:
+
 ```typescript
-const query = 'SELECT * FROM contacts WHERE name = $1';
+const query = "SELECT * FROM contacts WHERE name = $1";
 const result = await db.query(query, [name]);
 ```
 
@@ -784,13 +858,15 @@ Consider renaming `usr` to `user` for better readability and consistency with th
 
 **Nitpick**: Consider Memoization
 This calculation runs on every render. Consider using `useMemo` to optimize performance:
+
 ```typescript
-const displayName = useMemo(() => 
-  `${firstName} ${lastName}`, 
-  [firstName, lastName]
+const displayName = useMemo(
+  () => `${firstName} ${lastName}`,
+  [firstName, lastName],
 );
 ```
-```
+
+````
 
 ### Automated Checks Integration
 
@@ -807,29 +883,31 @@ quality_gates:
     line_coverage: 80%
     branch_coverage: 75%
     function_coverage: 90%
-  
+
   code_complexity:
     cyclomatic_complexity: 10
     cognitive_complexity: 15
-  
+
   security:
     high_vulnerabilities: 0
     medium_vulnerabilities: 3
-  
+
   performance:
     api_response_time_p95: 200ms
     database_query_time_p95: 50ms
-```
+````
 
 ### Post-Review Actions
 
 #### Author Responsibilities
+
 - [ ] **Address All Feedback**: Respond to every comment with changes or explanations
 - [ ] **Update Documentation**: Ensure related documentation is updated
 - [ ] **Test Changes**: Verify all feedback addressed correctly
 - [ ] **Squash Commits**: Clean up commit history before merge
 
 #### Reviewer Responsibilities
+
 - [ ] **Re-review Changes**: Review updated code after feedback addressed
 - [ ] **Verify Tests**: Ensure new tests cover suggested changes
 - [ ] **Approve Merge**: Explicitly approve when satisfied with changes

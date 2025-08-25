@@ -54,7 +54,7 @@ export async function forceCleanup(): Promise<void> {
     ];
 
     await Promise.allSettled(closePromises);
-    
+
     console.log('✅ Force cleanup completed');
   } catch (error) {
     console.error('❌ Force cleanup failed:', error);
@@ -74,7 +74,7 @@ process.on('SIGTERM', async () => {
   process.exit(0);
 });
 
-process.on('uncaughtException', async (error) => {
+process.on('uncaughtException', async error => {
   console.error('💥 Uncaught exception:', error);
   await forceCleanup();
   process.exit(1);

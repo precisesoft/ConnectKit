@@ -18,22 +18,22 @@ interface UIState {
   sidebarOpen: boolean;
   sidebarWidth: number;
   isMobile: boolean;
-  
+
   // Loading states
   isPageLoading: boolean;
   loadingMessage: string;
-  
+
   // Notifications
   notifications: Notification[];
-  
+
   // Search and filters
   searchQuery: string;
   activeFilters: Record<string, any>;
-  
+
   // Theme and layout
   themeMode: 'light' | 'dark' | 'system';
   densityMode: 'compact' | 'standard' | 'comfortable';
-  
+
   // Modal and dialog states
   activeModal: string | null;
   modalData: any;
@@ -46,14 +46,16 @@ interface UIState {
     confirmText?: string;
     cancelText?: string;
   } | null;
-  
+
   // Actions
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
   setSidebarWidth: (width: number) => void;
   setMobile: (mobile: boolean) => void;
   setPageLoading: (loading: boolean, message?: string) => void;
-  addNotification: (notification: Omit<Notification, 'id' | 'timestamp'>) => void;
+  addNotification: (
+    notification: Omit<Notification, 'id' | 'timestamp'>
+  ) => void;
   removeNotification: (id: string) => void;
   clearNotifications: () => void;
   setSearchQuery: (query: string) => void;
@@ -96,9 +98,13 @@ export const useUIStore = create<UIState>()(
 
         // Actions
         toggleSidebar: () => {
-          set((state) => ({ 
-            sidebarOpen: !state.sidebarOpen 
-          }), false, 'toggleSidebar');
+          set(
+            state => ({
+              sidebarOpen: !state.sidebarOpen,
+            }),
+            false,
+            'toggleSidebar'
+          );
         },
 
         setSidebarOpen: (open: boolean) => {
@@ -112,21 +118,29 @@ export const useUIStore = create<UIState>()(
         },
 
         setMobile: (mobile: boolean) => {
-          set((state) => ({
-            isMobile: mobile,
-            // Auto-close sidebar on mobile
-            sidebarOpen: mobile ? false : state.sidebarOpen,
-          }), false, 'setMobile');
+          set(
+            state => ({
+              isMobile: mobile,
+              // Auto-close sidebar on mobile
+              sidebarOpen: mobile ? false : state.sidebarOpen,
+            }),
+            false,
+            'setMobile'
+          );
         },
 
         setPageLoading: (loading: boolean, message = '') => {
-          set({ 
-            isPageLoading: loading, 
-            loadingMessage: message 
-          }, false, 'setPageLoading');
+          set(
+            {
+              isPageLoading: loading,
+              loadingMessage: message,
+            },
+            false,
+            'setPageLoading'
+          );
         },
 
-        addNotification: (notification) => {
+        addNotification: notification => {
           const id = `notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
           const newNotification: Notification = {
             ...notification,
@@ -136,9 +150,13 @@ export const useUIStore = create<UIState>()(
             duration: notification.duration ?? 5000,
           };
 
-          set((state) => ({
-            notifications: [...state.notifications, newNotification]
-          }), false, 'addNotification');
+          set(
+            state => ({
+              notifications: [...state.notifications, newNotification],
+            }),
+            false,
+            'addNotification'
+          );
 
           // Auto-remove notification after duration
           if (newNotification.autoClose) {
@@ -149,9 +167,13 @@ export const useUIStore = create<UIState>()(
         },
 
         removeNotification: (id: string) => {
-          set((state) => ({
-            notifications: state.notifications.filter(n => n.id !== id)
-          }), false, 'removeNotification');
+          set(
+            state => ({
+              notifications: state.notifications.filter(n => n.id !== id),
+            }),
+            false,
+            'removeNotification'
+          );
         },
 
         clearNotifications: () => {
@@ -167,10 +189,14 @@ export const useUIStore = create<UIState>()(
         },
 
         clearFilters: () => {
-          set({ 
-            activeFilters: {},
-            searchQuery: ''
-          }, false, 'clearFilters');
+          set(
+            {
+              activeFilters: {},
+              searchQuery: '',
+            },
+            false,
+            'clearFilters'
+          );
         },
 
         setThemeMode: (mode: 'light' | 'dark' | 'system') => {
@@ -182,28 +208,40 @@ export const useUIStore = create<UIState>()(
         },
 
         openModal: (modalId: string, data?: any) => {
-          set({ 
-            activeModal: modalId,
-            modalData: data
-          }, false, 'openModal');
+          set(
+            {
+              activeModal: modalId,
+              modalData: data,
+            },
+            false,
+            'openModal'
+          );
         },
 
         closeModal: () => {
-          set({ 
-            activeModal: null,
-            modalData: null
-          }, false, 'closeModal');
+          set(
+            {
+              activeModal: null,
+              modalData: null,
+            },
+            false,
+            'closeModal'
+          );
         },
 
-        showConfirmDialog: (options) => {
-          set({
-            confirmDialog: {
-              open: true,
-              ...options,
-              confirmText: options.confirmText || 'Confirm',
-              cancelText: options.cancelText || 'Cancel',
-            }
-          }, false, 'showConfirmDialog');
+        showConfirmDialog: options => {
+          set(
+            {
+              confirmDialog: {
+                open: true,
+                ...options,
+                confirmText: options.confirmText || 'Confirm',
+                cancelText: options.cancelText || 'Cancel',
+              },
+            },
+            false,
+            'showConfirmDialog'
+          );
         },
 
         hideConfirmDialog: () => {
@@ -212,7 +250,7 @@ export const useUIStore = create<UIState>()(
       })),
       {
         name: 'connectkit-ui', // localStorage key
-        partialize: (state) => ({
+        partialize: state => ({
           sidebarOpen: state.sidebarOpen,
           sidebarWidth: state.sidebarWidth,
           themeMode: state.themeMode,
@@ -228,48 +266,54 @@ export const useUIStore = create<UIState>()(
 );
 
 // Selectors for performance optimization
-export const useSidebar = () => useUIStore((state) => ({
-  open: state.sidebarOpen,
-  width: state.sidebarWidth,
-  toggle: state.toggleSidebar,
-  setOpen: state.setSidebarOpen,
-  setWidth: state.setSidebarWidth,
-}));
+export const useSidebar = () =>
+  useUIStore(state => ({
+    open: state.sidebarOpen,
+    width: state.sidebarWidth,
+    toggle: state.toggleSidebar,
+    setOpen: state.setSidebarOpen,
+    setWidth: state.setSidebarWidth,
+  }));
 
-export const useNotifications = () => useUIStore((state) => ({
-  notifications: state.notifications,
-  add: state.addNotification,
-  remove: state.removeNotification,
-  clear: state.clearNotifications,
-}));
+export const useNotifications = () =>
+  useUIStore(state => ({
+    notifications: state.notifications,
+    add: state.addNotification,
+    remove: state.removeNotification,
+    clear: state.clearNotifications,
+  }));
 
-export const useSearch = () => useUIStore((state) => ({
-  query: state.searchQuery,
-  filters: state.activeFilters,
-  setQuery: state.setSearchQuery,
-  setFilters: state.setActiveFilters,
-  clearFilters: state.clearFilters,
-}));
+export const useSearch = () =>
+  useUIStore(state => ({
+    query: state.searchQuery,
+    filters: state.activeFilters,
+    setQuery: state.setSearchQuery,
+    setFilters: state.setActiveFilters,
+    clearFilters: state.clearFilters,
+  }));
 
-export const useModal = () => useUIStore((state) => ({
-  activeModal: state.activeModal,
-  modalData: state.modalData,
-  open: state.openModal,
-  close: state.closeModal,
-}));
+export const useModal = () =>
+  useUIStore(state => ({
+    activeModal: state.activeModal,
+    modalData: state.modalData,
+    open: state.openModal,
+    close: state.closeModal,
+  }));
 
-export const useConfirmDialog = () => useUIStore((state) => ({
-  confirmDialog: state.confirmDialog,
-  show: state.showConfirmDialog,
-  hide: state.hideConfirmDialog,
-}));
+export const useConfirmDialog = () =>
+  useUIStore(state => ({
+    confirmDialog: state.confirmDialog,
+    show: state.showConfirmDialog,
+    hide: state.hideConfirmDialog,
+  }));
 
-export const useTheme = () => useUIStore((state) => ({
-  mode: state.themeMode,
-  density: state.densityMode,
-  setMode: state.setThemeMode,
-  setDensity: state.setDensityMode,
-}));
+export const useTheme = () =>
+  useUIStore(state => ({
+    mode: state.themeMode,
+    density: state.densityMode,
+    setMode: state.setThemeMode,
+    setDensity: state.setDensityMode,
+  }));
 
 // Utility functions for notifications
 export const showSuccessNotification = (message: string, title?: string) => {
