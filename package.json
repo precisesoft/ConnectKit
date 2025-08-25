@@ -61,5 +61,8 @@
     "*.{json,md,yml,yaml}": [
       "prettier --write"
     ]
+  },
+  "overrides": {
+    "cross-spawn": "^7.0.5"
   }
 }
