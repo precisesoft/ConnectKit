@@ -431,13 +431,31 @@ jobs:
 
       - name: Install color contrast testing tools
         run: |
-          npm install -g puppeteer
+          npm install -g puppeteer color-contrast-checker
 
       - name: Create color contrast test script
         run: |
           cat > color-contrast-test.js << 'EOF'
           const puppeteer = require('puppeteer');
+          const ColorContrastChecker = require('color-contrast-checker');
           const fs = require('fs');
+
+          function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? [
+              parseInt(result[1], 16),
+              parseInt(result[2], 16),
+              parseInt(result[3], 16)
+            ] : null;
+          }
+
+          function rgbStringToArray(rgbString) {
+            if (!rgbString || rgbString === 'rgba(0, 0, 0, 0)') return null;
+            const match = rgbString.match(/rgba?\(([^)]+)\)/);
+            if (!match) return null;
+            const values = match[1].split(',').map(v => parseInt(v.trim()));
+            return [values[0], values[1], values[2]];
+          }
 
           async function testColorContrast() {
             const browser = await puppeteer.launch({
@@ -446,6 +464,7 @@ jobs:
             });
             
             const page = await browser.newPage();
+            const ccc = new ColorContrastChecker();
             const results = {};
             
             const urls = [
@@ -470,9 +489,9 @@ jobs:
                   if (text && text.length > 0 && el.offsetWidth > 0 && el.offsetHeight > 0) {
                     const color = style.color;
                     const backgroundColor = style.backgroundColor;
-                    const fontSize = style.fontSize;
+                    const fontSize = parseFloat(style.fontSize);
                     
-                    if (color && backgroundColor && color !== backgroundColor) {
+                    if (color && backgroundColor && color !== backgroundColor && backgroundColor !== 'rgba(0, 0, 0, 0)') {
                       colorData.push({
                         element: el.tagName.toLowerCase(),
                         text: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
@@ -484,12 +503,40 @@ jobs:
                   }
                 });
                 
-                return colorData.slice(0, 20); // Limit to prevent huge output
+                return colorData.slice(0, 15); // Limit to prevent huge output
               });
+              
+              const contrastResults = [];
+              
+              for (const item of colorInfo) {
+                const foreground = rgbStringToArray(item.color);
+                const background = rgbStringToArray(item.backgroundColor);
+                
+                if (foreground && background) {
+                  const isLarge = item.fontSize >= 18 || (item.fontSize >= 14 && item.element === 'strong');
+                  const aaLevel = ccc.isLevelAA(foreground, background, isLarge);
+                  const aaaLevel = ccc.isLevelAAA(foreground, background, isLarge);
+                  const ratio = ccc.getContrastRatio(foreground, background);
+                  
+                  contrastResults.push({
+                    element: item.element,
+                    text: item.text,
+                    foreground: item.color,
+                    background: item.backgroundColor,
+                    fontSize: item.fontSize,
+                    isLarge: isLarge,
+                    contrastRatio: ratio,
+                    passesAA: aaLevel,
+                    passesAAA: aaaLevel
+                  });
+                }
+              }
               
               results[url] = {
                 totalElements: colorInfo.length,
-                elements: colorInfo
+                contrastResults: contrastResults,
+                failedAA: contrastResults.filter(r => !r.passesAA).length,
+                failedAAA: contrastResults.filter(r => !r.passesAAA).length
               };
             }
             
@@ -516,26 +563,37 @@ jobs:
             node -e "
               const results = JSON.parse(require('fs').readFileSync('color-contrast-results.json', 'utf8'));
               
+              let totalFailedAA = 0;
+              let totalTested = 0;
+              
               for (const [url, data] of Object.entries(results)) {
                 console.log(\`### \${url}\`);
                 console.log(\`**Elements Analyzed:** \${data.totalElements}\`);
+                console.log(\`**Failed WCAG AA:** \${data.failedAA}\`);
+                console.log(\`**Failed WCAG AAA:** \${data.failedAAA}\`);
                 console.log('');
                 
-                // Show sample of elements (first 5)
-                const samples = data.elements.slice(0, 5);
-                if (samples.length > 0) {
-                  console.log('**Sample Elements:**');
-                  samples.forEach((el, i) => {
+                totalFailedAA += data.failedAA;
+                totalTested += data.contrastResults?.length || 0;
+                
+                // Show failed contrast elements (first 3)
+                const failed = data.contrastResults?.filter(r => !r.passesAA).slice(0, 3) || [];
+                if (failed.length > 0) {
+                  console.log('**Failed Contrast Elements:**');
+                  failed.forEach((el, i) => {
                     console.log(\`\${i + 1}. **\${el.element}**: \${el.text}\`);
-                    console.log(\`   - Color: \${el.color}\`);
-                    console.log(\`   - Background: \${el.backgroundColor}\`);
-                    console.log(\`   - Font Size: \${el.fontSize}\`);
+                    console.log(\`   - Ratio: \${el.contrastRatio.toFixed(2)}:1\`);
+                    console.log(\`   - AA Required: \${el.isLarge ? '3:1' : '4.5:1'}\`);
+                    console.log(\`   - Colors: \${el.foreground} on \${el.background}\`);
                     console.log('');
                   });
                 }
               }
               
-              console.log('> **Note:** This is a basic color extraction. For detailed contrast ratio analysis, consider tools like axe-core or Lighthouse.');
+              console.log(\`### Summary\`);
+              console.log(\`**Total Elements Tested:** \${totalTested}\`);
+              console.log(\`**Total AA Failures:** \${totalFailedAA}\`);
+              console.log(\`**Success Rate:** \${totalTested > 0 ? (((totalTested - totalFailedAA) / totalTested) * 100).toFixed(1) : 0}%\`);
             " >> $GITHUB_STEP_SUMMARY
           fi
 
