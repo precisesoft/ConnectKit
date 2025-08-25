@@ -98,7 +98,7 @@ jobs:
           JWT_SECRET: test-secret-must-be-at-least-32-chars-long
           JWT_REFRESH_SECRET: test-refresh-secret-must-be-at-least-32-chars
           ENCRYPTION_KEY: test-encryption-key-32-characters!!
-        run: npm test -- --coverageReporters=lcov
+        run: npx jest --coverage --coverageReporters=lcov
 
       - name: Upload backend coverage to Codecov
         uses: codecov/codecov-action@v4
