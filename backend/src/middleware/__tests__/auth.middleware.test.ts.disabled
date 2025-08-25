@@ -1,12 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import {
-  authenticateToken,
+  authenticate,
   generateAccessToken,
   generateRefreshToken,
   verifyRefreshToken,
   blacklistToken,
-  requireRole,
+  authorize,
 } from '../auth.middleware';
 import { UserRole } from '../../models/user.model';
 import { UnauthorizedError, ForbiddenError } from '../../utils/errors';

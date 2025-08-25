@@ -1,18 +1,15 @@
 import { AuthService } from '../auth.service';
 import { UserRepository } from '../../repositories/user.repository';
-import { User, UserRole } from '../../models/user.model';
 import {
   InvalidCredentialsError,
   AccountLockedError,
   EmailNotVerifiedError,
   InvalidTokenError,
-  NotFoundError,
 } from '../../utils/errors';
 import {
   createMockUserRepository,
   createMockRedis,
   setupSuccessfulAuth,
-  setupFailedAuth,
 } from '../../tests/utils/mocks';
 import {
   createUser,
@@ -38,8 +35,7 @@ describe('AuthService', () => {
     jest.clearAllMocks();
 
     // Create mock instances
-    mockUserRepository =
-      createMockUserRepository() as jest.Mocked<UserRepository>;
+    mockUserRepository = createMockUserRepository() as unknown as jest.Mocked<UserRepository>;
     mockRedis = createMockRedis();
 
     // Mock the constructor dependencies

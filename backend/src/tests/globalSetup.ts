@@ -25,13 +25,14 @@ export default async function globalSetup() {
     process.env.DB_PORT =
       process.env.DB_PORT || process.env.TEST_DB_PORT || '5432';
     process.env.DB_USER =
-      process.env.DB_USER || process.env.TEST_DB_USER || 'postgres';
+      process.env.DB_USER || process.env.TEST_DB_USER || 'admin';
     process.env.DB_PASSWORD =
-      process.env.DB_PASSWORD || process.env.TEST_DB_PASSWORD || 'postgres';
+      process.env.DB_PASSWORD || process.env.TEST_DB_PASSWORD || 'admin123';
 
     // Redis test configuration
     process.env.REDIS_HOST = process.env.TEST_REDIS_HOST || 'localhost';
     process.env.REDIS_PORT = process.env.TEST_REDIS_PORT || '6379';
+    process.env.REDIS_PASSWORD = process.env.TEST_REDIS_PASSWORD || 'redis123';
     process.env.REDIS_DB = process.env.TEST_REDIS_DB || '1';
 
     // JWT test secrets
@@ -43,24 +44,65 @@ export default async function globalSetup() {
     process.env.ENCRYPTION_KEY =
       process.env.TEST_ENCRYPTION_KEY || 'test-encryption-key-32-chars-long';
 
-    // Initialize test database
+    // Initialize test database with retry logic
     console.log('📊 Initializing test database...');
-    await testDb.initialize();
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        await testDb.initialize();
+        break;
+      } catch (error) {
+        retries--;
+        if (retries === 0) {
+          console.error(
+            '❌ Failed to initialize test database after 3 attempts:',
+            error
+          );
+          throw error;
+        }
+        console.log(
+          `⏳ Retrying database initialization... (${3 - retries}/3)`
+        );
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+      }
+    }
 
     // Create test database schema
     console.log('🗄️ Creating test database schema...');
     await setupTestSchema();
 
-    // Initialize Redis connection
+    // Initialize Redis connection with retry logic
     console.log('🔴 Connecting to test Redis...');
-    await redisConnection.connect();
+    retries = 3;
+    while (retries > 0) {
+      try {
+        await redisConnection.connect();
+        break;
+      } catch (error) {
+        retries--;
+        if (retries === 0) {
+          console.warn(
+            '⚠️ Failed to connect to Redis after 3 attempts, continuing without Redis...'
+          );
+          break;
+        }
+        console.log(`⏳ Retrying Redis connection... (${3 - retries}/3)`);
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+      }
+    }
 
     // Clean up any existing test data
     console.log('🧹 Cleaning up test environment...');
     await testDb.cleanup();
 
-    const redis = redisConnection.getClient();
-    await redis.flushdb();
+    try {
+      const redis = redisConnection.getClient();
+      if (redis && redis.status === 'ready') {
+        await redis.flushdb();
+      }
+    } catch (error) {
+      console.warn('⚠️ Failed to flush Redis test database, continuing...');
+    }
 
     console.log('✅ Test environment setup completed successfully');
   } catch (error) {
@@ -173,9 +215,11 @@ export async function setupTestSchema(): Promise<void> {
        END;
        $$ language 'plpgsql'`,
 
+      `DROP TRIGGER IF EXISTS update_users_updated_at ON users`,
       `CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()`,
 
+      `DROP TRIGGER IF EXISTS update_contacts_updated_at ON contacts`,
       `CREATE TRIGGER update_contacts_updated_at BEFORE UPDATE ON contacts
        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()`,
     ];

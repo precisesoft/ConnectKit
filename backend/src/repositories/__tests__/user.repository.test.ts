@@ -1,12 +1,8 @@
 import { UserRepository } from '../user.repository';
-import { User, UserRole } from '../../models/user.model';
+import { UserRole } from '../../models/user.model';
 import { NotFoundError, ConflictError } from '../../utils/errors';
-import { testDb, TestDatabase } from '../../tests/utils/testDb';
-import {
-  createUser,
-  createUsers,
-  createSeedData,
-} from '../../tests/utils/fixtures';
+import { testDb } from '../../tests/utils/testDb';
+import { createUser, createSeedData } from '../../tests/utils/fixtures';
 import { jest } from '@jest/globals';
 
 // Mock dependencies
@@ -257,7 +253,7 @@ describe('UserRepository', () => {
     });
   });
 
-  describe('updateUser', () => {
+  describe('update', () => {
     it('should update user successfully', async () => {
       // Arrange
       const seedData = createSeedData({ usersCount: 1, includeAdmin: false });
@@ -270,7 +266,7 @@ describe('UserRepository', () => {
       };
 
       // Act
-      const result = await repository.updateUser(testUser.id, updateData);
+      const result = await repository.update(testUser.id, updateData);
 
       // Assert
       expect(result.firstName).toBe(updateData.firstName);
@@ -297,7 +293,7 @@ describe('UserRepository', () => {
       };
 
       // Act
-      const result = await repository.updateUser(testUser.id, updateData);
+      const result = await repository.update(testUser.id, updateData);
 
       // Assert
       expect(result.passwordHash).toBe(testUser.passwordHash);

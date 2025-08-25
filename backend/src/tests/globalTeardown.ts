@@ -1,6 +1,5 @@
 import { testDb } from './utils/testDb';
 import { redisConnection } from '../config/redis.config';
-import { logger } from '../utils/logger';
 
 /**
  * Global test teardown - runs once after all tests
@@ -28,7 +27,7 @@ export default async function globalTeardown() {
 
     // Close Redis connections
     console.log('🔴 Closing Redis connections...');
-    await redisConnection.close();
+    await redisConnection.disconnect();
 
     // Wait a bit for connections to close gracefully
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -50,7 +49,7 @@ export async function forceCleanup(): Promise<void> {
     // Force close all connections
     const closePromises = [
       testDb.close().catch(() => {}),
-      redisConnection.close().catch(() => {}),
+      redisConnection.disconnect().catch(() => {}),
     ];
 
     await Promise.allSettled(closePromises);

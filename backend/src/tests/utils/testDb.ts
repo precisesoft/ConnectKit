@@ -25,12 +25,12 @@ export class TestDatabase {
         ),
         database:
           process.env.DB_NAME || process.env.TEST_DB_NAME || 'connectkit_test',
-        user: process.env.DB_USER || process.env.TEST_DB_USER || 'postgres',
+        user: process.env.DB_USER || process.env.TEST_DB_USER || 'admin',
         password:
-          process.env.DB_PASSWORD || process.env.TEST_DB_PASSWORD || 'postgres',
+          process.env.DB_PASSWORD || process.env.TEST_DB_PASSWORD || 'admin123',
         max: 10,
         idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 2000,
+        connectionTimeoutMillis: 5000,
       };
 
       this.pool = new Pool(dbConfig);
@@ -336,9 +336,9 @@ export const createTestDbConfig = () => ({
   port: parseInt(process.env.DB_PORT || process.env.TEST_DB_PORT || '5432', 10),
   database:
     process.env.DB_NAME || process.env.TEST_DB_NAME || 'connectkit_test',
-  user: process.env.DB_USER || process.env.TEST_DB_USER || 'postgres',
+  user: process.env.DB_USER || process.env.TEST_DB_USER || 'admin',
   password:
-    process.env.DB_PASSWORD || process.env.TEST_DB_PASSWORD || 'postgres',
+    process.env.DB_PASSWORD || process.env.TEST_DB_PASSWORD || 'admin123',
   ssl: process.env.TEST_DB_SSL === 'true',
 });
 
