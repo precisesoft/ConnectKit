@@ -69,7 +69,7 @@ jobs:
 
   core-setup:
     name: Core Setup & Validation
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     outputs:
       should_run_security: ${{ steps.conditions.outputs.security }}
       should_run_accessibility: ${{ steps.conditions.outputs.accessibility }}
@@ -155,7 +155,7 @@ jobs:
 
   unit-tests:
     name: Unit Tests
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [core-setup]
     strategy:
       matrix:
@@ -199,7 +199,7 @@ jobs:
 
   lint-and-format:
     name: Lint & Format Check
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [core-setup]
     steps:
       - uses: actions/checkout@v4
@@ -233,7 +233,7 @@ jobs:
 
   security-scan:
     name: Security Analysis
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [core-setup, unit-tests]
     if: needs.core-setup.outputs.should_run_security == 'true'
     services:
@@ -440,7 +440,7 @@ jobs:
 
   accessibility-tests:
     name: Accessibility Testing
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [core-setup, unit-tests]
     if: needs.core-setup.outputs.should_run_accessibility == 'true'
     strategy:
@@ -659,7 +659,7 @@ jobs:
 
   federal-compliance:
     name: Federal Compliance Testing
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [core-setup]
     if: needs.core-setup.outputs.should_run_compliance == 'true'
     steps:
@@ -800,7 +800,7 @@ jobs:
 
   build-and-deploy:
     name: Build & Deploy
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [core-setup, unit-tests, lint-and-format]
     if: needs.core-setup.outputs.should_run_deploy == 'true'
     environment:
@@ -886,7 +886,7 @@ jobs:
 
   pipeline-summary:
     name: Pipeline Summary
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs:
       [
         core-setup,
