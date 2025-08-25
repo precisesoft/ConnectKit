@@ -1,6 +1,6 @@
 # Dependencies
 node_modules/
-package-lock.json
+# NOTE: package-lock.json files should be committed for reproducible builds
 yarn.lock
 pnpm-lock.yaml
 
