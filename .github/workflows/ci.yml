@@ -26,10 +26,11 @@ jobs:
           format: "sarif"
           output: "trivy-results.sarif"
 
-      - name: Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: "trivy-results.sarif"
+      # NOTE: SARIF upload requires GitHub Advanced Security - commented out
+      # - name: Upload Trivy results to GitHub Security
+      #   uses: github/codeql-action/upload-sarif@v3
+      #   with:
+      #     sarif_file: "trivy-results.sarif"
 
   # Backend testing job
   backend-test:
@@ -68,6 +69,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
+          cache-dependency-path: "package-lock.json"
 
       - name: Install backend dependencies
         working-directory: ./backend
@@ -116,6 +118,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
+          cache-dependency-path: "package-lock.json"
 
       - name: Install frontend dependencies
         working-directory: ./frontend
@@ -186,6 +189,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
+          cache-dependency-path: "package-lock.json"
 
       - name: Start services with Docker Compose
         run: |
