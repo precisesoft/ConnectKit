@@ -157,6 +157,29 @@ jobs:
     name: Unit Tests
     runs-on: self-hosted
     needs: [core-setup]
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: admin123
+          POSTGRES_DB: connectkit_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
     strategy:
       matrix:
         component: [backend, frontend]
@@ -186,6 +209,19 @@ jobs:
       - name: Run tests
         if: matrix.enabled == 'true'
         working-directory: ${{ matrix.path }}
+        env:
+          # Backend test environment variables
+          TEST_DB_HOST: localhost
+          TEST_DB_PORT: 5432
+          TEST_DB_USER: admin
+          TEST_DB_PASSWORD: admin123
+          TEST_DB_NAME: connectkit_test
+          TEST_REDIS_HOST: localhost
+          TEST_REDIS_PORT: 6379
+          TEST_JWT_SECRET: test-jwt-secret-key-for-testing-only-minimum-32-characters
+          TEST_JWT_REFRESH_SECRET: test-refresh-secret-key-for-testing-only-minimum-32-characters
+          TEST_ENCRYPTION_KEY: test-encryption-key-32-chars-long
+          NODE_ENV: test
         run: ${{ matrix.test_cmd }}
 
       - name: Upload test results

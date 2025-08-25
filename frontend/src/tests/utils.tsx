@@ -332,10 +332,9 @@ export const testAccessibility = async (container: HTMLElement) => {
     rules: {
       // Common accessibility rules to test
       'color-contrast': { enabled: true },
-      'keyboard-navigation': { enabled: true },
-      'focus-management': { enabled: true },
-      'aria-labels': { enabled: true },
-      'semantic-structure': { enabled: true },
+      'aria-valid-attr': { enabled: true },
+      label: { enabled: true },
+      'button-name': { enabled: true },
     },
   });
   expect(results).toHaveNoViolations();

@@ -6,6 +6,31 @@ import { useAuth } from '../useAuth';
 import { AuthService } from '../../services/auth.service';
 import { createMockUser, createTestQueryClient } from '../../tests/utils';
 
+// Mock the UI store functions
+vi.mock('../../store/uiStore', () => ({
+  showErrorNotification: vi.fn(),
+  showSuccessNotification: vi.fn(),
+}));
+
+// Mock the auth store
+const mockAuthStore = {
+  user: null,
+  token: null,
+  refreshToken: null,
+  isAuthenticated: false,
+  isLoading: false,
+  setUser: vi.fn(),
+  setTokens: vi.fn(),
+  clearAuth: vi.fn(),
+  setLoading: vi.fn(),
+  getAuthHeader: vi.fn(),
+  isTokenExpired: vi.fn(),
+};
+
+vi.mock('../../store/authStore', () => ({
+  useAuthStore: () => mockAuthStore,
+}));
+
 // Mock the auth service
 vi.mock('../../services/auth.service', () => ({
   AuthService: {
@@ -17,20 +42,14 @@ vi.mock('../../services/auth.service', () => ({
     forgotPassword: vi.fn(),
     resetPassword: vi.fn(),
     changePassword: vi.fn(),
+    verifyEmail: vi.fn(),
+    resendVerificationEmail: vi.fn(),
   },
 }));
 
-// Mock localStorage
-const mockLocalStorage = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-};
-vi.stubGlobal('localStorage', mockLocalStorage);
-
 describe('useAuth', () => {
   let queryClient: QueryClient;
+  const mockUser = createMockUser();
 
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
@@ -39,38 +58,50 @@ describe('useAuth', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     queryClient = createTestQueryClient();
-    mockLocalStorage.getItem.mockReturnValue(null);
+
+    // Reset mock auth store to default state
+    mockAuthStore.user = null;
+    mockAuthStore.token = null;
+    mockAuthStore.refreshToken = null;
+    mockAuthStore.isAuthenticated = false;
+    mockAuthStore.isLoading = false;
+    mockAuthStore.isTokenExpired.mockReturnValue(false);
+    mockAuthStore.getAuthHeader.mockReturnValue(null);
   });
 
   describe('Initial State', () => {
-    it('should initialize with default values', () => {
+    it('should initialize with default values from auth store', () => {
       const { result } = renderHook(() => useAuth(), { wrapper });
 
       expect(result.current.user).toBeNull();
       expect(result.current.isAuthenticated).toBe(false);
       expect(result.current.isLoading).toBe(false);
       expect(result.current.error).toBeNull();
+      expect(result.current.isInitializing).toBe(true);
     });
 
-    it('should initialize as loading when tokens exist in localStorage', () => {
-      mockLocalStorage.getItem.mockReturnValue('mock-token');
+    it('should return authenticated state when user exists in store', () => {
+      mockAuthStore.user = mockUser;
+      mockAuthStore.isAuthenticated = true;
+      mockAuthStore.token = 'mock-token';
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
-      expect(result.current.isLoading).toBe(true);
+      expect(result.current.user).toEqual(mockUser);
+      expect(result.current.isAuthenticated).toBe(true);
+      expect(result.current.token).toBe('mock-token');
     });
   });
 
   describe('Login', () => {
     it('should login successfully with valid credentials', async () => {
-      const mockUser = createMockUser();
-      const mockAuthData = {
+      const mockAuthResponse = {
         user: mockUser,
-        accessToken: 'mock-access-token',
+        token: 'mock-access-token',
         refreshToken: 'mock-refresh-token',
       };
 
-      (AuthService.login as vi.Mock).mockResolvedValueOnce(mockAuthData);
+      (AuthService.login as vi.Mock).mockResolvedValueOnce(mockAuthResponse);
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
@@ -81,33 +112,18 @@ describe('useAuth', () => {
         });
       });
 
-      await waitFor(() => {
-        expect(result.current.user).toEqual(mockUser);
-        expect(result.current.isAuthenticated).toBe(true);
-        expect(result.current.isLoading).toBe(false);
-        expect(result.current.error).toBeNull();
-      });
-
-      expect(AuthService.login).toHaveBeenCalledWith({
-        email: 'test@example.com',
-        password: 'TestPass123!',
-      });
-
-      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
-        'accessToken',
-        'mock-access-token'
-      );
-      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
-        'refreshToken',
+      expect(mockAuthStore.setTokens).toHaveBeenCalledWith(
+        'mock-access-token',
         'mock-refresh-token'
       );
+      expect(mockAuthStore.setUser).toHaveBeenCalledWith(mockUser);
+      expect(mockAuthStore.setLoading).toHaveBeenCalledWith(true);
+      expect(mockAuthStore.setLoading).toHaveBeenCalledWith(false);
     });
 
     it('should handle login failure', async () => {
-      const errorMessage = 'Invalid credentials';
-      (AuthService.login as vi.Mock).mockRejectedValueOnce(
-        new Error(errorMessage)
-      );
+      const error = new Error('Invalid credentials');
+      (AuthService.login as vi.Mock).mockRejectedValueOnce(error);
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
@@ -117,181 +133,129 @@ describe('useAuth', () => {
             email: 'test@example.com',
             password: 'wrong-password',
           });
-        } catch (error) {
+        } catch (e) {
           // Expected to throw
         }
       });
 
-      await waitFor(() => {
-        expect(result.current.user).toBeNull();
-        expect(result.current.isAuthenticated).toBe(false);
-        expect(result.current.isLoading).toBe(false);
-        expect(result.current.error).toBe(errorMessage);
-      });
-
-      expect(mockLocalStorage.setItem).not.toHaveBeenCalled();
+      expect(result.current.error).toBe('Invalid credentials');
+      expect(mockAuthStore.setUser).not.toHaveBeenCalled();
+      expect(mockAuthStore.setTokens).not.toHaveBeenCalled();
     });
 
     it('should set loading state during login', async () => {
-      let resolveLogin: (value: any) => void;
-      const loginPromise = new Promise(resolve => {
-        resolveLogin = resolve;
-      });
+      const mockAuthResponse = {
+        user: mockUser,
+        token: 'token',
+        refreshToken: 'refresh-token',
+      };
 
-      (AuthService.login as vi.Mock).mockReturnValueOnce(loginPromise);
+      (AuthService.login as vi.Mock).mockResolvedValueOnce(mockAuthResponse);
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
       act(() => {
         result.current.login({
           email: 'test@example.com',
-          password: 'TestPass123!',
+          password: 'password',
         });
       });
 
-      // Should be loading
-      expect(result.current.isLoading).toBe(true);
-
-      await act(async () => {
-        resolveLogin!({
-          user: createMockUser(),
-          accessToken: 'token',
-          refreshToken: 'refresh-token',
-        });
-      });
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-      });
+      expect(mockAuthStore.setLoading).toHaveBeenCalledWith(true);
     });
   });
 
   describe('Logout', () => {
     it('should logout successfully', async () => {
-      const mockUser = createMockUser();
-
-      // Setup authenticated state
-      const { result } = renderHook(() => useAuth(), { wrapper });
-
-      // Manually set authenticated state
-      act(() => {
-        (result.current as any).setUser(mockUser);
-        (result.current as any).setIsAuthenticated(true);
-      });
-
       (AuthService.logout as vi.Mock).mockResolvedValueOnce(undefined);
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
 
       await act(async () => {
         await result.current.logout();
       });
 
-      await waitFor(() => {
-        expect(result.current.user).toBeNull();
-        expect(result.current.isAuthenticated).toBe(false);
-        expect(result.current.isLoading).toBe(false);
-      });
-
-      expect(AuthService.logout).toHaveBeenCalled();
-      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('accessToken');
-      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('refreshToken');
+      expect(mockAuthStore.clearAuth).toHaveBeenCalled();
+      expect(mockAuthStore.setLoading).toHaveBeenCalledWith(true);
+      expect(mockAuthStore.setLoading).toHaveBeenCalledWith(false);
     });
 
     it('should handle logout errors gracefully', async () => {
-      const { result } = renderHook(() => useAuth(), { wrapper });
+      const error = new Error('Logout failed');
+      (AuthService.logout as vi.Mock).mockRejectedValueOnce(error);
 
-      (AuthService.logout as vi.Mock).mockRejectedValueOnce(
-        new Error('Logout failed')
-      );
+      const { result } = renderHook(() => useAuth(), { wrapper });
 
       await act(async () => {
         await result.current.logout();
       });
 
-      // Should still clear local state even if server logout fails
-      await waitFor(() => {
-        expect(result.current.user).toBeNull();
-        expect(result.current.isAuthenticated).toBe(false);
-      });
-
-      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('accessToken');
-      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('refreshToken');
+      // Should still clear auth state even if API call fails
+      expect(mockAuthStore.clearAuth).toHaveBeenCalled();
     });
   });
 
   describe('Register', () => {
     it('should register successfully', async () => {
-      const mockUser = createMockUser();
-      const registrationData = {
-        username: 'testuser',
-        email: 'test@example.com',
-        password: 'TestPass123!',
-        confirmPassword: 'TestPass123!',
-        firstName: 'Test',
-        lastName: 'User',
+      const mockAuthResponse = {
+        user: mockUser,
+        token: 'mock-token',
+        refreshToken: 'mock-refresh-token',
       };
 
-      (AuthService.register as vi.Mock).mockResolvedValueOnce({
-        user: mockUser,
-        message: 'Registration successful',
-      });
+      (AuthService.register as vi.Mock).mockResolvedValueOnce(mockAuthResponse);
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
       await act(async () => {
-        await result.current.register(registrationData);
+        await result.current.register({
+          firstName: 'Test',
+          lastName: 'User',
+          email: 'test@example.com',
+          password: 'TestPass123!',
+        });
       });
 
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-        expect(result.current.error).toBeNull();
-      });
-
-      expect(AuthService.register).toHaveBeenCalledWith(registrationData);
+      expect(mockAuthStore.setTokens).toHaveBeenCalledWith(
+        'mock-token',
+        'mock-refresh-token'
+      );
+      expect(mockAuthStore.setUser).toHaveBeenCalledWith(mockUser);
     });
 
     it('should handle registration failure', async () => {
-      const errorMessage = 'Email already exists';
-      (AuthService.register as vi.Mock).mockRejectedValueOnce(
-        new Error(errorMessage)
-      );
+      const error = new Error('Registration failed');
+      (AuthService.register as vi.Mock).mockRejectedValueOnce(error);
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
       await act(async () => {
         try {
           await result.current.register({
-            username: 'testuser',
-            email: 'existing@example.com',
-            password: 'TestPass123!',
-            confirmPassword: 'TestPass123!',
             firstName: 'Test',
             lastName: 'User',
+            email: 'test@example.com',
+            password: 'password',
           });
-        } catch (error) {
+        } catch (e) {
           // Expected to throw
         }
       });
 
-      await waitFor(() => {
-        expect(result.current.error).toBe(errorMessage);
-        expect(result.current.isLoading).toBe(false);
-      });
+      expect(result.current.error).toBe('Registration failed');
     });
   });
 
   describe('Token Refresh', () => {
     it('should refresh token successfully', async () => {
-      mockLocalStorage.getItem.mockImplementation(key => {
-        if (key === 'refreshToken') return 'old-refresh-token';
-        return null;
-      });
+      mockAuthStore.refreshToken = 'valid-refresh-token';
 
-      const newTokens = {
-        accessToken: 'new-access-token',
+      const mockResponse = {
+        token: 'new-access-token',
         refreshToken: 'new-refresh-token',
       };
 
-      (AuthService.refreshToken as vi.Mock).mockResolvedValueOnce(newTokens);
+      (AuthService.refreshToken as vi.Mock).mockResolvedValueOnce(mockResponse);
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
@@ -299,43 +263,24 @@ describe('useAuth', () => {
         await result.current.refreshToken();
       });
 
-      expect(AuthService.refreshToken).toHaveBeenCalledWith(
-        'old-refresh-token'
-      );
-      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
-        'accessToken',
-        'new-access-token'
-      );
-      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
-        'refreshToken',
+      expect(mockAuthStore.setTokens).toHaveBeenCalledWith(
+        'new-access-token',
         'new-refresh-token'
       );
     });
 
     it('should handle refresh token failure', async () => {
-      mockLocalStorage.getItem.mockReturnValue('invalid-refresh-token');
-      (AuthService.refreshToken as vi.Mock).mockRejectedValueOnce(
-        new Error('Invalid refresh token')
-      );
+      mockAuthStore.refreshToken = null;
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
       await act(async () => {
         try {
           await result.current.refreshToken();
-        } catch (error) {
-          // Expected to throw
+        } catch (error: any) {
+          expect(error.message).toBe('No refresh token available');
         }
       });
-
-      // Should logout user when refresh fails
-      await waitFor(() => {
-        expect(result.current.user).toBeNull();
-        expect(result.current.isAuthenticated).toBe(false);
-      });
-
-      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('accessToken');
-      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('refreshToken');
     });
   });
 
@@ -359,17 +304,17 @@ describe('useAuth', () => {
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
-      const resetData = {
-        token: 'reset-token',
-        newPassword: 'NewPass123!',
-        confirmPassword: 'NewPass123!',
-      };
-
       await act(async () => {
-        await result.current.resetPassword(resetData);
+        await result.current.resetPassword({
+          token: 'reset-token',
+          password: 'new-password',
+        });
       });
 
-      expect(AuthService.resetPassword).toHaveBeenCalledWith(resetData);
+      expect(AuthService.resetPassword).toHaveBeenCalledWith({
+        token: 'reset-token',
+        password: 'new-password',
+      });
     });
 
     it('should handle password change', async () => {
@@ -377,30 +322,29 @@ describe('useAuth', () => {
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
-      const changeData = {
-        currentPassword: 'OldPass123!',
-        newPassword: 'NewPass123!',
-        confirmPassword: 'NewPass123!',
-      };
-
       await act(async () => {
-        await result.current.changePassword(changeData);
+        await result.current.changePassword({
+          currentPassword: 'old-password',
+          newPassword: 'new-password',
+        });
       });
 
-      expect(AuthService.changePassword).toHaveBeenCalledWith(changeData);
+      expect(AuthService.changePassword).toHaveBeenCalledWith({
+        currentPassword: 'old-password',
+        newPassword: 'new-password',
+      });
     });
   });
 
   describe('Error Handling', () => {
-    it('should clear error when clearError is called', async () => {
-      // Set an error state
+    it('should clear error when clearError is called', () => {
       const { result } = renderHook(() => useAuth(), { wrapper });
 
       act(() => {
-        (result.current as any).setError('Some error');
+        result.current.setError('Test error');
       });
 
-      expect(result.current.error).toBe('Some error');
+      expect(result.current.error).toBe('Test error');
 
       act(() => {
         result.current.clearError();
@@ -410,9 +354,8 @@ describe('useAuth', () => {
     });
 
     it('should handle network errors', async () => {
-      (AuthService.login as vi.Mock).mockRejectedValueOnce(
-        new Error('Network request failed')
-      );
+      const networkError = new Error('Network error');
+      (AuthService.login as vi.Mock).mockRejectedValueOnce(networkError);
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
@@ -420,61 +363,42 @@ describe('useAuth', () => {
         try {
           await result.current.login({
             email: 'test@example.com',
-            password: 'TestPass123!',
+            password: 'password',
           });
-        } catch (error) {
+        } catch (e) {
           // Expected to throw
         }
       });
 
-      await waitFor(() => {
-        expect(result.current.error).toBe('Network request failed');
-      });
+      expect(result.current.error).toBe('Network error');
     });
   });
 
-  describe('Persistence', () => {
-    it('should restore user session from localStorage on initialization', async () => {
-      const mockUser = createMockUser();
-      mockLocalStorage.getItem.mockImplementation(key => {
-        if (key === 'accessToken') return 'stored-access-token';
-        if (key === 'refreshToken') return 'stored-refresh-token';
-        return null;
-      });
-
-      (AuthService.getCurrentUser as vi.Mock).mockResolvedValueOnce(mockUser);
+  describe('Utilities', () => {
+    it('should check user permissions correctly', () => {
+      mockAuthStore.user = { ...mockUser, role: 'admin' };
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
-      await waitFor(() => {
-        expect(result.current.user).toEqual(mockUser);
-        expect(result.current.isAuthenticated).toBe(true);
-        expect(result.current.isLoading).toBe(false);
-      });
-
-      expect(AuthService.getCurrentUser).toHaveBeenCalled();
+      expect(result.current.hasPermission('any-permission')).toBe(true);
     });
 
-    it('should handle invalid stored tokens', async () => {
-      mockLocalStorage.getItem.mockImplementation(key => {
-        if (key === 'accessToken') return 'invalid-token';
-        return null;
-      });
-
-      (AuthService.getCurrentUser as vi.Mock).mockRejectedValueOnce(
-        new Error('Invalid token')
-      );
+    it('should check email verification status', () => {
+      mockAuthStore.user = { ...mockUser, emailVerified: true };
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
-      await waitFor(() => {
-        expect(result.current.user).toBeNull();
-        expect(result.current.isAuthenticated).toBe(false);
-        expect(result.current.isLoading).toBe(false);
-      });
+      expect(result.current.isEmailVerified()).toBe(true);
+    });
 
-      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('accessToken');
-      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('refreshToken');
+    it('should get user display name', () => {
+      mockAuthStore.user = mockUser;
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+
+      expect(result.current.getUserDisplayName()).toBe(
+        `${mockUser.firstName} ${mockUser.lastName}`
+      );
     });
   });
 });

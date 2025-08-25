@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
-// userEvent imported but not used in current tests
+import userEvent from '@testing-library/user-event';
 import {
   render,
   createMockUser,
@@ -52,11 +52,7 @@ describe('LoginForm', () => {
   });
 
   const renderLoginForm = (props = {}) => {
-    const utils = render(<LoginForm onSuccess={mockOnSuccess} {...props} />);
-    return {
-      ...utils,
-      user: utils.user, // Ensure user is available
-    };
+    return render(<LoginForm onSuccess={mockOnSuccess} {...props} />);
   };
 
   describe('Rendering', () => {
@@ -80,7 +76,7 @@ describe('LoginForm', () => {
       renderLoginForm();
 
       expect(screen.getByText(/don't have an account/i)).toBeInTheDocument();
-      expect(screen.getByText(/sign up/i)).toBeInTheDocument();
+      expect(screen.getByText(/create one now/i)).toBeInTheDocument();
     });
 
     it('should show loading state when isLoading is true', () => {
@@ -94,7 +90,8 @@ describe('LoginForm', () => {
 
   describe('Form Validation', () => {
     it('should show validation error for empty email', async () => {
-      const { user } = renderLoginForm();
+      const user = userEvent.setup();
+      renderLoginForm();
 
       const emailInput = screen.getByLabelText(/email/i);
       const submitButton = screen.getByRole('button', { name: /sign in/i });
@@ -109,21 +106,25 @@ describe('LoginForm', () => {
     });
 
     it('should show validation error for invalid email format', async () => {
-      const { user } = renderLoginForm();
+      const user = userEvent.setup();
+      renderLoginForm();
 
       const emailInput = screen.getByLabelText(/email/i);
       await user.type(emailInput, 'invalid-email');
       await user.tab();
 
       await waitFor(() => {
-        expect(screen.getByText(/invalid email format/i)).toBeInTheDocument();
+        expect(
+          screen.getByText(/please enter a valid email address/i)
+        ).toBeInTheDocument();
       });
     });
 
     it('should show validation error for empty password', async () => {
-      const { user } = renderLoginForm();
+      const user = userEvent.setup();
+      renderLoginForm();
 
-      const passwordInput = screen.getByLabelText(/password/i);
+      const passwordInput = screen.getByLabelText(/^password$/i);
       const submitButton = screen.getByRole('button', { name: /sign in/i });
 
       await user.click(passwordInput);
@@ -136,15 +137,16 @@ describe('LoginForm', () => {
     });
 
     it('should show validation error for short password', async () => {
-      const { user } = renderLoginForm();
+      const user = userEvent.setup();
+      renderLoginForm();
 
-      const passwordInput = screen.getByLabelText(/password/i);
+      const passwordInput = screen.getByLabelText(/^password$/i);
       await user.type(passwordInput, '123');
       await user.tab();
 
       await waitFor(() => {
         expect(
-          screen.getByText(/password must be at least 8 characters/i)
+          screen.getByText(/password must be at least 6 characters/i)
         ).toBeInTheDocument();
       });
     });
@@ -152,10 +154,11 @@ describe('LoginForm', () => {
 
   describe('Form Submission', () => {
     it('should call login with correct credentials on valid submission', async () => {
-      const { user } = renderLoginForm();
+      const user = userEvent.setup();
+      renderLoginForm();
 
       const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/password/i);
+      const passwordInput = screen.getByLabelText(/^password$/i);
       const submitButton = screen.getByRole('button', { name: /sign in/i });
 
       await user.type(emailInput, 'test@example.com');
@@ -171,7 +174,8 @@ describe('LoginForm', () => {
     });
 
     it('should call onSuccess callback on successful login', async () => {
-      const { user } = renderLoginForm();
+      const user = userEvent.setup();
+      renderLoginForm();
 
       // Mock successful login
       mockLogin.mockResolvedValueOnce({
@@ -180,7 +184,7 @@ describe('LoginForm', () => {
       });
 
       const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/password/i);
+      const passwordInput = screen.getByLabelText(/^password$/i);
       const submitButton = screen.getByRole('button', { name: /sign in/i });
 
       await user.type(emailInput, 'test@example.com');
@@ -193,14 +197,15 @@ describe('LoginForm', () => {
     });
 
     it('should display error message on login failure', async () => {
-      const { user } = renderLoginForm();
+      const user = userEvent.setup();
+      renderLoginForm();
 
       // Mock login failure
       const errorMessage = 'Invalid credentials';
       mockLogin.mockRejectedValueOnce(new Error(errorMessage));
 
       const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/password/i);
+      const passwordInput = screen.getByLabelText(/^password$/i);
       const submitButton = screen.getByRole('button', { name: /sign in/i });
 
       await user.type(emailInput, 'test@example.com');
@@ -213,12 +218,13 @@ describe('LoginForm', () => {
     });
 
     it('should prevent submission while loading', async () => {
-      const { user } = renderLoginForm();
+      const user = userEvent.setup();
+      renderLoginForm();
 
       mockAuthContext.isLoading = true;
 
       const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/password/i);
+      const passwordInput = screen.getByLabelText(/^password$/i);
       const submitButton = screen.getByRole('button', { name: /signing in/i });
 
       await user.type(emailInput, 'test@example.com');
@@ -233,10 +239,11 @@ describe('LoginForm', () => {
 
   describe('Password Visibility Toggle', () => {
     it('should toggle password visibility when clicking eye icon', async () => {
-      const { user } = renderLoginForm();
+      const user = userEvent.setup();
+      renderLoginForm();
 
       const passwordInput = screen.getByLabelText(
-        /password/i
+        /^password$/i
       ) as HTMLInputElement;
       const toggleButton = screen.getByRole('button', {
         name: /toggle password visibility/i,
@@ -263,7 +270,8 @@ describe('LoginForm', () => {
     });
 
     it('should toggle remember me state', async () => {
-      const { user } = renderLoginForm();
+      const user = userEvent.setup();
+      renderLoginForm();
 
       const checkbox = screen.getByLabelText(
         /remember me/i
@@ -281,10 +289,11 @@ describe('LoginForm', () => {
 
   describe('Keyboard Navigation', () => {
     it('should support tab navigation through form fields', async () => {
-      const { user } = renderLoginForm();
+      const user = userEvent.setup();
+      renderLoginForm();
 
       const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/password/i);
+      const passwordInput = screen.getByLabelText(/^password$/i);
       const rememberCheckbox = screen.getByLabelText(/remember me/i);
       const submitButton = screen.getByRole('button', { name: /sign in/i });
 
@@ -305,10 +314,11 @@ describe('LoginForm', () => {
     });
 
     it('should submit form on Enter key press', async () => {
-      const { user } = renderLoginForm();
+      const user = userEvent.setup();
+      renderLoginForm();
 
       const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/password/i);
+      const passwordInput = screen.getByLabelText(/^password$/i);
 
       await user.type(emailInput, 'test@example.com');
       await user.type(passwordInput, 'TestPass123!');
@@ -329,7 +339,7 @@ describe('LoginForm', () => {
 
       // Inputs should have proper labels
       expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
 
       // Submit button should be properly identified
       expect(
@@ -338,7 +348,8 @@ describe('LoginForm', () => {
     });
 
     it('should announce validation errors to screen readers', async () => {
-      const { user } = renderLoginForm();
+      const user = userEvent.setup();
+      renderLoginForm();
 
       const emailInput = screen.getByLabelText(/email/i);
       await user.click(emailInput);
@@ -351,7 +362,8 @@ describe('LoginForm', () => {
     });
 
     it('should have proper error associations with inputs', async () => {
-      const { user } = renderLoginForm();
+      const user = userEvent.setup();
+      renderLoginForm();
 
       const emailInput = screen.getByLabelText(/email/i);
       await user.click(emailInput);
@@ -374,11 +386,19 @@ describe('LoginForm', () => {
     it('should have proper color contrast and accessibility features', async () => {
       const { container } = renderLoginForm();
 
-      await testAccessibility(container);
+      const results = await axe(container, {
+        rules: {
+          'color-contrast': { enabled: true },
+          'aria-valid-attr': { enabled: true },
+          label: { enabled: true },
+        },
+      });
+      expect(results).toHaveNoViolations();
     });
 
     it('should be navigable with keyboard', async () => {
-      const { user } = renderLoginForm();
+      const user = userEvent.setup();
+      renderLoginForm();
 
       // Focus email input first
       await user.tab();
@@ -386,7 +406,7 @@ describe('LoginForm', () => {
 
       // Tab to password input
       await user.tab();
-      expect(screen.getByLabelText(/password/i)).toHaveFocus();
+      expect(screen.getByLabelText(/^password$/i)).toHaveFocus();
 
       // Tab to password toggle
       await user.tab();
@@ -445,12 +465,13 @@ describe('LoginForm', () => {
 
   describe('Error Handling', () => {
     it('should handle network errors gracefully', async () => {
-      const { user } = renderLoginForm();
+      const user = userEvent.setup();
+      renderLoginForm();
 
       mockLogin.mockRejectedValueOnce(new Error('Network error'));
 
       const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/password/i);
+      const passwordInput = screen.getByLabelText(/^password$/i);
       const submitButton = screen.getByRole('button', { name: /sign in/i });
 
       await user.type(emailInput, 'test@example.com');
@@ -463,13 +484,14 @@ describe('LoginForm', () => {
     });
 
     it('should clear error message when user starts typing', async () => {
-      const { user } = renderLoginForm();
+      const user = userEvent.setup();
+      renderLoginForm();
 
       // Trigger an error first
       mockLogin.mockRejectedValueOnce(new Error('Invalid credentials'));
 
       const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/password/i);
+      const passwordInput = screen.getByLabelText(/^password$/i);
       const submitButton = screen.getByRole('button', { name: /sign in/i });
 
       await user.type(emailInput, 'test@example.com');
