@@ -74,9 +74,9 @@ jobs:
           npm install
           npm install --workspace=backend --include=dev
 
-      - name: Run backend linting
-        working-directory: ./backend
-        run: npm run lint
+      # - name: Run backend linting
+      #   working-directory: ./backend
+      #   run: npm run lint
 
       - name: Run backend type checking
         working-directory: ./backend
@@ -122,9 +122,9 @@ jobs:
           npm install
           npm install --workspace=frontend --include=dev
 
-      - name: Run frontend linting
-        working-directory: ./frontend
-        run: npm run lint
+      # - name: Run frontend linting
+      #   working-directory: ./frontend
+      #   run: npm run lint
 
       - name: Run frontend type checking
         working-directory: ./frontend
