@@ -144,10 +144,9 @@ jobs:
           npm install
           npm install --workspace=frontend
 
-      - name: Install Playwright and axe-playwright
+      - name: Install Playwright
         working-directory: ./frontend
         run: |
-          npm install --save-dev @playwright/test axe-playwright
           npx playwright install
 
       - name: Build and serve frontend
@@ -163,75 +162,18 @@ jobs:
         run: |
           timeout 60 bash -c 'until curl -f http://localhost:3201; do sleep 2; done'
 
-      - name: Create Axe accessibility tests
+      - name: Update accessibility test configuration
         working-directory: ./frontend
         run: |
-          mkdir -p tests/accessibility
-
-          cat > tests/accessibility/axe.spec.ts << 'EOF'
-          import { test, expect } from '@playwright/test';
-          import AxeBuilder from '@axe-core/playwright';
-
-          const pages = [
-            { name: 'Home', url: '/' },
-            { name: 'Login', url: '/login' },
-            { name: 'Register', url: '/register' },
-          ];
-
-          pages.forEach(({ name, url }) => {
-            test(`${name} page should not have accessibility violations`, async ({ page }) => {
-              await page.goto(`http://localhost:3201${url}`);
-              
-              // Wait for page to load
-              await page.waitForLoadState('networkidle');
-              
-              const accessibilityScanResults = await new AxeBuilder({ page })
-                .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
-                .exclude('#ads') // Exclude third-party content
-                .analyze();
-              
-              expect(accessibilityScanResults.violations).toEqual([]);
-            });
-          });
-
-          test('Contact form should be accessible', async ({ page }) => {
-            await page.goto('http://localhost:3201/login');
-            
-            // Fill login form (this would need valid test credentials)
-            // For now, just test the form structure
-            await page.waitForLoadState('networkidle');
-            
-            const accessibilityScanResults = await new AxeBuilder({ page })
-              .include('form')
-              .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
-              .analyze();
-              
-            expect(accessibilityScanResults.violations).toEqual([]);
-          });
-
-          test('Navigation should be keyboard accessible', async ({ page }) => {
-            await page.goto('http://localhost:3201/');
-            await page.waitForLoadState('networkidle');
-            
-            // Test keyboard navigation
-            await page.keyboard.press('Tab');
-            const focusedElement = await page.locator(':focus').first();
-            expect(await focusedElement.isVisible()).toBe(true);
-            
-            // Run accessibility scan on navigation
-            const accessibilityScanResults = await new AxeBuilder({ page })
-              .include('[role="navigation"], nav, header')
-              .withTags(['wcag2a', 'wcag2aa'])
-              .analyze();
-              
-            expect(accessibilityScanResults.violations).toEqual([]);
-          });
-          EOF
+          # Update Playwright config to use port 3201 for accessibility tests
+          sed -i "s|baseURL: 'http://localhost:3000'|baseURL: 'http://localhost:3201'|g" playwright.config.ts
 
       - name: Run Axe accessibility tests
         working-directory: ./frontend
+        env:
+          TEST_TYPE: accessibility
         run: |
-          npx playwright test tests/accessibility/axe.spec.ts --reporter=html --output accessibility-results
+          npx playwright test tests/accessibility/axe.spec.ts --reporter=html --output-dir=accessibility-results --project=chromium
         continue-on-error: true
 
       - name: Upload Axe test results
