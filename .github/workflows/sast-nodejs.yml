@@ -46,69 +46,47 @@ jobs:
           echo "Scanning entire project for JavaScript/Node.js security issues..."
           njsscan --sarif --output njsscan-full.sarif . || true
 
-      - name: Merge SARIF results
-        run: |
-          # Create combined SARIF file
-          python3 -c "
-          import json
-          import os
-
-          def merge_sarif_files():
-              files = ['backend-njsscan.sarif', 'njsscan-full.sarif']
-              merged = {
-                  'version': '2.1.0',
-                  'runs': []
-              }
-              
-              for file in files:
-                  if os.path.exists(file):
-                      try:
-                          with open(file, 'r') as f:
-                              data = json.load(f)
-                              if 'runs' in data:
-                                  merged['runs'].extend(data['runs'])
-                      except Exception as e:
-                          print(f'Error processing {file}: {e}')
-              
-              with open('njsscan.sarif', 'w') as f:
-                  json.dump(merged, f, indent=2)
-
-          merge_sarif_files()
-          "
-
       - name: Display scan summary
         run: |
           echo "NodeJsScan Analysis Complete"
-          if [ -f "njsscan.sarif" ]; then
-            echo "SARIF file generated successfully"
-            # Count findings
-            python3 -c "
-            import json
-            try:
-                with open('njsscan.sarif', 'r') as f:
-                    data = json.load(f)
-                    total_results = sum(len(run.get('results', [])) for run in data.get('runs', []))
-                    print(f'Total security findings: {total_results}')
-            except Exception as e:
-                print(f'Error reading SARIF: {e}')
-            "
+
+          # Check backend scan results
+          if [ -f "backend-njsscan.sarif" ]; then
+            echo "✓ Backend SARIF file generated successfully"
+            echo "  File size: $(du -h backend-njsscan.sarif | cut -f1)"
           else
-            echo "No SARIF file generated"
+            echo "✗ No backend SARIF file generated"
           fi
 
-      - name: Upload SARIF results to GitHub Security Dashboard
+          # Check full project scan results  
+          if [ -f "njsscan-full.sarif" ]; then
+            echo "✓ Full project SARIF file generated successfully"
+            echo "  File size: $(du -h njsscan-full.sarif | cut -f1)"
+          else
+            echo "✗ No full project SARIF file generated"
+          fi
+
+          echo "Both scans will be uploaded separately to comply with GitHub's SARIF policy"
+
+      - name: Upload Backend SARIF results to GitHub Security Dashboard
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: njsscan.sarif
-          category: nodejs-scan
-        if: always() && hashFiles('njsscan.sarif') != ''
+          sarif_file: backend-njsscan.sarif
+          category: nodejs-backend
+        if: always() && hashFiles('backend-njsscan.sarif') != ''
+
+      - name: Upload Full Project SARIF results to GitHub Security Dashboard
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: njsscan-full.sarif
+          category: nodejs-full
+        if: always() && hashFiles('njsscan-full.sarif') != ''
 
       - name: Upload NodeJsScan results as artifact
         uses: actions/upload-artifact@v4
         with:
           name: nodejs-security-results
           path: |
-            njsscan.sarif
             backend-njsscan.sarif
             njsscan-full.sarif
           retention-days: 30
