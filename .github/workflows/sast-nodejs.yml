@@ -1,0 +1,117 @@
+name: SAST - NodeJS Security Scan
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  njsscan:
+    name: NodeJS Security Analysis
+    runs-on: ubuntu-latest
+
+    # Skip any PR created by dependabot to avoid permission issues
+    if: (github.actor != 'dependabot[bot]')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install NodeJsScan
+        run: |
+          pip install --upgrade pip
+          pip install njsscan
+
+      - name: Run NodeJsScan on backend
+        run: |
+          echo "Scanning backend directory for Node.js security issues..."
+          njsscan --sarif --output backend-njsscan.sarif backend/ || true
+
+      - name: Run NodeJsScan on entire project
+        run: |
+          echo "Scanning entire project for JavaScript/Node.js security issues..."
+          njsscan --sarif --output njsscan-full.sarif . || true
+
+      - name: Merge SARIF results
+        run: |
+          # Create combined SARIF file
+          python3 -c "
+          import json
+          import os
+
+          def merge_sarif_files():
+              files = ['backend-njsscan.sarif', 'njsscan-full.sarif']
+              merged = {
+                  'version': '2.1.0',
+                  'schema': 'https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json',
+                  'runs': []
+              }
+              
+              for file in files:
+                  if os.path.exists(file):
+                      try:
+                          with open(file, 'r') as f:
+                              data = json.load(f)
+                              if 'runs' in data:
+                                  merged['runs'].extend(data['runs'])
+                      except Exception as e:
+                          print(f'Error processing {file}: {e}')
+              
+              with open('njsscan.sarif', 'w') as f:
+                  json.dump(merged, f, indent=2)
+
+          merge_sarif_files()
+          "
+
+      - name: Display scan summary
+        run: |
+          echo "NodeJsScan Analysis Complete"
+          if [ -f "njsscan.sarif" ]; then
+            echo "SARIF file generated successfully"
+            # Count findings
+            python3 -c "
+            import json
+            try:
+                with open('njsscan.sarif', 'r') as f:
+                    data = json.load(f)
+                    total_results = sum(len(run.get('results', [])) for run in data.get('runs', []))
+                    print(f'Total security findings: {total_results}')
+            except Exception as e:
+                print(f'Error reading SARIF: {e}')
+            "
+          else
+            echo "No SARIF file generated"
+          fi
+
+      - name: Upload SARIF results to GitHub Security Dashboard
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: njsscan.sarif
+          category: nodejs-scan
+        if: always() && hashFiles('njsscan.sarif') != ''
+
+      - name: Upload NodeJsScan results as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nodejs-security-results
+          path: |
+            njsscan.sarif
+            backend-njsscan.sarif
+            njsscan-full.sarif
+          retention-days: 30
+        if: always()

@@ -1,0 +1,122 @@
+name: SAST - CodeQL Security Analysis
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "30 1 * * 0" # Weekly on Sunday at 1:30 AM UTC
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    # Skip any PR created by dependabot to avoid permission issues
+    if: (github.actor != 'dependabot[bot]')
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ["javascript-typescript"]
+        # Additional languages can be added here: ['python', 'java', 'go', 'cpp', 'csharp', 'ruby']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Fetch full history for better analysis
+          fetch-depth: 0
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          # Use security-extended query suite for comprehensive security analysis
+          queries: security-extended
+          # Custom query packs can be specified here
+          packs: |
+            codeql/javascript-queries:security-extended
+          # Source root for analysis
+          source-root: .
+
+      - name: Setup Node.js for better JavaScript/TypeScript analysis
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: Install dependencies for better analysis
+        run: |
+          # Install root dependencies
+          npm ci --ignore-scripts
+
+          # Install backend dependencies
+          cd backend
+          npm ci --ignore-scripts
+          cd ..
+
+          # Install frontend dependencies  
+          cd frontend
+          npm ci --ignore-scripts
+          cd ..
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{matrix.language}}"
+          # Upload results even if there are no findings
+          upload: true
+          # Checkout path
+          checkout_path: ${{ github.workspace }}
+
+      - name: Upload CodeQL results as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-results-${{ matrix.language }}
+          path: |
+            ${{ runner.temp }}/codeql_databases/
+          retention-days: 30
+        if: always()
+
+  # Additional job for analyzing GitHub Actions workflows
+  analyze-workflows:
+    name: Analyze GitHub Actions Workflows
+    runs-on: ubuntu-latest
+
+    if: (github.actor != 'dependabot[bot]')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL for GitHub Actions
+        uses: github/codeql-action/init@v3
+        with:
+          # Special language identifier for GitHub Actions workflows
+          languages: "yaml"
+          queries: security-extended
+
+      - name: Perform GitHub Actions Workflow Analysis
+        run: |
+          # CodeQL can analyze YAML files including GitHub Actions workflows
+          echo "Analyzing GitHub Actions workflows for security issues..."
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/workflows"

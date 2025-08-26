@@ -1,0 +1,65 @@
+name: SAST - Semgrep Security Scan
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 2 * * *" # Daily at 2 AM UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  semgrep:
+    name: Semgrep Security Analysis
+    runs-on: ubuntu-latest
+
+    # Skip any PR created by dependabot to avoid permission issues
+    if: (github.actor != 'dependabot[bot]')
+
+    container:
+      # A Docker image with Semgrep installed
+      image: semgrep/semgrep
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Semgrep with comprehensive rulesets
+        run: |
+          semgrep ci \
+            --config=p/security-audit \
+            --config=p/nodejs \
+            --config=p/typescript \
+            --config=p/react \
+            --config=p/owasp-top-ten \
+            --config=p/secrets \
+            --sarif \
+            --output=semgrep.sarif \
+            --timeout=300 \
+            --verbose
+        env:
+          # Use GitHub token for improved rate limiting
+          SEMGREP_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload SARIF results to GitHub Security Dashboard
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep.sarif
+          category: semgrep
+        if: always()
+
+      - name: Upload Semgrep results as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-security-results
+          path: semgrep.sarif
+          retention-days: 30
+        if: always()
