@@ -64,8 +64,15 @@ jobs:
             --config=.trufflehogrc.yml \
             --results=verified,unknown \
             --json \
-            --output git-secrets.json || true
-            
+            --output git-secrets.json
+          exit_code=$?
+          if [ $exit_code -eq 0 ]; then
+            echo "TruffleHog scan completed successfully."
+          else
+            echo "TruffleHog scan failed with exit code $exit_code."
+            # Optionally, fail the workflow or continue based on your requirements
+            # exit $exit_code
+          fi
           echo "Git history scan completed"
           ls -la *secrets.json || echo "No git results found"
 
