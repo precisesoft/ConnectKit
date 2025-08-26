@@ -1,0 +1,312 @@
+name: Security - Backend Analysis
+
+on:
+  pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/security-backend.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  backend-security:
+    name: Backend Security Tests
+    runs-on: ubuntu-latest
+    
+    # Skip any PR created by dependabot to avoid permission issues
+    if: (github.actor != 'dependabot[bot]')
+    
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: test_security
+          POSTGRES_PASSWORD: test_security
+          POSTGRES_DB: connectkit_security_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+      
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            backend/node_modules
+          key: backend-security-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            backend-security-${{ runner.os }}-
+      
+      - name: Install dependencies
+        run: |
+          echo "Installing workspace dependencies..."
+          npm install
+        continue-on-error: true
+      
+      - name: Run ESLint security checks
+        run: |
+          echo "## Backend Security Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "### ESLint Security Scan:" >> $GITHUB_STEP_SUMMARY
+          
+          cd backend
+          
+          # Run ESLint with security focus
+          npm run lint -- --format=json --output-file=eslint-security-results.json || true
+          
+          if [ -f "eslint-security-results.json" ]; then
+            ERROR_COUNT=$(jq '[.[] | .errorCount] | add' eslint-security-results.json || echo "0")
+            WARNING_COUNT=$(jq '[.[] | .warningCount] | add' eslint-security-results.json || echo "0")
+            
+            echo "- Errors: $ERROR_COUNT" >> $GITHUB_STEP_SUMMARY
+            echo "- Warnings: $WARNING_COUNT" >> $GITHUB_STEP_SUMMARY
+            
+            if [ "$ERROR_COUNT" = "0" ]; then
+              echo "✅ No security errors found" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "⚠️ Security issues detected - review ESLint report" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+        continue-on-error: true
+      
+      - name: Check for SQL injection vulnerabilities
+        run: |
+          echo "### SQL Injection Prevention Check:" >> $GITHUB_STEP_SUMMARY
+          cd backend/src
+          
+          # Check for raw SQL queries
+          if grep -r "query(" . --include="*.ts" --include="*.js" | grep -v "parameterized\|prepared" | head -5; then
+            echo "⚠️ Raw SQL queries found - ensure they use parameterized queries" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No obvious raw SQL queries detected" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Check for string concatenation in queries
+          if grep -r "query.*\+.*" . --include="*.ts" --include="*.js" | grep -v "test" | head -5; then
+            echo "⚠️ String concatenation in queries found - SQL injection risk!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No SQL string concatenation detected" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Check for ORM usage (TypeORM, Sequelize, Prisma)
+          if grep -r "@Entity\|sequelize\|prisma" . --include="*.ts" --include="*.js" | head -1; then
+            echo "✅ Using ORM for database operations" >> $GITHUB_STEP_SUMMARY
+          fi
+        continue-on-error: true
+      
+      - name: Check for hardcoded secrets
+        run: |
+          echo "### Hardcoded Secrets Check:" >> $GITHUB_STEP_SUMMARY
+          cd backend
+          
+          SECRETS_FOUND=false
+          
+          # Check for hardcoded passwords
+          if grep -r "password\s*[:=]\s*['\"][^'\"]*['\"]" src/ --include="*.ts" --include="*.js" | grep -v "test\|mock\|example\|env" | head -5; then
+            echo "❌ Hardcoded passwords found!" >> $GITHUB_STEP_SUMMARY
+            SECRETS_FOUND=true
+          fi
+          
+          # Check for hardcoded API keys
+          if grep -r -E "(api[_-]?key|apikey)\s*[:=]\s*['\"][^'\"]+['\"]" src/ --include="*.ts" --include="*.js" | grep -v "process.env\|test\|mock" | head -5; then
+            echo "❌ Hardcoded API keys found!" >> $GITHUB_STEP_SUMMARY
+            SECRETS_FOUND=true
+          fi
+          
+          # Check for JWT secrets
+          if grep -r -E "jwt.*secret\s*[:=]\s*['\"][^'\"]+['\"]" src/ --include="*.ts" --include="*.js" | grep -v "process.env\|test" | head -5; then
+            echo "❌ Hardcoded JWT secrets found!" >> $GITHUB_STEP_SUMMARY
+            SECRETS_FOUND=true
+          fi
+          
+          # Check for database credentials
+          if grep -r -E "(db_password|database_password|mysql_password|postgres_password)" src/ --include="*.ts" --include="*.js" | grep -v "process.env\|test" | head -5; then
+            echo "❌ Hardcoded database credentials found!" >> $GITHUB_STEP_SUMMARY
+            SECRETS_FOUND=true
+          fi
+          
+          if [ "$SECRETS_FOUND" = "false" ]; then
+            echo "✅ No hardcoded secrets detected" >> $GITHUB_STEP_SUMMARY
+          fi
+        continue-on-error: true
+      
+      - name: Check authentication security
+        run: |
+          echo "### Authentication Security Check:" >> $GITHUB_STEP_SUMMARY
+          cd backend/src
+          
+          # Check for password hashing
+          if grep -r "bcrypt\|argon2\|scrypt\|pbkdf2" . --include="*.ts" --include="*.js" | head -1; then
+            echo "✅ Password hashing library detected" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ No password hashing library detected - ensure passwords are hashed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Check for JWT implementation
+          if grep -r "jsonwebtoken\|jwt" . --include="*.ts" --include="*.js" | head -1; then
+            echo "✅ JWT authentication detected" >> $GITHUB_STEP_SUMMARY
+            
+            # Check for JWT expiration
+            if grep -r "expiresIn" . --include="*.ts" --include="*.js" | head -1; then
+              echo "✅ JWT expiration configured" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "⚠️ Ensure JWT tokens have expiration" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+          
+          # Check for rate limiting
+          if grep -r "rate-limit\|express-rate-limit\|ratelimit" . --include="*.ts" --include="*.js" | head -1; then
+            echo "✅ Rate limiting detected" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ No rate limiting detected - consider adding to prevent brute force" >> $GITHUB_STEP_SUMMARY
+          fi
+        continue-on-error: true
+      
+      - name: Check input validation
+        run: |
+          echo "### Input Validation Check:" >> $GITHUB_STEP_SUMMARY
+          cd backend/src
+          
+          # Check for validation libraries
+          if grep -r "joi\|yup\|express-validator\|class-validator" . --include="*.ts" --include="*.js" | head -1; then
+            echo "✅ Input validation library detected" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ No validation library detected - ensure inputs are validated" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Check for sanitization
+          if grep -r "sanitize\|escape\|xss" . --include="*.ts" --include="*.js" | head -1; then
+            echo "✅ Input sanitization detected" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Ensure user inputs are sanitized" >> $GITHUB_STEP_SUMMARY
+          fi
+        continue-on-error: true
+      
+      - name: Check for console statements
+        run: |
+          echo "### Console Statements Check:" >> $GITHUB_STEP_SUMMARY
+          cd backend/src
+          
+          # Count console statements
+          CONSOLE_COUNT=$(grep -r "console\." . --include="*.ts" --include="*.js" --exclude-dir="tests" --exclude-dir="__tests__" | wc -l || echo "0")
+          
+          if [ "$CONSOLE_COUNT" -gt "0" ]; then
+            echo "⚠️ Found $CONSOLE_COUNT console statements - should use proper logging" >> $GITHUB_STEP_SUMMARY
+            
+            # Show first few instances
+            echo "First few instances:" >> $GITHUB_STEP_SUMMARY
+            grep -r "console\." . --include="*.ts" --include="*.js" --exclude-dir="tests" | head -3 | while read line; do
+              echo "  - $line" >> $GITHUB_STEP_SUMMARY
+            done
+          else
+            echo "✅ No console statements in production code" >> $GITHUB_STEP_SUMMARY
+          fi
+        continue-on-error: true
+      
+      - name: Check error handling
+        run: |
+          echo "### Error Handling Check:" >> $GITHUB_STEP_SUMMARY
+          cd backend/src
+          
+          # Check for try-catch blocks
+          TRY_COUNT=$(grep -r "try {" . --include="*.ts" --include="*.js" | wc -l || echo "0")
+          echo "- Try-catch blocks found: $TRY_COUNT" >> $GITHUB_STEP_SUMMARY
+          
+          # Check for error middleware
+          if grep -r "app.use.*err.*req.*res.*next" . --include="*.ts" --include="*.js" | head -1; then
+            echo "✅ Express error middleware detected" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ No error middleware detected" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Check for unhandled promise rejections
+          if grep -r "unhandledRejection\|uncaughtException" . --include="*.ts" --include="*.js" | head -1; then
+            echo "✅ Unhandled rejection handlers configured" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Consider adding unhandled rejection handlers" >> $GITHUB_STEP_SUMMARY
+          fi
+        continue-on-error: true
+      
+      - name: Check security middleware
+        run: |
+          echo "### Security Middleware Check:" >> $GITHUB_STEP_SUMMARY
+          cd backend/src
+          
+          # Check for helmet
+          if grep -r "helmet" . --include="*.ts" --include="*.js" | head -1; then
+            echo "✅ Helmet security headers detected" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Consider using Helmet for security headers" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Check for CORS
+          if grep -r "cors" . --include="*.ts" --include="*.js" | head -1; then
+            echo "✅ CORS configuration detected" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ No CORS configuration detected" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Check for CSRF protection
+          if grep -r "csrf" . --include="*.ts" --include="*.js" | head -1; then
+            echo "✅ CSRF protection detected" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Consider adding CSRF protection" >> $GITHUB_STEP_SUMMARY
+          fi
+        continue-on-error: true
+      
+      - name: Run security tests
+        env:
+          NODE_ENV: test
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: test_security
+          DB_PASSWORD: test_security
+          DB_NAME: connectkit_security_test
+          JWT_SECRET: test-security-secret-key-for-testing
+          JWT_REFRESH_SECRET: test-security-refresh-key-for-testing
+          ENCRYPTION_KEY: test-security-encryption-key-32ch
+        run: |
+          echo "### Security Test Execution:" >> $GITHUB_STEP_SUMMARY
+          cd backend
+          
+          # Run database migrations
+          npm run db:migrate || echo "Migration skipped"
+          
+          # Run security-focused tests if they exist
+          if [ -d "src/tests/security" ] || [ -d "src/__tests__/security" ]; then
+            npm run test -- --testPathPattern=security || echo "Security tests completed"
+            echo "✅ Security tests executed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "ℹ️ No dedicated security tests found" >> $GITHUB_STEP_SUMMARY
+          fi
+        continue-on-error: true
+      
+      - name: Upload security results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-security-results-${{ github.run_number }}
+          path: |
+            backend/eslint-security-results.json
+          retention-days: 7

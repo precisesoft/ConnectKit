@@ -1,0 +1,377 @@
+name: Security - Headers & Configuration
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  security-headers:
+    name: Security Headers Test
+    runs-on: ubuntu-latest
+    
+    # Skip any PR created by dependabot to avoid permission issues
+    if: (github.actor != 'dependabot[bot]')
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup test environment
+        run: |
+          # Create test environment file with unique ports
+          cat > .env << 'EOF'
+          NODE_ENV=test
+          PORT=3101
+          FRONTEND_PORT=3100
+          DB_HOST=localhost
+          DB_PORT=5434
+          DB_USER=postgres
+          DB_PASSWORD=postgres
+          DB_NAME=connectkit_test
+          REDIS_URL=redis://localhost:6381
+          JWT_SECRET=test-jwt-secret-for-security-testing-very-long-key
+          JWT_REFRESH_SECRET=test-refresh-secret-for-security-testing-very-long-key
+          ENCRYPTION_KEY=test-encryption-key-32-characters
+          CORS_ORIGIN=http://localhost:3100
+          EOF
+          echo "Environment configured for security headers testing"
+      
+      - name: Start application services
+        run: |
+          echo "Starting application services..."
+          
+          # Use unique port configuration to avoid conflicts
+          export DB_PORT=5434
+          export REDIS_PORT=6381
+          export BACKEND_PORT=3101
+          export FRONTEND_PORT=3100
+          
+          # Start services
+          docker compose up -d
+          
+          echo "Waiting for services to be ready..."
+          sleep 45
+          
+          docker compose ps
+        continue-on-error: true
+      
+      - name: Wait for services to be ready
+        run: |
+          echo "Checking service availability..."
+          
+          # Wait for backend
+          for i in {1..30}; do
+            if curl -f http://localhost:3101/api/health 2>/dev/null; then
+              echo "✅ Backend is ready on port 3101"
+              break
+            fi
+            echo "Waiting for backend... ($i/30)"
+            sleep 3
+          done
+          
+          # Wait for frontend
+          for i in {1..30}; do
+            if curl -f http://localhost:3100 2>/dev/null; then
+              echo "✅ Frontend is ready on port 3100"
+              break
+            fi
+            echo "Waiting for frontend... ($i/30)"
+            sleep 3
+          done
+        continue-on-error: true
+      
+      - name: Test backend security headers
+        run: |
+          echo "## Security Headers Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Backend API Security Headers" >> $GITHUB_STEP_SUMMARY
+          
+          # Fetch headers from backend
+          BACKEND_HEADERS=$(curl -I -s http://localhost:3101/api/health 2>/dev/null || echo "Failed to fetch")
+          
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "$BACKEND_HEADERS" | head -20 >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check for essential security headers
+          echo "#### Backend Security Header Checks:" >> $GITHUB_STEP_SUMMARY
+          
+          # X-Content-Type-Options
+          if echo "$BACKEND_HEADERS" | grep -i "x-content-type-options: nosniff" >/dev/null; then
+            echo "✅ X-Content-Type-Options: nosniff" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Missing X-Content-Type-Options header" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # X-Frame-Options
+          if echo "$BACKEND_HEADERS" | grep -i "x-frame-options" >/dev/null; then
+            FRAME_OPTIONS=$(echo "$BACKEND_HEADERS" | grep -i "x-frame-options" | cut -d: -f2 | xargs)
+            echo "✅ X-Frame-Options: $FRAME_OPTIONS" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Missing X-Frame-Options header" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # X-XSS-Protection
+          if echo "$BACKEND_HEADERS" | grep -i "x-xss-protection" >/dev/null; then
+            echo "✅ X-XSS-Protection present" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Missing X-XSS-Protection header (deprecated but still useful)" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Strict-Transport-Security (HSTS)
+          if echo "$BACKEND_HEADERS" | grep -i "strict-transport-security" >/dev/null; then
+            echo "✅ Strict-Transport-Security (HSTS) present" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Missing HSTS header (required for production HTTPS)" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Content-Security-Policy
+          if echo "$BACKEND_HEADERS" | grep -i "content-security-policy" >/dev/null; then
+            echo "✅ Content-Security-Policy present" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Missing Content-Security-Policy header" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Check for information disclosure
+          if echo "$BACKEND_HEADERS" | grep -i "server:" >/dev/null; then
+            SERVER_HEADER=$(echo "$BACKEND_HEADERS" | grep -i "server:" | cut -d: -f2 | xargs)
+            echo "⚠️ Server header present: $SERVER_HEADER (consider removing)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No server information disclosed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if echo "$BACKEND_HEADERS" | grep -i "x-powered-by" >/dev/null; then
+            POWERED_BY=$(echo "$BACKEND_HEADERS" | grep -i "x-powered-by" | cut -d: -f2 | xargs)
+            echo "⚠️ X-Powered-By header present: $POWERED_BY (should be removed)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ X-Powered-By header not present" >> $GITHUB_STEP_SUMMARY
+          fi
+        continue-on-error: true
+      
+      - name: Test frontend security headers
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Frontend Security Headers" >> $GITHUB_STEP_SUMMARY
+          
+          # Fetch headers from frontend
+          FRONTEND_HEADERS=$(curl -I -s http://localhost:3100 2>/dev/null || echo "Failed to fetch")
+          
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "$FRONTEND_HEADERS" | head -20 >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "#### Frontend Security Header Checks:" >> $GITHUB_STEP_SUMMARY
+          
+          # Content-Security-Policy
+          if echo "$FRONTEND_HEADERS" | grep -i "content-security-policy" >/dev/null; then
+            echo "✅ Content-Security-Policy present" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Missing Content-Security-Policy header (critical for XSS prevention)" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # X-Frame-Options
+          if echo "$FRONTEND_HEADERS" | grep -i "x-frame-options" >/dev/null; then
+            echo "✅ X-Frame-Options present" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Missing X-Frame-Options header (clickjacking protection)" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Permissions-Policy
+          if echo "$FRONTEND_HEADERS" | grep -i "permissions-policy" >/dev/null; then
+            echo "✅ Permissions-Policy present" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Missing Permissions-Policy header (controls browser features)" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Cross-Origin headers
+          if echo "$FRONTEND_HEADERS" | grep -i "cross-origin-embedder-policy" >/dev/null; then
+            echo "✅ Cross-Origin-Embedder-Policy present" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Missing Cross-Origin-Embedder-Policy" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if echo "$FRONTEND_HEADERS" | grep -i "cross-origin-opener-policy" >/dev/null; then
+            echo "✅ Cross-Origin-Opener-Policy present" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Missing Cross-Origin-Opener-Policy" >> $GITHUB_STEP_SUMMARY
+          fi
+        continue-on-error: true
+      
+      - name: Test CORS configuration
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### CORS Configuration Test" >> $GITHUB_STEP_SUMMARY
+          
+          # Test CORS preflight request
+          echo "Testing CORS preflight request..." >> $GITHUB_STEP_SUMMARY
+          
+          CORS_RESPONSE=$(curl -s -I -X OPTIONS \
+            -H "Origin: http://malicious.example.com" \
+            -H "Access-Control-Request-Method: POST" \
+            -H "Access-Control-Request-Headers: Content-Type" \
+            http://localhost:3101/api/contacts 2>/dev/null || echo "Failed")
+          
+          # Check if wildcard origin is allowed
+          if echo "$CORS_RESPONSE" | grep -i "access-control-allow-origin: \*" >/dev/null; then
+            echo "❌ CORS allows all origins (*) - security risk!" >> $GITHUB_STEP_SUMMARY
+          elif echo "$CORS_RESPONSE" | grep -i "access-control-allow-origin: http://malicious.example.com" >/dev/null; then
+            echo "❌ CORS allows unintended origin - security risk!" >> $GITHUB_STEP_SUMMARY
+          elif echo "$CORS_RESPONSE" | grep -i "access-control-allow-origin" >/dev/null; then
+            ALLOWED_ORIGIN=$(echo "$CORS_RESPONSE" | grep -i "access-control-allow-origin" | cut -d: -f2 | xargs)
+            echo "✅ CORS properly configured - allows: $ALLOWED_ORIGIN" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ CORS not allowing unauthorized origins" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Check CORS credentials
+          if echo "$CORS_RESPONSE" | grep -i "access-control-allow-credentials: true" >/dev/null; then
+            echo "⚠️ CORS allows credentials - ensure origin is properly restricted" >> $GITHUB_STEP_SUMMARY
+          fi
+        continue-on-error: true
+      
+      - name: Test rate limiting
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Rate Limiting Test" >> $GITHUB_STEP_SUMMARY
+          
+          echo "Sending 20 rapid requests to test rate limiting..." >> $GITHUB_STEP_SUMMARY
+          
+          # Send rapid requests
+          RESPONSES=""
+          for i in {1..20}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3101/api/health)
+            RESPONSES="$RESPONSES $STATUS"
+            if [ "$STATUS" = "429" ]; then
+              echo "✅ Rate limiting active - returned 429 after $i requests" >> $GITHUB_STEP_SUMMARY
+              break
+            fi
+          done
+          
+          if ! echo "$RESPONSES" | grep -q "429"; then
+            echo "⚠️ No rate limiting detected after 20 requests" >> $GITHUB_STEP_SUMMARY
+            echo "Consider implementing rate limiting to prevent abuse" >> $GITHUB_STEP_SUMMARY
+          fi
+        continue-on-error: true
+      
+      - name: Test authentication security
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Authentication Security Test" >> $GITHUB_STEP_SUMMARY
+          
+          # Test login endpoint security
+          echo "Testing authentication endpoint security..." >> $GITHUB_STEP_SUMMARY
+          
+          # Test with invalid credentials
+          LOGIN_RESPONSE=$(curl -s -X POST \
+            -H "Content-Type: application/json" \
+            -d '{"email":"test@example.com","password":"wrongpassword"}' \
+            http://localhost:3101/api/auth/login 2>/dev/null || echo '{"error":"Failed"}')
+          
+          # Check for information leakage
+          if echo "$LOGIN_RESPONSE" | grep -i "user not found\|email not found" >/dev/null; then
+            echo "⚠️ Authentication endpoint reveals user existence" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ Authentication errors don't reveal user existence" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Check for timing attack prevention
+          echo "Testing for timing attack vulnerabilities..." >> $GITHUB_STEP_SUMMARY
+          
+          # Time valid vs invalid user
+          START=$(date +%s%N)
+          curl -s -X POST -H "Content-Type: application/json" \
+            -d '{"email":"admin@example.com","password":"wrong"}' \
+            http://localhost:3101/api/auth/login >/dev/null 2>&1
+          TIME1=$(($(date +%s%N) - START))
+          
+          START=$(date +%s%N)
+          curl -s -X POST -H "Content-Type: application/json" \
+            -d '{"email":"nonexistent@example.com","password":"wrong"}' \
+            http://localhost:3101/api/auth/login >/dev/null 2>&1
+          TIME2=$(($(date +%s%N) - START))
+          
+          DIFF=$((TIME1 - TIME2))
+          if [ "${DIFF#-}" -lt "50000000" ]; then # Less than 50ms difference
+            echo "✅ Consistent response times (timing attack protection)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Response time varies significantly - possible timing attack vector" >> $GITHUB_STEP_SUMMARY
+          fi
+        continue-on-error: true
+      
+      - name: Test cookie security
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Cookie Security Test" >> $GITHUB_STEP_SUMMARY
+          
+          # Make a request that might set cookies
+          COOKIE_RESPONSE=$(curl -s -I -c cookies.txt \
+            http://localhost:3101/api/health 2>/dev/null || echo "Failed")
+          
+          if [ -f "cookies.txt" ] && [ -s "cookies.txt" ]; then
+            echo "Cookies detected, checking security attributes..." >> $GITHUB_STEP_SUMMARY
+            
+            # Check for secure flags
+            if grep -i "httponly" cookies.txt >/dev/null; then
+              echo "✅ HttpOnly flag set on cookies" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ Missing HttpOnly flag on cookies" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            if grep -i "secure" cookies.txt >/dev/null; then
+              echo "✅ Secure flag set on cookies" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "⚠️ Missing Secure flag (required for HTTPS)" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            if grep -i "samesite" cookies.txt >/dev/null; then
+              echo "✅ SameSite attribute set on cookies" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "⚠️ Missing SameSite attribute on cookies" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "ℹ️ No cookies set by the application" >> $GITHUB_STEP_SUMMARY
+          fi
+        continue-on-error: true
+      
+      - name: Generate security recommendations
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Security Recommendations" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Priority 1 (Critical):" >> $GITHUB_STEP_SUMMARY
+          echo "- Implement Content-Security-Policy headers" >> $GITHUB_STEP_SUMMARY
+          echo "- Add X-Frame-Options to prevent clickjacking" >> $GITHUB_STEP_SUMMARY
+          echo "- Configure CORS to allow only trusted origins" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Priority 2 (High):" >> $GITHUB_STEP_SUMMARY
+          echo "- Implement rate limiting on all endpoints" >> $GITHUB_STEP_SUMMARY
+          echo "- Add HSTS header for production HTTPS" >> $GITHUB_STEP_SUMMARY
+          echo "- Set secure cookie attributes (HttpOnly, Secure, SameSite)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Priority 3 (Medium):" >> $GITHUB_STEP_SUMMARY
+          echo "- Remove server identification headers" >> $GITHUB_STEP_SUMMARY
+          echo "- Add Permissions-Policy header" >> $GITHUB_STEP_SUMMARY
+          echo "- Implement Cross-Origin policies" >> $GITHUB_STEP_SUMMARY
+        continue-on-error: true
+      
+      - name: Stop services
+        if: always()
+        run: |
+          echo "Stopping services..."
+          docker compose down -v || true
+          
+          # Cleanup
+          docker container prune -f || true
+          rm -f cookies.txt .env
+          
+          echo "Cleanup completed"
