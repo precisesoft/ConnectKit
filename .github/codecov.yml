@@ -1,0 +1,82 @@
+# Codecov Configuration for ConnectKit
+# https://docs.codecov.com/docs/codecov-yaml
+
+coverage:
+  # Coverage precision (number of decimal places)
+  precision: 2
+
+  # Coverage rounding
+  round: down
+
+  # Coverage range (red to green)
+  range: "70..100"
+
+  # Coverage status checks
+  status:
+    project:
+      default:
+        target: 75% # Target coverage for entire project
+        threshold: 1% # Allow coverage to drop by 1%
+        base: auto
+
+    patch:
+      default:
+        target: 75% # Target coverage for changed code
+        threshold: 5% # Allow new code to have lower coverage
+        base: auto
+
+  # Flags for different parts of the codebase
+  flags:
+    backend:
+      paths:
+        - backend/
+      target: 80% # Higher target for backend
+      threshold: 2%
+
+    frontend:
+      paths:
+        - frontend/
+      target: 70% # Slightly lower for frontend (React components)
+      threshold: 3%
+
+# Pull request comments
+comment:
+  layout: "reach,diff,flags,tree,footer"
+  behavior: default
+  require_changes: false
+  require_base: no
+  require_head: yes
+
+  # Show coverage for these files
+  show_carryforward_flags: false
+
+# GitHub checks
+github_checks:
+  annotations: true
+
+# Ignore these paths from coverage
+ignore:
+  - "**/*.test.*"
+  - "**/*.spec.*"
+  - "**/*.mock.*"
+  - "**/*.config.*"
+  - "**/tests/**"
+  - "**/coverage/**"
+  - "**/node_modules/**"
+  - "**/dist/**"
+  - "**/build/**"
+  - "frontend/src/tests/**"
+  - "backend/src/tests/**"
+  - "*.d.ts"
+  - ".github/**"
+  - "docs/**"
+  - "scripts/**"
+
+# Notification settings
+parsers:
+  gcov:
+    branch_detection:
+      conditional: yes
+      loop: yes
+      method: no
+      macro: no

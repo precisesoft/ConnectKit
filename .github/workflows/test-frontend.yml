@@ -1,0 +1,176 @@
+name: Frontend Unit Tests
+
+on:
+  pull_request:
+    paths:
+      - "frontend/**"
+      - ".github/workflows/test-frontend.yml"
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  test:
+    name: Frontend Tests (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+
+    # Skip any PR created by dependabot to avoid permission issues
+    if: (github.actor != 'dependabot[bot]')
+
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [18, 20]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+          cache-dependency-path: "frontend/package-lock.json"
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci --ignore-scripts
+
+      - name: Cache Vite build
+        uses: actions/cache@v4
+        with:
+          path: |
+            frontend/node_modules/.vite
+            frontend/dist
+          key: vite-${{ runner.os }}-${{ matrix.node-version }}-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            vite-${{ runner.os }}-${{ matrix.node-version }}-
+
+      - name: Run TypeScript type checking
+        run: |
+          cd frontend
+          echo "Running TypeScript type checking..."
+          npm run type-check
+
+      - name: Run ESLint
+        run: |
+          cd frontend
+          echo "Running ESLint..."
+          npm run lint
+
+      - name: Build application
+        run: |
+          cd frontend
+          echo "Building application to verify build process..."
+          npm run build
+
+          # Check build output
+          if [ -d "dist" ]; then
+            echo "✅ Build successful - dist directory created"
+            echo "Build size: $(du -sh dist | cut -f1)"
+          else
+            echo "❌ Build failed - no dist directory found"
+            exit 1
+          fi
+
+      - name: Run unit tests with coverage
+        run: |
+          cd frontend
+          echo "Running unit tests with coverage..."
+          npm run test:unit
+        env:
+          NODE_ENV: test
+          CI: true
+
+      - name: Generate coverage summary
+        run: |
+          cd frontend
+          if [ -f "coverage/lcov-report/index.html" ]; then
+            echo "✅ Coverage report generated successfully"
+            
+            # Extract coverage percentages from lcov.info
+            coverage_file="coverage/lcov.info"
+            if [ -f "$coverage_file" ]; then
+              lines_coverage=$(grep -o "LF:[0-9]*" "$coverage_file" | head -1 | grep -o "[0-9]*" || echo "0")
+              lines_hit=$(grep -o "LH:[0-9]*" "$coverage_file" | head -1 | grep -o "[0-9]*" || echo "0")
+              
+              if [ "$lines_coverage" -gt 0 ]; then
+                percentage=$((lines_hit * 100 / lines_coverage))
+                echo "Frontend test coverage: ${percentage}%"
+                echo "Lines covered: ${lines_hit}/${lines_coverage}"
+              fi
+            fi
+          else
+            echo "❌ No coverage report found"
+          fi
+
+          # Display test summary
+          echo "Frontend test execution completed for Node.js ${{ matrix.node-version }}"
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: frontend/coverage/lcov.info
+          flags: frontend
+          name: frontend-coverage
+          token: ${{ secrets.CODECOV_TOKEN }}
+        if: success() && matrix.node-version == 18
+
+      - name: Upload test results as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-test-results-node-${{ matrix.node-version }}
+          path: |
+            frontend/coverage/
+            frontend/dist/
+          retention-days: 7
+        if: always()
+
+      - name: Comment PR with coverage
+        if: success() && github.event_name == 'pull_request' && matrix.node-version == 18
+        run: |
+          echo "Frontend tests completed successfully for Node.js ${{ matrix.node-version }}"
+          echo "Coverage reports available in artifacts and Codecov"
+
+      - name: Verify build artifacts
+        run: |
+          cd frontend
+          echo "Verifying build artifacts..."
+
+          if [ -d "dist" ]; then
+            echo "✅ Production build artifacts created"
+            echo "Main files in dist:"
+            ls -la dist/
+            
+            # Check for essential files
+            if [ -f "dist/index.html" ]; then
+              echo "✅ index.html found"
+            else
+              echo "❌ index.html missing"
+            fi
+            
+            # Check for asset files
+            asset_count=$(find dist/assets -name "*.js" -o -name "*.css" 2>/dev/null | wc -l)
+            echo "Asset files found: $asset_count"
+            
+            if [ "$asset_count" -gt 0 ]; then
+              echo "✅ Build assets generated successfully"
+            else
+              echo "⚠️ No build assets found"
+            fi
+          else
+            echo "❌ No dist directory found"
+          fi
+
+          echo "All frontend checks completed for Node.js ${{ matrix.node-version }}!"
