@@ -42,5 +42,13 @@
     "types": ["vite/client", "node", "@testing-library/jest-dom"]
   },
   "include": ["src"],
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
+    "**/tests/**",
+    "**/__tests__/**"
+  ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
