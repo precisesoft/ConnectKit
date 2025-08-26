@@ -114,14 +114,7 @@ jobs:
           # Display test summary
           echo "Frontend test execution completed for Node.js ${{ matrix.node-version }}"
 
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          files: frontend/coverage/lcov.info
-          flags: frontend
-          name: frontend-coverage
-          token: ${{ secrets.CODECOV_TOKEN }}
-        if: always() && matrix.node-version == 18
+      # Codecov upload removed - using only OSS coverage reporting via artifacts
 
       - name: Upload test results as artifacts
         uses: actions/upload-artifact@v4
@@ -137,7 +130,7 @@ jobs:
         if: always() && github.event_name == 'pull_request' && matrix.node-version == 18
         run: |
           echo "Frontend tests completed for Node.js ${{ matrix.node-version }}"
-          echo "Coverage reports available in artifacts and Codecov"
+          echo "Coverage reports available in artifacts"
 
       - name: Verify build artifacts
         run: |
