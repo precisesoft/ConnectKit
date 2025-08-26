@@ -54,7 +54,7 @@ jobs:
       - name: Install workspace dependencies
         run: |
           echo "Installing workspace dependencies..."
-          npm ci
+          npm install
 
       - name: Run TypeScript type checking
         run: |
