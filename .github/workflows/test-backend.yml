@@ -75,6 +75,10 @@ jobs:
           echo "Waiting for PostgreSQL to be ready..."
           timeout 60 bash -c 'until pg_isready -h localhost -p 5432 -U test_user; do sleep 1; done'
 
+          echo "Installing Redis CLI for health check..."
+          sudo apt-get update -qq
+          sudo apt-get install -y redis-tools
+
           echo "Waiting for Redis to be ready..."
           timeout 60 bash -c 'until redis-cli -h localhost -p 6379 ping; do sleep 1; done'
 
