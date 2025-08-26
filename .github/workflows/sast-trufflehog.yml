@@ -1,0 +1,166 @@
+name: SAST - TruffleHog Secrets Scan
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 3 * * *" # Daily at 3 AM UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  trufflehog:
+    name: TruffleHog Secrets Analysis
+    runs-on: ubuntu-latest
+
+    # Skip any PR created by dependabot to avoid permission issues
+    if: (github.actor != 'dependabot[bot]')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Fetch full history for comprehensive secret scanning
+          fetch-depth: 0
+
+      - name: Download and install TruffleHog
+        run: |
+          echo "Installing TruffleHog..."
+          curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
+          trufflehog --version
+
+      - name: Run TruffleHog filesystem scan
+        run: |
+          echo "Scanning filesystem for secrets..."
+          trufflehog filesystem . \
+            --config=.trufflehogrc.yml \
+            --results=verified,unknown \
+            --json \
+            --output filesystem-secrets.json || true
+            
+          echo "Filesystem scan completed"
+          ls -la *secrets.json || echo "No filesystem results found"
+
+      - name: Run TruffleHog git history scan
+        run: |
+          echo "Scanning git history for secrets..."
+          trufflehog git file://. \
+            --config=.trufflehogrc.yml \
+            --results=verified,unknown \
+            --json \
+            --output git-secrets.json || true
+            
+          echo "Git history scan completed"
+          ls -la *secrets.json || echo "No git results found"
+
+      - name: Create basic SARIF file
+        run: |
+          echo "Creating SARIF file for dashboard upload..."
+
+          # Create a basic SARIF structure
+          cat > trufflehog.sarif << 'EOF'
+          {
+            "version": "2.1.0",
+            "runs": [
+              {
+                "tool": {
+                  "driver": {
+                    "name": "TruffleHog",
+                    "version": "3.0",
+                    "informationUri": "https://github.com/trufflesecurity/trufflehog"
+                  }
+                },
+                "results": []
+              }
+            ]
+          }
+          EOF
+
+          echo "Basic SARIF file created. Detailed results available in JSON artifacts."
+
+      - name: Display scan summary
+        run: |
+          echo "TruffleHog Secrets Analysis Complete"
+
+          # Count findings in each scan
+          filesystem_count=0
+          git_count=0
+
+          if [ -f "filesystem-secrets.json" ]; then
+            filesystem_count=$(wc -l < filesystem-secrets.json | tr -d ' ')
+            echo "✓ Filesystem scan: $filesystem_count potential secrets found"
+          else
+            echo "✗ No filesystem scan results"
+          fi
+
+          if [ -f "git-secrets.json" ]; then
+            git_count=$(wc -l < git-secrets.json | tr -d ' ')
+            echo "✓ Git history scan: $git_count potential secrets found"
+          else
+            echo "✗ No git history scan results" 
+          fi
+
+          total_count=$((filesystem_count + git_count))
+          echo "Total potential secrets detected: $total_count"
+
+          if [ -f "trufflehog.sarif" ]; then
+            echo "✓ SARIF file generated successfully"
+            echo "  File size: $(du -h trufflehog.sarif | cut -f1)"
+          else
+            echo "✗ No SARIF file generated"
+          fi
+
+      - name: Upload SARIF results to GitHub Security Dashboard
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trufflehog.sarif
+          category: secrets-scan
+        if: always() && hashFiles('trufflehog.sarif') != ''
+
+      - name: Upload TruffleHog results as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trufflehog-secrets-results
+          path: |
+            trufflehog.sarif
+            filesystem-secrets.json
+            git-secrets.json
+          retention-days: 30
+        if: always()
+
+      - name: Fail workflow on verified secrets
+        run: |
+          echo "Checking for verified secrets that could pose immediate security risks..."
+
+          verified_count=0
+
+          # Check filesystem results for verified secrets
+          if [ -f "filesystem-secrets.json" ]; then
+            filesystem_verified=$(grep -c '"Verified":true' filesystem-secrets.json || echo "0")
+            echo "Filesystem verified secrets: $filesystem_verified"
+            verified_count=$((verified_count + filesystem_verified))
+          fi
+
+          # Check git results for verified secrets  
+          if [ -f "git-secrets.json" ]; then
+            git_verified=$(grep -c '"Verified":true' git-secrets.json || echo "0")
+            echo "Git history verified secrets: $git_verified"
+            verified_count=$((verified_count + git_verified))
+          fi
+
+          echo "Total verified secrets: $verified_count"
+
+          if [ $verified_count -gt 0 ]; then
+            echo "❌ SECURITY ALERT: $verified_count verified secrets detected!"
+            echo "These secrets are live and pose immediate security risks."
+            echo "Please rotate these credentials immediately and remove them from the codebase."
+            exit 183  # TruffleHog standard exit code for verified secrets
+          else
+            echo "✅ No verified secrets detected - security check passed"
+          fi

@@ -1,0 +1,73 @@
+# TruffleHog Configuration for ConnectKit
+# https://github.com/trufflesecurity/trufflehog
+
+# Verification settings
+verify: true
+
+# Results to include
+results:
+  - verified
+  - unknown
+
+# Exclude specific paths from scanning
+exclude_paths:
+  - node_modules/
+  - dist/
+  - build/
+  - coverage/
+  - "*.min.js"
+  - "*.min.css"
+  - "*.map"
+  - ".git/"
+  - ".github/workflows/*.yml" # Exclude workflow files from secret scanning
+  - "package-lock.json"
+  - "yarn.lock"
+  - "pnpm-lock.yaml"
+
+# Exclude specific detectors that commonly cause false positives
+exclude_detectors:
+  - uri # Often finds connection strings that aren't secrets
+
+# Custom regex patterns to exclude (reduce false positives)
+exclude_entropy_patterns:
+  - 'console\.log'
+  - 'console\.error'
+  - 'console\.warn'
+  - 'process\.env\.NODE_ENV'
+
+# Include additional file extensions for scanning
+include_extensions:
+  - .ts
+  - .tsx
+  - .js
+  - .jsx
+  - .json
+  - .env.example
+  - .md
+  - .yml
+  - .yaml
+  - .sql
+  - .sh
+
+# Exclude test secrets and example values
+exclude_patterns:
+  - "test_api_key"
+  - "example_secret"
+  - "your_api_key_here"
+  - "placeholder"
+  - "dummy_token"
+  - "fake_password"
+  - "sample_key"
+  - "mock_secret"
+  - "TODO"
+  - "FIXME"
+  - "xxx"
+  - "yyy"
+  - "zzz"
+
+# Performance settings
+max_depth: 100
+timeout: 300
+
+# Logging level
+log_level: info
