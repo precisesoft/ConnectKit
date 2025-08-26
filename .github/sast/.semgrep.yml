@@ -1,0 +1,286 @@
+rules:
+  # Production code quality rules
+  - id: connectkit-no-console-log
+    pattern: console.log(...)
+    message: |
+      Remove console.log statements from production code.
+      Use proper logging (winston/pino) instead for production environments.
+    languages: [typescript, javascript]
+    severity: WARNING
+    paths:
+      include:
+        - "backend/src/**/*.ts"
+        - "frontend/src/**/*.ts"
+        - "frontend/src/**/*.tsx"
+      exclude:
+        - "**/*.test.ts"
+        - "**/*.spec.ts"
+        - "**/tests/**"
+
+  - id: connectkit-no-console-error
+    pattern: console.error(...)
+    message: |
+      Use proper error logging instead of console.error.
+      Consider using the logger utility for consistent error handling.
+    languages: [typescript, javascript]
+    severity: INFO
+    paths:
+      include:
+        - "backend/src/**/*.ts"
+        - "frontend/src/**/*.ts"
+        - "frontend/src/**/*.tsx"
+      exclude:
+        - "**/*.test.ts"
+        - "**/*.spec.ts"
+        - "**/tests/**"
+
+  # Security-focused rules
+  - id: connectkit-no-hardcoded-secrets
+    patterns:
+      - pattern: |
+          $KEY = "..."
+      - pattern: |
+          const $KEY = "..."
+      - pattern: |
+          let $KEY = "..."
+      - pattern: |
+          var $KEY = "..."
+    message: |
+      Potential hardcoded secret detected. 
+      Use environment variables or secure configuration management.
+    languages: [typescript, javascript]
+    severity: ERROR
+    paths:
+      include:
+        - "backend/src/**/*.ts"
+        - "frontend/src/**/*.ts"
+        - "frontend/src/**/*.tsx"
+      exclude:
+        - "**/*.test.ts"
+        - "**/*.spec.ts"
+        - "**/tests/**"
+    metavariable-regex:
+      $KEY: (?i).*(secret|password|key|token|api.?key|private.?key|jwt.?secret|db.?password|redis.?password).*
+
+  - id: connectkit-sql-injection-risk
+    patterns:
+      - pattern: |
+          $QUERY = "..." + $VAR + "..."
+      - pattern: |
+          $QUERY = `...${$VAR}...`
+    message: |
+      Potential SQL injection vulnerability.
+      Use parameterized queries or prepared statements instead.
+    languages: [typescript, javascript]
+    severity: ERROR
+    paths:
+      include:
+        - "backend/src/**/*.ts"
+
+  - id: connectkit-jwt-no-verify
+    pattern: |
+      jwt.decode($TOKEN)
+    message: |
+      Using jwt.decode() without verification is insecure.
+      Use jwt.verify() to validate token signatures.
+    languages: [typescript, javascript]
+    severity: ERROR
+    paths:
+      include:
+        - "backend/src/**/*.ts"
+
+  - id: connectkit-password-no-hash
+    patterns:
+      - pattern: |
+          password === $VAR
+      - pattern: |
+          $VAR === password
+    message: |
+      Direct password comparison detected.
+      Always hash passwords before comparison using bcrypt or similar.
+    languages: [typescript, javascript]
+    severity: ERROR
+    paths:
+      include:
+        - "backend/src/**/*.ts"
+
+  # API and Express.js security rules
+  - id: connectkit-express-missing-auth
+    pattern: |
+      app.$METHOD($PATH, $HANDLER)
+    message: |
+      Express route without authentication middleware.
+      Consider adding auth middleware for protected routes.
+    languages: [typescript, javascript]
+    severity: INFO
+    paths:
+      include:
+        - "backend/src/routes/**/*.ts"
+    metavariable-regex:
+      $METHOD: (post|put|patch|delete)
+      $PATH: '"/(contacts|users|admin).*"'
+
+  - id: connectkit-no-error-handling
+    pattern: |
+      async function $FUNC(...) {
+        ...
+      }
+    message: |
+      Async function without error handling.
+      Consider adding try-catch blocks or error middleware.
+    languages: [typescript, javascript]
+    severity: INFO
+    paths:
+      include:
+        - "backend/src/controllers/**/*.ts"
+        - "backend/src/services/**/*.ts"
+
+  # React/Frontend specific rules
+  - id: connectkit-react-dangerously-set-html
+    pattern: |
+      dangerouslySetInnerHTML={{ __html: $VAR }}
+    message: |
+      Using dangerouslySetInnerHTML can lead to XSS vulnerabilities.
+      Sanitize user input before rendering HTML.
+    languages: [typescript, javascript]
+    severity: ERROR
+    paths:
+      include:
+        - "frontend/src/**/*.tsx"
+        - "frontend/src/**/*.ts"
+
+  - id: connectkit-react-missing-key-prop
+    pattern: |
+      <$ELEMENT>
+        ...
+      </$ELEMENT>
+    message: |
+      Missing 'key' prop in list items can cause React rendering issues.
+      Add unique key prop when rendering lists.
+    languages: [typescript, javascript]
+    severity: WARNING
+    paths:
+      include:
+        - "frontend/src/**/*.tsx"
+
+  # Environment and configuration rules
+  - id: connectkit-missing-env-validation
+    patterns:
+      - pattern: |
+          process.env.$VAR
+    message: |
+      Direct access to environment variables without validation.
+      Use configuration validation (joi/zod) for environment variables.
+    languages: [typescript, javascript]
+    severity: INFO
+    paths:
+      include:
+        - "backend/src/**/*.ts"
+        - "frontend/src/**/*.ts"
+      exclude:
+        - "backend/src/config/**/*.ts"
+        - "**/*.test.ts"
+        - "**/*.spec.ts"
+
+  # Database and data handling
+  - id: connectkit-unsafe-json-parse
+    pattern: |
+      JSON.parse($VAR)
+    message: |
+      Unsafe JSON.parse without error handling.
+      Wrap in try-catch or use safe parsing utility.
+    languages: [typescript, javascript]
+    severity: WARNING
+    paths:
+      include:
+        - "backend/src/**/*.ts"
+        - "frontend/src/**/*.ts"
+
+  # Performance and code quality
+  - id: connectkit-sync-file-operations
+    patterns:
+      - pattern: |
+          fs.readFileSync(...)
+      - pattern: |
+          fs.writeFileSync(...)
+    message: |
+      Synchronous file operations can block the event loop.
+      Use async versions (fs.readFile, fs.writeFile) instead.
+    languages: [typescript, javascript]
+    severity: WARNING
+    paths:
+      include:
+        - "backend/src/**/*.ts"
+
+  - id: connectkit-eval-usage
+    patterns:
+      - pattern: |
+          eval($VAR)
+      - pattern: |
+          new Function($VAR)
+    message: |
+      Using eval() or Function constructor is dangerous and can lead to code injection.
+      Find alternative approaches for dynamic code execution.
+    languages: [typescript, javascript]
+    severity: ERROR
+    paths:
+      include:
+        - "backend/src/**/*.ts"
+        - "frontend/src/**/*.ts"
+
+  # Docker and Infrastructure
+  - id: connectkit-docker-root-user
+    pattern: |
+      USER root
+    message: |
+      Running containers as root user is a security risk.
+      Create and use non-root user in Docker containers.
+    languages: [dockerfile]
+    severity: ERROR
+    paths:
+      include:
+        - "docker/**/*"
+        - "**/Dockerfile*"
+
+  # GitHub Actions security
+  - id: connectkit-actions-shell-injection
+    patterns:
+      - pattern: |
+          run: ... ${{ $VAR }} ...
+    message: |
+      Potential shell injection in GitHub Actions.
+      Use input parameters or environment variables instead.
+    languages: [yaml]
+    severity: ERROR
+    paths:
+      include:
+        - ".github/workflows/**/*.yml"
+        - ".github/workflows/**/*.yaml"
+
+# Configuration for Semgrep CI
+options:
+  # Baseline configuration
+  baseline: true
+
+  # Output configuration
+  output_format: sarif
+
+  # Performance settings
+  timeout: 300
+  max_memory: 2048
+
+  # Rule inclusion/exclusion
+  include:
+    - "backend/"
+    - "frontend/"
+    - "docker/"
+    - ".github/"
+
+  exclude:
+    - "node_modules/"
+    - "dist/"
+    - "build/"
+    - "coverage/"
+    - "*.min.js"
+    - "*.min.css"
+    - "*.generated.*"
