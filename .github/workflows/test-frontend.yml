@@ -40,42 +40,41 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Install frontend dependencies
-        run: |
-          cd frontend
-          npm install --ignore-scripts
-
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
-          path: frontend/node_modules
-          key: node-modules-${{ runner.os }}-${{ matrix.node-version }}-${{ hashFiles('frontend/package.json') }}
+          path: |
+            node_modules
+            frontend/node_modules
+            backend/node_modules
+          key: workspace-modules-${{ runner.os }}-${{ matrix.node-version }}-${{ hashFiles('package-lock.json') }}
           restore-keys: |
-            node-modules-${{ runner.os }}-${{ matrix.node-version }}-
+            workspace-modules-${{ runner.os }}-${{ matrix.node-version }}-
 
-      # TODO: Fix TypeScript errors in codebase before enabling
-      # - name: Run TypeScript type checking
-      #   run: |
-      #     cd frontend
-      #     echo "Running TypeScript type checking..."
-      #     npm run type-check
+      - name: Install workspace dependencies
+        run: |
+          echo "Installing workspace dependencies..."
+          npm ci
+
+      - name: Run TypeScript type checking
+        run: |
+          echo "Running TypeScript type checking..."
+          npm run type-check --workspace=frontend
 
       - name: Run ESLint
         run: |
-          cd frontend
           echo "Running ESLint..."
-          npm run lint
+          npm run lint --workspace=frontend
 
       - name: Build application
         run: |
-          cd frontend
           echo "Building application to verify build process..."
-          npm run build
+          npm run build --workspace=frontend
 
           # Check build output
-          if [ -d "dist" ]; then
+          if [ -d "frontend/dist" ]; then
             echo "✅ Build successful - dist directory created"
-            echo "Build size: $(du -sh dist | cut -f1)"
+            echo "Build size: $(du -sh frontend/dist | cut -f1)"
           else
             echo "❌ Build failed - no dist directory found"
             exit 1
@@ -83,9 +82,8 @@ jobs:
 
       - name: Run unit tests with coverage
         run: |
-          cd frontend
           echo "Running unit tests with coverage..."
-          npm run test:unit
+          npm run test:unit --workspace=frontend
         env:
           NODE_ENV: test
           CI: true
