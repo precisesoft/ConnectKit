@@ -233,7 +233,8 @@ describe('User Model', () => {
       expect(user.resetPasswordExpires).toBeInstanceOf(Date);
 
       const expiresIn = user.resetPasswordExpires!.getTime() - Date.now();
-      expect(expiresIn).toBeWithinRange(3500000, 3700000); // ~1 hour
+      expect(expiresIn).toBeGreaterThan(3500000); // ~1 hour
+      expect(expiresIn).toBeLessThan(3700000);
     });
 
     it('should reset password with valid token', async () => {

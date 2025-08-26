@@ -89,7 +89,7 @@ describe('Contact Model', () => {
     });
 
     it('should validate phone format if provided', () => {
-      const invalidPhones = ['abc', '++1234567890', '0123456789', ''];
+      const invalidPhones = ['abc', '++1234567890', '0123456789'];
 
       invalidPhones.forEach(phone => {
         expect(() => {
@@ -174,14 +174,13 @@ describe('Contact Model', () => {
     });
 
     it('should archive contact', async () => {
-      // Wait 1ms to ensure different timestamp
-      await new Promise(resolve => setTimeout(resolve, 1));
+      const originalCreatedAt = contact.createdAt.getTime();
+      // Wait 5ms to ensure different timestamp
+      await new Promise(resolve => setTimeout(resolve, 5));
       contact.archive();
 
       expect(contact.status).toBe(ContactStatus.ARCHIVED);
-      expect(contact.updatedAt.getTime()).toBeGreaterThan(
-        contact.createdAt.getTime()
-      );
+      expect(contact.updatedAt.getTime()).toBeGreaterThan(originalCreatedAt);
     });
 
     it('should activate contact', () => {

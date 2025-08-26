@@ -73,7 +73,7 @@ export class Contact {
     if (data.email) {
       this.validateEmail(data.email);
     }
-    if (data.phone) {
+    if (data.phone !== undefined) {
       this.validatePhone(data.phone);
     }
 
@@ -109,6 +109,11 @@ export class Contact {
   }
 
   private validatePhone(phone: string): void {
+    // Allow empty/null phone (phone is optional)
+    if (!phone || phone.trim() === '') {
+      return;
+    }
+
     const phoneRegex = /^\+?[1-9]\d{1,14}$/;
     if (!phoneRegex.test(phone)) {
       throw new Error('Invalid phone format');

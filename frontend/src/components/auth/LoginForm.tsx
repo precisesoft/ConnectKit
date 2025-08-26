@@ -72,6 +72,8 @@ const LoginForm: React.FC<LoginFormProps> = ({
     clearErrors,
   } = useForm<LoginFormData>({
     resolver: yupResolver(loginSchema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
     defaultValues: {
       email: '',
       password: '',

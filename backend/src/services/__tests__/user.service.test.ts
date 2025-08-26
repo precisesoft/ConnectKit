@@ -1,6 +1,6 @@
 import { UserService } from '../user.service';
 import { UserRepository } from '../../repositories/user.repository';
-import { User, UserRole } from '../../models/user.model';
+import { UserRole } from '../../models/user.model';
 import {
   NotFoundError,
   ConflictError,
@@ -33,7 +33,7 @@ describe('UserService', () => {
 
     // Create mock instances
     mockUserRepository =
-      createMockUserRepository() as jest.Mocked<UserRepository>;
+      createMockUserRepository() as unknown as jest.Mocked<UserRepository>;
     mockRedis = createMockRedis();
 
     // Mock the constructor dependencies
@@ -108,7 +108,7 @@ describe('UserService', () => {
     });
   });
 
-  describe('getUsers', () => {
+  describe('listUsers', () => {
     it('should return paginated users list', async () => {
       // Arrange
       const users = createUsers(10);
@@ -124,7 +124,7 @@ describe('UserService', () => {
         },
       };
 
-      mockUserRepository.findMany.mockResolvedValue(paginationResult);
+      mockUserRepository.findAll.mockResolvedValue(paginationResult);
 
       const request = {
         page: 1,
@@ -134,10 +134,10 @@ describe('UserService', () => {
       };
 
       // Act
-      const result = await userService.getUsers(request);
+      const result = await userService.listUsers(request);
 
       // Assert
-      expect(mockUserRepository.findMany).toHaveBeenCalledWith({
+      expect(mockUserRepository.findAll).toHaveBeenCalledWith({
         pagination: { page: 1, limit: 5 },
         sorting: { sort: 'createdAt', order: 'desc' },
         filters: {},
@@ -160,7 +160,7 @@ describe('UserService', () => {
         },
       };
 
-      mockUserRepository.findMany.mockResolvedValue(paginationResult);
+      mockUserRepository.findAll.mockResolvedValue(paginationResult);
 
       const request = {
         search: 'john',
@@ -171,10 +171,10 @@ describe('UserService', () => {
       };
 
       // Act
-      const result = await userService.getUsers(request);
+      const result = await userService.listUsers(request);
 
       // Assert
-      expect(mockUserRepository.findMany).toHaveBeenCalledWith({
+      expect(mockUserRepository.findAll).toHaveBeenCalledWith({
         pagination: { page: 1, limit: 10 },
         sorting: { sort: 'createdAt', order: 'desc' },
         search: 'john',
