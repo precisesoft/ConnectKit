@@ -64,13 +64,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "npm"
-          cache-dependency-path: "backend/package-lock.json"
 
       - name: Install backend dependencies
         run: |
           cd backend
-          npm ci --ignore-scripts
+          npm install --ignore-scripts
 
       - name: Wait for services to be ready
         run: |
