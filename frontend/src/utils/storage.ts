@@ -143,12 +143,19 @@ export class AuthStorage {
     user: any | null;
     expiresAt: string | null;
   } {
-    return Storage.get(this.key, {
-      token: null,
-      refreshToken: null,
-      user: null,
-      expiresAt: null,
-    });
+    return (
+      Storage.get(this.key, {
+        token: null,
+        refreshToken: null,
+        user: null,
+        expiresAt: null,
+      }) || {
+        token: null,
+        refreshToken: null,
+        user: null,
+        expiresAt: null,
+      }
+    );
   }
 
   static setAuthData(data: {
@@ -184,12 +191,19 @@ export class UIStorage {
     themeMode: 'light' | 'dark' | 'system';
     densityMode: 'compact' | 'standard' | 'comfortable';
   } {
-    return Storage.get(this.key, {
-      sidebarOpen: true,
-      sidebarWidth: 280,
-      themeMode: 'light',
-      densityMode: 'standard',
-    });
+    return (
+      Storage.get(this.key, {
+        sidebarOpen: true,
+        sidebarWidth: 280,
+        themeMode: 'light' as const,
+        densityMode: 'standard' as const,
+      }) || {
+        sidebarOpen: true,
+        sidebarWidth: 280,
+        themeMode: 'light' as const,
+        densityMode: 'standard' as const,
+      }
+    );
   }
 
   static setUIState(
@@ -219,13 +233,21 @@ export class PreferencesStorage {
     emailNotifications: boolean;
     pushNotifications: boolean;
   } {
-    return Storage.get(this.key, {
-      language: 'en',
-      timezone: 'UTC',
-      dateFormat: 'MM/dd/yyyy',
-      emailNotifications: true,
-      pushNotifications: true,
-    });
+    return (
+      Storage.get(this.key, {
+        language: 'en',
+        timezone: 'UTC',
+        dateFormat: 'MM/dd/yyyy',
+        emailNotifications: true,
+        pushNotifications: true,
+      }) || {
+        language: 'en',
+        timezone: 'UTC',
+        dateFormat: 'MM/dd/yyyy',
+        emailNotifications: true,
+        pushNotifications: true,
+      }
+    );
   }
 
   static setPreferences(
@@ -251,7 +273,7 @@ export class SearchStorage {
   private static maxItems = 10;
 
   static getRecentSearches(): string[] {
-    return Storage.get(this.key, []);
+    return Storage.get(this.key, []) || [];
   }
 
   static addRecentSearch(query: string): boolean {
@@ -341,7 +363,7 @@ export class StorageMigration {
   private static versionKey = 'storage-version';
 
   static migrate(): void {
-    const currentVersion = Storage.get<number>(this.versionKey, 0);
+    const currentVersion = Storage.get<number>(this.versionKey, 0) || 0;
 
     if (currentVersion < this.currentVersion) {
       this.runMigrations(currentVersion);
@@ -418,13 +440,25 @@ export class StorageEventManager {
   }
 
   private static addGlobalListener(): void {
-    window.addEventListener('storage-change', this.handleStorageEvent);
-    window.addEventListener('storage', this.handleBrowserStorageEvent);
+    window.addEventListener(
+      'storage-change',
+      this.handleStorageEvent as EventListener
+    );
+    window.addEventListener(
+      'storage',
+      this.handleBrowserStorageEvent as EventListener
+    );
   }
 
   private static removeGlobalListener(): void {
-    window.removeEventListener('storage-change', this.handleStorageEvent);
-    window.removeEventListener('storage', this.handleBrowserStorageEvent);
+    window.removeEventListener(
+      'storage-change',
+      this.handleStorageEvent as EventListener
+    );
+    window.removeEventListener(
+      'storage',
+      this.handleBrowserStorageEvent as EventListener
+    );
   }
 
   private static handleStorageEvent = (event: CustomEvent): void => {

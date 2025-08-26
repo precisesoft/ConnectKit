@@ -280,10 +280,11 @@ export const generateAvatarColor = (text: string): string => {
 // List formatting
 export const formatList = (items: string[], conjunction = 'and'): string => {
   if (!items || items.length === 0) return '';
-  if (items.length === 1) return items[0];
-  if (items.length === 2) return `${items[0]} ${conjunction} ${items[1]}`;
+  if (items.length === 1) return items[0] || '';
+  if (items.length === 2)
+    return `${items[0] || ''} ${conjunction} ${items[1] || ''}`;
 
-  const lastItem = items[items.length - 1];
+  const lastItem = items[items.length - 1] || '';
   const otherItems = items.slice(0, -1).join(', ');
 
   return `${otherItems}, ${conjunction} ${lastItem}`;
