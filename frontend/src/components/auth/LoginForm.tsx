@@ -50,12 +50,18 @@ interface LoginFormProps {
   onSuccess?: () => void;
   showTitle?: boolean;
   showRegisterLink?: boolean;
+  title?: string;
+  className?: string;
+  additionalActions?: React.ReactNode;
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({
   onSuccess,
   showTitle = true,
   showRegisterLink = true,
+  title = 'Welcome Back',
+  className,
+  additionalActions,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -72,13 +78,14 @@ const LoginForm: React.FC<LoginFormProps> = ({
     clearErrors,
   } = useForm<LoginFormData>({
     resolver: yupResolver(loginSchema),
-    mode: 'onBlur',
+    mode: 'all',
     reValidateMode: 'onChange',
     defaultValues: {
       email: '',
       password: '',
       rememberMe: false,
     },
+    shouldFocusError: true,
   });
 
   // Handle form submission
@@ -140,6 +147,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
   return (
     <Card
       elevation={3}
+      className={className}
       sx={{
         maxWidth: 400,
         width: '100%',
@@ -159,7 +167,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
                 mb: 1,
               }}
             >
-              Welcome Back
+              {title}
             </Typography>
             <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
               Sign in to access your contacts
@@ -310,6 +318,9 @@ const LoginForm: React.FC<LoginFormProps> = ({
           >
             {isLoading || isSubmitting ? 'Signing In...' : 'Sign In'}
           </Button>
+
+          {/* Additional Actions */}
+          {additionalActions && <Box sx={{ mb: 3 }}>{additionalActions}</Box>}
 
           {/* Register Link */}
           {showRegisterLink && (

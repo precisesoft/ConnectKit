@@ -8,6 +8,23 @@ import axios, {
 import { useAuthStore } from '@store/authStore';
 import { ApiResponse, ApiException } from './types';
 
+// Extend Axios types to include metadata
+declare module 'axios' {
+  interface InternalAxiosRequestConfig {
+    metadata?: {
+      startTime: Date;
+    };
+  }
+}
+
+// Type for API error response data
+interface ApiErrorData {
+  message?: string;
+  errors?: string[];
+  details?: any;
+  code?: string;
+}
+
 // API Configuration
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
@@ -172,21 +189,23 @@ apiClient.interceptors.response.use(
 
     // Handle validation errors (400)
     if (status === 400 && data) {
+      const errorData = data as ApiErrorData;
       const validationError = new ApiException(
-        data.message || 'Validation failed',
+        errorData.message || 'Validation failed',
         400,
         'VALIDATION_ERROR',
-        data.errors || data.details
+        errorData.errors || errorData.details
       );
       return Promise.reject(validationError);
     }
 
     // Handle other client errors
+    const errorData = data as ApiErrorData;
     const apiError = new ApiException(
-      data?.message || error.message || 'An unexpected error occurred',
+      errorData?.message || error.message || 'An unexpected error occurred',
       status,
-      data?.code || 'UNKNOWN_ERROR',
-      data
+      errorData?.code || 'UNKNOWN_ERROR',
+      errorData
     );
 
     return Promise.reject(apiError);

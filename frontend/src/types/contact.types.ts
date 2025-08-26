@@ -144,7 +144,10 @@ export interface ContactStats {
   companies: number;
 
   // Category breakdown
-  byCategory: Record<Contact['category'] | 'uncategorized', number>;
+  byCategory: Record<
+    NonNullable<Contact['category']> | 'uncategorized',
+    number
+  >;
 
   // Tag statistics
   topTags: Array<{
@@ -159,10 +162,13 @@ export interface ContactStats {
   }>;
 
   // Contact frequency
-  byFrequency: Record<Contact['contactFrequency'] | 'unset', number>;
+  byFrequency: Record<
+    NonNullable<Contact['contactFrequency']> | 'unset',
+    number
+  >;
 
   // Importance levels
-  byImportance: Record<Contact['importance'] | 'unset', number>;
+  byImportance: Record<NonNullable<Contact['importance']> | 'unset', number>;
 
   // Growth statistics
   growthStats: {

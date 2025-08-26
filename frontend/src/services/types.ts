@@ -240,7 +240,11 @@ export interface ContactStats {
   favorites: number;
   recentlyAdded: number;
   companies: number;
-  tags: Array<{
+  topTags: Array<{
+    name: string;
+    count: number;
+  }>;
+  topCompanies: Array<{
     name: string;
     count: number;
   }>;
