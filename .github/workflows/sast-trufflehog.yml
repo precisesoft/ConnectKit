@@ -31,8 +31,11 @@ jobs:
 
       - name: Download and install TruffleHog
         run: |
-          echo "Installing TruffleHog..."
-          curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
+          echo "Installing TruffleHog v3.68.0..."
+          curl -sSL https://github.com/trufflesecurity/trufflehog/releases/download/v3.68.0/trufflehog_3.68.0_linux_amd64.tar.gz -o trufflehog.tar.gz
+          tar -xzf trufflehog.tar.gz
+          chmod +x trufflehog
+          mv trufflehog /usr/local/bin/trufflehog
           trufflehog --version
 
       - name: Run TruffleHog filesystem scan
