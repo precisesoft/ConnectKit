@@ -45,9 +45,16 @@ jobs:
             --config=.trufflehogrc.yml \
             --results=verified,unknown \
             --json \
-            --output filesystem-secrets.json || true
-            
-          echo "Filesystem scan completed"
+            --output filesystem-secrets.json
+          scan_exit_code=$?
+          if [ $scan_exit_code -eq 0 ]; then
+            echo "Filesystem scan completed successfully."
+          elif [ $scan_exit_code -eq 2 ]; then
+            echo "Filesystem scan completed: no secrets found."
+          else
+            echo "Filesystem scan failed with exit code $scan_exit_code."
+            exit $scan_exit_code
+          fi
           ls -la *secrets.json || echo "No filesystem results found"
 
       - name: Run TruffleHog git history scan
