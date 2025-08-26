@@ -2,7 +2,7 @@
   "name": "@connectkit/frontend",
   "version": "1.0.0",
   "private": true,
-  "description": "ConnectKit Frontend Application",
+  "description": "ConnectKit Frontend Application - TypeScript errors resolved",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
