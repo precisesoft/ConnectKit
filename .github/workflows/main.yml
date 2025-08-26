@@ -88,13 +88,20 @@ jobs:
           if [ "${{ github.event_name }}" = "push" ]; then
             BACKEND_CHANGED=$(git diff --name-only HEAD~1 HEAD | grep -E '^backend/' || echo '')
             FRONTEND_CHANGED=$(git diff --name-only HEAD~1 HEAD | grep -E '^frontend/' || echo '')
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            BACKEND_CHANGED=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep -E '^backend/' || echo '')
+            FRONTEND_CHANGED=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep -E '^frontend/' || echo '')
           else
+            # For workflow_dispatch, schedule, or other events - run all tests
             BACKEND_CHANGED="backend/"
             FRONTEND_CHANGED="frontend/"
           fi
 
           echo "backend=$( [ -n "$BACKEND_CHANGED" ] && echo 'true' || echo 'false' )" >> $GITHUB_OUTPUT
           echo "frontend=$( [ -n "$FRONTEND_CHANGED" ] && echo 'true' || echo 'false' )" >> $GITHUB_OUTPUT
+
+          echo "Backend changed: $( [ -n "$BACKEND_CHANGED" ] && echo 'true' || echo 'false' )"
+          echo "Frontend changed: $( [ -n "$FRONTEND_CHANGED" ] && echo 'true' || echo 'false' )"
 
       - name: Determine job conditions
         id: conditions
@@ -173,8 +180,10 @@ jobs:
           - 5432:5432
       redis:
         image: redis:7
+        env:
+          REDIS_PASSWORD: redis123
         options: >-
-          --health-cmd "redis-cli ping"
+          --health-cmd "redis-cli -a redis123 ping"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -186,12 +195,12 @@ jobs:
         include:
           - component: backend
             path: ./backend
-            test_cmd: npm test
-            enabled: ${{ needs.core-setup.outputs.backend_changed == 'true' }}
+            test_cmd: npm run test:ci
+            enabled: ${{ needs.core-setup.outputs.backend_changed == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
           - component: frontend
             path: ./frontend
-            test_cmd: npm test -- --run
-            enabled: ${{ needs.core-setup.outputs.frontend_changed == 'true' }}
+            test_cmd: npm run test:unit
+            enabled: ${{ needs.core-setup.outputs.frontend_changed == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
     steps:
       - uses: actions/checkout@v4
         if: matrix.enabled == 'true'
@@ -206,6 +215,21 @@ jobs:
           install-frontend: ${{ matrix.component == 'frontend' && 'true' || 'false' }}
           cache-key-suffix: "unit-tests"
 
+      - name: Setup test database
+        if: matrix.enabled == 'true' && matrix.component == 'backend'
+        run: |
+          # Wait for PostgreSQL to be ready
+          until pg_isready -h localhost -p 5432 -U admin; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+
+          # Create additional test schemas if needed
+          PGPASSWORD=admin123 psql -h localhost -p 5432 -U admin -d connectkit_test -c "
+            CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";
+            CREATE EXTENSION IF NOT EXISTS \"citext\";
+          " || echo "Extensions already exist or not needed"
+
       - name: Run tests
         if: matrix.enabled == 'true'
         working-directory: ${{ matrix.path }}
@@ -218,10 +242,14 @@ jobs:
           TEST_DB_NAME: connectkit_test
           TEST_REDIS_HOST: localhost
           TEST_REDIS_PORT: 6379
+          TEST_REDIS_PASSWORD: redis123
           TEST_JWT_SECRET: test-jwt-secret-key-for-testing-only-minimum-32-characters
           TEST_JWT_REFRESH_SECRET: test-refresh-secret-key-for-testing-only-minimum-32-characters
           TEST_ENCRYPTION_KEY: test-encryption-key-32-chars-long
           NODE_ENV: test
+          # Frontend test environment variables (Vitest uses VITE_ prefix)
+          VITE_API_URL: http://localhost:3001/api
+          VITE_APP_NAME: ConnectKit Test
         run: ${{ matrix.test_cmd }}
 
       - name: Upload test results
