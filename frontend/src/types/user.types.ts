@@ -20,11 +20,11 @@ export interface User {
   language?: string;
 
   // Notification preferences
-  emailNotifications: boolean;
-  marketingEmails: boolean;
+  emailNotifications?: boolean;
+  marketingEmails?: boolean;
 
   // Security
-  twoFactorEnabled: boolean;
+  twoFactorEnabled?: boolean;
   lastLogin?: string;
 
   // Timestamps

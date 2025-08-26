@@ -32,6 +32,7 @@ import {
 } from '@mui/icons-material';
 
 import { useContacts } from '@hooks/useContacts';
+import { Contact } from '@/types/contact.types';
 import LoadingSpinner from '@components/common/LoadingSpinner';
 import ErrorMessage from '@components/common/ErrorMessage';
 import SearchBar from '@components/common/SearchBar';
@@ -190,7 +191,7 @@ const ContactsPage: React.FC = () => {
       {/* Contacts Grid */}
       {contacts.length > 0 ? (
         <Grid container spacing={2}>
-          {contacts.map(contact => {
+          {contacts.map((contact: Contact) => {
             const _isMenuOpen = selectedContact === contact.id;
 
             return (
@@ -321,7 +322,7 @@ const ContactsPage: React.FC = () => {
                       {contact.tags &&
                         contact.tags
                           .slice(0, 2)
-                          .map(tag => (
+                          .map((tag: string) => (
                             <Chip
                               key={tag}
                               label={tag}
@@ -416,7 +417,8 @@ const ContactsPage: React.FC = () => {
         <MenuItem onClick={handleToggleFavorite}>
           <ListItemIcon>
             {selectedContact &&
-            contacts.find(c => c.id === selectedContact)?.isFavorite ? (
+            contacts.find((c: Contact) => c.id === selectedContact)
+              ?.isFavorite ? (
               <StarBorder fontSize='small' />
             ) : (
               <Star fontSize='small' />
@@ -424,7 +426,7 @@ const ContactsPage: React.FC = () => {
           </ListItemIcon>
           <ListItemText>
             {selectedContact &&
-            contacts.find(c => c.id === selectedContact)?.isFavorite
+            contacts.find((c: Contact) => c.id === selectedContact)?.isFavorite
               ? 'Remove from Favorites'
               : 'Add to Favorites'}
           </ListItemText>

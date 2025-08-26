@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools, persist, subscribeWithSelector } from 'zustand/middleware';
-import { User } from '@types/user.types';
+import { User } from '@/types/user.types';
 
 // Define the authentication state interface
 interface AuthState {
@@ -29,6 +29,7 @@ const isTokenExpired = (token: string | null): boolean => {
   try {
     // Decode JWT token (basic decode, not verification)
     const base64Url = token.split('.')[1];
+    if (!base64Url) return true;
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     const jsonPayload = decodeURIComponent(
       atob(base64)

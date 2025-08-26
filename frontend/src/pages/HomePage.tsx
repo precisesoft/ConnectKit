@@ -29,6 +29,7 @@ import {
 
 import { useAuth } from '@hooks/useAuth';
 import { useContacts } from '@hooks/useContacts';
+import { Contact } from '@/types/contact.types';
 import LoadingSpinner from '@components/common/LoadingSpinner';
 
 const HomePage: React.FC = () => {
@@ -234,59 +235,63 @@ const HomePage: React.FC = () => {
             <CardContent sx={{ p: 0 }}>
               {contacts.length > 0 ? (
                 <List>
-                  {contacts.slice(0, 5).map((contact, index) => (
-                    <React.Fragment key={contact.id}>
-                      <ListItem
-                        component={Button}
-                        href={`/contacts/${contact.id}`}
-                        sx={{
-                          textAlign: 'left',
-                          textTransform: 'none',
-                          color: 'inherit',
-                          justifyContent: 'flex-start',
-                          px: 2,
-                        }}
-                      >
-                        <ListItemAvatar>
-                          <Avatar
-                            src={contact.avatar}
-                            sx={{ bgcolor: 'primary.main' }}
-                          >
-                            {contact.firstName[0]}
-                            {contact.lastName[0]}
-                          </Avatar>
-                        </ListItemAvatar>
-                        <ListItemText
-                          primary={`${contact.firstName} ${contact.lastName}`}
-                          secondary={
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 1,
-                                mt: 0.5,
-                              }}
+                  {contacts
+                    .slice(0, 5)
+                    .map((contact: Contact, index: number) => (
+                      <React.Fragment key={contact.id}>
+                        <ListItem
+                          component={Button}
+                          href={`/contacts/${contact.id}`}
+                          sx={{
+                            textAlign: 'left',
+                            textTransform: 'none',
+                            color: 'inherit',
+                            justifyContent: 'flex-start',
+                            px: 2,
+                          }}
+                        >
+                          <ListItemAvatar>
+                            <Avatar
+                              src={contact.avatar}
+                              sx={{ bgcolor: 'primary.main' }}
                             >
-                              {contact.company && (
-                                <Chip
-                                  label={contact.company}
-                                  size='small'
-                                  variant='outlined'
-                                  sx={{ height: 20, fontSize: '0.7rem' }}
-                                />
-                              )}
-                              {contact.isFavorite && (
-                                <Star
-                                  sx={{ color: 'warning.main', fontSize: 16 }}
-                                />
-                              )}
-                            </Box>
-                          }
-                        />
-                      </ListItem>
-                      {index < Math.min(contacts.length, 5) - 1 && <Divider />}
-                    </React.Fragment>
-                  ))}
+                              {contact.firstName[0]}
+                              {contact.lastName[0]}
+                            </Avatar>
+                          </ListItemAvatar>
+                          <ListItemText
+                            primary={`${contact.firstName} ${contact.lastName}`}
+                            secondary={
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 1,
+                                  mt: 0.5,
+                                }}
+                              >
+                                {contact.company && (
+                                  <Chip
+                                    label={contact.company}
+                                    size='small'
+                                    variant='outlined'
+                                    sx={{ height: 20, fontSize: '0.7rem' }}
+                                  />
+                                )}
+                                {contact.isFavorite && (
+                                  <Star
+                                    sx={{ color: 'warning.main', fontSize: 16 }}
+                                  />
+                                )}
+                              </Box>
+                            }
+                          />
+                        </ListItem>
+                        {index < Math.min(contacts.length, 5) - 1 && (
+                          <Divider />
+                        )}
+                      </React.Fragment>
+                    ))}
                 </List>
               ) : (
                 <Box sx={{ p: 3, textAlign: 'center' }}>

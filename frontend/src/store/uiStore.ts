@@ -10,6 +10,7 @@ export interface Notification {
   autoClose?: boolean;
   duration?: number;
   timestamp: number;
+  read?: boolean;
 }
 
 // Define the UI state interface
@@ -273,6 +274,7 @@ export const useSidebar = () =>
     toggle: state.toggleSidebar,
     setOpen: state.setSidebarOpen,
     setWidth: state.setSidebarWidth,
+    setMobile: state.setMobile,
   }));
 
 export const useNotifications = () =>
