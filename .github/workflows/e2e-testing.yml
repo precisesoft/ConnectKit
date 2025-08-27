@@ -75,7 +75,7 @@ jobs:
 
       - name: Start backend
         run: |
-          PORT=${{ env.BACKEND_PORT }} npm run dev:backend &
+          cd backend && npm run dev &
           sleep 5
           timeout 60 bash -c 'until curl -f http://localhost:${{ env.BACKEND_PORT }}/health; do sleep 2; done'
           echo "✅ Backend is ready on port ${{ env.BACKEND_PORT }}"
@@ -96,13 +96,12 @@ jobs:
 
       - name: Start frontend
         run: |
-          PORT=${{ env.FRONTEND_PORT }} npm run dev:frontend &
+          cd frontend && npx vite --port ${{ env.FRONTEND_PORT }} &
           sleep 5
           timeout 60 bash -c 'until curl -f http://localhost:${{ env.FRONTEND_PORT }}; do sleep 2; done'
           echo "✅ Frontend is ready on port ${{ env.FRONTEND_PORT }}"
         env:
           NODE_ENV: test
-          PORT: ${{ env.FRONTEND_PORT }}
           VITE_API_URL: http://localhost:${{ env.BACKEND_PORT }}/api
           VITE_APP_NAME: ConnectKit
 
@@ -179,7 +178,7 @@ jobs:
 
       - name: Start backend
         run: |
-          PORT=${{ env.BACKEND_PORT }} npm run dev:backend &
+          cd backend && npm run dev &
           sleep 5
           timeout 60 bash -c 'until curl -f http://localhost:${{ env.BACKEND_PORT }}/health; do sleep 2; done'
           echo "✅ Backend is ready on port ${{ env.BACKEND_PORT }}"
@@ -200,13 +199,12 @@ jobs:
 
       - name: Start frontend
         run: |
-          PORT=${{ env.FRONTEND_PORT }} npm run dev:frontend &
+          cd frontend && npx vite --port ${{ env.FRONTEND_PORT }} &
           sleep 5
           timeout 60 bash -c 'until curl -f http://localhost:${{ env.FRONTEND_PORT }}; do sleep 2; done'
           echo "✅ Frontend is ready on port ${{ env.FRONTEND_PORT }}"
         env:
           NODE_ENV: test
-          PORT: ${{ env.FRONTEND_PORT }}
           VITE_API_URL: http://localhost:${{ env.BACKEND_PORT }}/api
           VITE_APP_NAME: ConnectKit
 
@@ -277,7 +275,7 @@ jobs:
 
       - name: Start backend
         run: |
-          PORT=${{ env.BACKEND_PORT }} npm run dev:backend &
+          cd backend && npm run dev &
           sleep 5
           timeout 60 bash -c 'until curl -f http://localhost:${{ env.BACKEND_PORT }}/health; do sleep 2; done'
           echo "✅ Backend is ready on port ${{ env.BACKEND_PORT }}"
@@ -298,13 +296,12 @@ jobs:
 
       - name: Start frontend
         run: |
-          PORT=${{ env.FRONTEND_PORT }} npm run dev:frontend &
+          cd frontend && npx vite --port ${{ env.FRONTEND_PORT }} &
           sleep 5
           timeout 60 bash -c 'until curl -f http://localhost:${{ env.FRONTEND_PORT }}; do sleep 2; done'
           echo "✅ Frontend is ready on port ${{ env.FRONTEND_PORT }}"
         env:
           NODE_ENV: test
-          PORT: ${{ env.FRONTEND_PORT }}
           VITE_API_URL: http://localhost:${{ env.BACKEND_PORT }}/api
           VITE_APP_NAME: ConnectKit
 
@@ -375,7 +372,7 @@ jobs:
 
       - name: Start backend
         run: |
-          PORT=${{ env.BACKEND_PORT }} npm run dev:backend &
+          cd backend && npm run dev &
           sleep 5
           timeout 60 bash -c 'until curl -f http://localhost:${{ env.BACKEND_PORT }}/health; do sleep 2; done'
           echo "✅ Backend is ready on port ${{ env.BACKEND_PORT }}"
@@ -396,13 +393,12 @@ jobs:
 
       - name: Start frontend
         run: |
-          PORT=${{ env.FRONTEND_PORT }} npm run dev:frontend &
+          cd frontend && npx vite --port ${{ env.FRONTEND_PORT }} &
           sleep 5
           timeout 60 bash -c 'until curl -f http://localhost:${{ env.FRONTEND_PORT }}; do sleep 2; done'
           echo "✅ Frontend is ready on port ${{ env.FRONTEND_PORT }}"
         env:
           NODE_ENV: test
-          PORT: ${{ env.FRONTEND_PORT }}
           VITE_API_URL: http://localhost:${{ env.BACKEND_PORT }}/api
           VITE_APP_NAME: ConnectKit
 
@@ -473,7 +469,7 @@ jobs:
 
       - name: Start backend
         run: |
-          PORT=${{ env.BACKEND_PORT }} npm run dev:backend &
+          cd backend && npm run dev &
           sleep 5
           timeout 60 bash -c 'until curl -f http://localhost:${{ env.BACKEND_PORT }}/health; do sleep 2; done'
           echo "✅ Backend is ready on port ${{ env.BACKEND_PORT }}"
@@ -494,13 +490,12 @@ jobs:
 
       - name: Start frontend
         run: |
-          PORT=${{ env.FRONTEND_PORT }} npm run dev:frontend &
+          cd frontend && npx vite --port ${{ env.FRONTEND_PORT }} &
           sleep 5
           timeout 60 bash -c 'until curl -f http://localhost:${{ env.FRONTEND_PORT }}; do sleep 2; done'
           echo "✅ Frontend is ready on port ${{ env.FRONTEND_PORT }}"
         env:
           NODE_ENV: test
-          PORT: ${{ env.FRONTEND_PORT }}
           VITE_API_URL: http://localhost:${{ env.BACKEND_PORT }}/api
           VITE_APP_NAME: ConnectKit
 
