@@ -30,6 +30,9 @@ jobs:
   e2e-chromium:
     name: E2E Tests - Chromium
     runs-on: ubuntu-latest
+    env:
+      FRONTEND_PORT: 3000
+      BACKEND_PORT: 3001
 
     services:
       postgres:
@@ -72,13 +75,13 @@ jobs:
 
       - name: Start backend
         run: |
-          npm run dev:backend &
+          PORT=${{ env.BACKEND_PORT }} npm run dev:backend &
           sleep 5
-          timeout 60 bash -c 'until curl -f http://localhost:3001/health; do sleep 2; done'
-          echo "✅ Backend is ready"
+          timeout 60 bash -c 'until curl -f http://localhost:${{ env.BACKEND_PORT }}/health; do sleep 2; done'
+          echo "✅ Backend is ready on port ${{ env.BACKEND_PORT }}"
         env:
           NODE_ENV: test
-          PORT: 3001
+          PORT: ${{ env.BACKEND_PORT }}
           DB_HOST: localhost
           DB_PORT: 5432
           DB_USER: admin
@@ -93,22 +96,23 @@ jobs:
 
       - name: Start frontend
         run: |
-          npm run dev:frontend &
+          PORT=${{ env.FRONTEND_PORT }} npm run dev:frontend &
           sleep 5
-          timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
-          echo "✅ Frontend is ready"
+          timeout 60 bash -c 'until curl -f http://localhost:${{ env.FRONTEND_PORT }}; do sleep 2; done'
+          echo "✅ Frontend is ready on port ${{ env.FRONTEND_PORT }}"
         env:
           NODE_ENV: test
-          VITE_API_URL: http://localhost:3001/api
+          PORT: ${{ env.FRONTEND_PORT }}
+          VITE_API_URL: http://localhost:${{ env.BACKEND_PORT }}/api
           VITE_APP_NAME: ConnectKit
 
       - name: Run E2E tests - Chromium
         run: |
           cd frontend
-          npx playwright test --project=chromium --reporter=html
+          npx playwright test --config=playwright.ci.config.ts --project=chromium --reporter=html
         env:
-          PLAYWRIGHT_BASE_URL: http://localhost:3000
-          API_URL: http://localhost:3001/api
+          PLAYWRIGHT_BASE_URL: http://localhost:${{ env.FRONTEND_PORT }}
+          API_URL: http://localhost:${{ env.BACKEND_PORT }}/api
         continue-on-error: true
 
       - name: Upload test results
@@ -130,6 +134,9 @@ jobs:
   e2e-firefox:
     name: E2E Tests - Firefox
     runs-on: ubuntu-latest
+    env:
+      FRONTEND_PORT: 3100
+      BACKEND_PORT: 3101
 
     services:
       postgres:
@@ -172,13 +179,13 @@ jobs:
 
       - name: Start backend
         run: |
-          npm run dev:backend &
+          PORT=${{ env.BACKEND_PORT }} npm run dev:backend &
           sleep 5
-          timeout 60 bash -c 'until curl -f http://localhost:3001/health; do sleep 2; done'
-          echo "✅ Backend is ready"
+          timeout 60 bash -c 'until curl -f http://localhost:${{ env.BACKEND_PORT }}/health; do sleep 2; done'
+          echo "✅ Backend is ready on port ${{ env.BACKEND_PORT }}"
         env:
           NODE_ENV: test
-          PORT: 3001
+          PORT: ${{ env.BACKEND_PORT }}
           DB_HOST: localhost
           DB_PORT: 5432
           DB_USER: admin
@@ -193,22 +200,23 @@ jobs:
 
       - name: Start frontend
         run: |
-          npm run dev:frontend &
+          PORT=${{ env.FRONTEND_PORT }} npm run dev:frontend &
           sleep 5
-          timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
-          echo "✅ Frontend is ready"
+          timeout 60 bash -c 'until curl -f http://localhost:${{ env.FRONTEND_PORT }}; do sleep 2; done'
+          echo "✅ Frontend is ready on port ${{ env.FRONTEND_PORT }}"
         env:
           NODE_ENV: test
-          VITE_API_URL: http://localhost:3001/api
+          PORT: ${{ env.FRONTEND_PORT }}
+          VITE_API_URL: http://localhost:${{ env.BACKEND_PORT }}/api
           VITE_APP_NAME: ConnectKit
 
       - name: Run E2E tests - Firefox
         run: |
           cd frontend
-          npx playwright test --project=firefox --reporter=html
+          npx playwright test --config=playwright.ci.config.ts --project=firefox --reporter=html
         env:
-          PLAYWRIGHT_BASE_URL: http://localhost:3000
-          API_URL: http://localhost:3001/api
+          PLAYWRIGHT_BASE_URL: http://localhost:${{ env.FRONTEND_PORT }}
+          API_URL: http://localhost:${{ env.BACKEND_PORT }}/api
         continue-on-error: true
 
       - name: Upload test results
@@ -224,6 +232,9 @@ jobs:
   e2e-webkit:
     name: E2E Tests - WebKit
     runs-on: ubuntu-latest
+    env:
+      FRONTEND_PORT: 3200
+      BACKEND_PORT: 3201
 
     services:
       postgres:
@@ -266,13 +277,13 @@ jobs:
 
       - name: Start backend
         run: |
-          npm run dev:backend &
+          PORT=${{ env.BACKEND_PORT }} npm run dev:backend &
           sleep 5
-          timeout 60 bash -c 'until curl -f http://localhost:3001/health; do sleep 2; done'
-          echo "✅ Backend is ready"
+          timeout 60 bash -c 'until curl -f http://localhost:${{ env.BACKEND_PORT }}/health; do sleep 2; done'
+          echo "✅ Backend is ready on port ${{ env.BACKEND_PORT }}"
         env:
           NODE_ENV: test
-          PORT: 3001
+          PORT: ${{ env.BACKEND_PORT }}
           DB_HOST: localhost
           DB_PORT: 5432
           DB_USER: admin
@@ -287,22 +298,23 @@ jobs:
 
       - name: Start frontend
         run: |
-          npm run dev:frontend &
+          PORT=${{ env.FRONTEND_PORT }} npm run dev:frontend &
           sleep 5
-          timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
-          echo "✅ Frontend is ready"
+          timeout 60 bash -c 'until curl -f http://localhost:${{ env.FRONTEND_PORT }}; do sleep 2; done'
+          echo "✅ Frontend is ready on port ${{ env.FRONTEND_PORT }}"
         env:
           NODE_ENV: test
-          VITE_API_URL: http://localhost:3001/api
+          PORT: ${{ env.FRONTEND_PORT }}
+          VITE_API_URL: http://localhost:${{ env.BACKEND_PORT }}/api
           VITE_APP_NAME: ConnectKit
 
       - name: Run E2E tests - WebKit
         run: |
           cd frontend
-          npx playwright test --project=webkit --reporter=html
+          npx playwright test --config=playwright.ci.config.ts --project=webkit --reporter=html
         env:
-          PLAYWRIGHT_BASE_URL: http://localhost:3000
-          API_URL: http://localhost:3001/api
+          PLAYWRIGHT_BASE_URL: http://localhost:${{ env.FRONTEND_PORT }}
+          API_URL: http://localhost:${{ env.BACKEND_PORT }}/api
         continue-on-error: true
 
       - name: Upload test results
@@ -318,6 +330,9 @@ jobs:
   e2e-mobile:
     name: E2E Tests - Mobile
     runs-on: ubuntu-latest
+    env:
+      FRONTEND_PORT: 3300
+      BACKEND_PORT: 3301
 
     services:
       postgres:
@@ -360,13 +375,13 @@ jobs:
 
       - name: Start backend
         run: |
-          npm run dev:backend &
+          PORT=${{ env.BACKEND_PORT }} npm run dev:backend &
           sleep 5
-          timeout 60 bash -c 'until curl -f http://localhost:3001/health; do sleep 2; done'
-          echo "✅ Backend is ready"
+          timeout 60 bash -c 'until curl -f http://localhost:${{ env.BACKEND_PORT }}/health; do sleep 2; done'
+          echo "✅ Backend is ready on port ${{ env.BACKEND_PORT }}"
         env:
           NODE_ENV: test
-          PORT: 3001
+          PORT: ${{ env.BACKEND_PORT }}
           DB_HOST: localhost
           DB_PORT: 5432
           DB_USER: admin
@@ -381,57 +396,23 @@ jobs:
 
       - name: Start frontend
         run: |
-          npm run dev:frontend &
+          PORT=${{ env.FRONTEND_PORT }} npm run dev:frontend &
           sleep 5
-          timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
-          echo "✅ Frontend is ready"
+          timeout 60 bash -c 'until curl -f http://localhost:${{ env.FRONTEND_PORT }}; do sleep 2; done'
+          echo "✅ Frontend is ready on port ${{ env.FRONTEND_PORT }}"
         env:
           NODE_ENV: test
-          VITE_API_URL: http://localhost:3001/api
+          PORT: ${{ env.FRONTEND_PORT }}
+          VITE_API_URL: http://localhost:${{ env.BACKEND_PORT }}/api
           VITE_APP_NAME: ConnectKit
-
-      - name: Create mobile test configuration
-        run: |
-          cd frontend
-          cat > playwright.mobile.config.ts << 'EOF'
-          import { defineConfig, devices } from '@playwright/test';
-
-          export default defineConfig({
-            testDir: './e2e',
-            fullyParallel: true,
-            forbidOnly: !!process.env.CI,
-            retries: process.env.CI ? 2 : 0,
-            workers: process.env.CI ? 1 : undefined,
-            reporter: 'html',
-            use: {
-              baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
-              trace: 'on-first-retry',
-              screenshot: 'only-on-failure',
-            },
-            projects: [
-              {
-                name: 'Mobile Chrome',
-                use: { ...devices['Pixel 5'] },
-              },
-              {
-                name: 'Mobile Safari',
-                use: { ...devices['iPhone 12'] },
-              },
-              {
-                name: 'Tablet',
-                use: { ...devices['iPad Pro'] },
-              },
-            ],
-          });
-          EOF
 
       - name: Run E2E tests - Mobile
         run: |
           cd frontend
-          npx playwright test --config=playwright.mobile.config.ts --reporter=html
+          npx playwright test --config=playwright.ci.config.ts --project="Mobile Chrome" --project="Mobile Safari" --reporter=html
         env:
-          PLAYWRIGHT_BASE_URL: http://localhost:3000
-          API_URL: http://localhost:3001/api
+          PLAYWRIGHT_BASE_URL: http://localhost:${{ env.FRONTEND_PORT }}
+          API_URL: http://localhost:${{ env.BACKEND_PORT }}/api
         continue-on-error: true
 
       - name: Upload test results
@@ -447,6 +428,9 @@ jobs:
   visual-regression:
     name: Visual Regression Testing
     runs-on: ubuntu-latest
+    env:
+      FRONTEND_PORT: 3400
+      BACKEND_PORT: 3401
 
     services:
       postgres:
@@ -489,13 +473,13 @@ jobs:
 
       - name: Start backend
         run: |
-          npm run dev:backend &
+          PORT=${{ env.BACKEND_PORT }} npm run dev:backend &
           sleep 5
-          timeout 60 bash -c 'until curl -f http://localhost:3001/health; do sleep 2; done'
-          echo "✅ Backend is ready"
+          timeout 60 bash -c 'until curl -f http://localhost:${{ env.BACKEND_PORT }}/health; do sleep 2; done'
+          echo "✅ Backend is ready on port ${{ env.BACKEND_PORT }}"
         env:
           NODE_ENV: test
-          PORT: 3001
+          PORT: ${{ env.BACKEND_PORT }}
           DB_HOST: localhost
           DB_PORT: 5432
           DB_USER: admin
@@ -510,13 +494,14 @@ jobs:
 
       - name: Start frontend
         run: |
-          npm run dev:frontend &
+          PORT=${{ env.FRONTEND_PORT }} npm run dev:frontend &
           sleep 5
-          timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
-          echo "✅ Frontend is ready"
+          timeout 60 bash -c 'until curl -f http://localhost:${{ env.FRONTEND_PORT }}; do sleep 2; done'
+          echo "✅ Frontend is ready on port ${{ env.FRONTEND_PORT }}"
         env:
           NODE_ENV: test
-          VITE_API_URL: http://localhost:3001/api
+          PORT: ${{ env.FRONTEND_PORT }}
+          VITE_API_URL: http://localhost:${{ env.BACKEND_PORT }}/api
           VITE_APP_NAME: ConnectKit
 
       - name: Create visual regression tests
@@ -549,9 +534,9 @@ jobs:
       - name: Run visual regression tests
         run: |
           cd frontend
-          npx playwright test tests/visual --update-snapshots --reporter=html
+          npx playwright test tests/visual --config=playwright.ci.config.ts --update-snapshots --reporter=html
         env:
-          PLAYWRIGHT_BASE_URL: http://localhost:3000
+          PLAYWRIGHT_BASE_URL: http://localhost:${{ env.FRONTEND_PORT }}
         continue-on-error: true
 
       - name: Upload visual regression results
