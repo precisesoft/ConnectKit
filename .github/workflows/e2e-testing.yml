@@ -82,7 +82,7 @@ jobs:
           cd backend
           npm run dev &
           sleep 5
-          timeout 60 bash -c 'until curl -f http://localhost:3001/api/health; do sleep 2; done'
+          timeout 60 bash -c 'until curl -f http://localhost:3001/health; do sleep 2; done'
           echo "✅ Backend is ready"
         env:
           NODE_ENV: test
@@ -190,7 +190,7 @@ jobs:
           cd backend
           npm run dev &
           sleep 5
-          timeout 60 bash -c 'until curl -f http://localhost:3001/api/health; do sleep 2; done'
+          timeout 60 bash -c 'until curl -f http://localhost:3001/health; do sleep 2; done'
           echo "✅ Backend is ready"
         env:
           NODE_ENV: test
@@ -292,7 +292,7 @@ jobs:
           cd backend
           npm run dev &
           sleep 5
-          timeout 60 bash -c 'until curl -f http://localhost:3001/api/health; do sleep 2; done'
+          timeout 60 bash -c 'until curl -f http://localhost:3001/health; do sleep 2; done'
           echo "✅ Backend is ready"
         env:
           NODE_ENV: test
@@ -394,7 +394,7 @@ jobs:
           cd backend
           npm run dev &
           sleep 5
-          timeout 60 bash -c 'until curl -f http://localhost:3001/api/health; do sleep 2; done'
+          timeout 60 bash -c 'until curl -f http://localhost:3001/health; do sleep 2; done'
           echo "✅ Backend is ready"
         env:
           NODE_ENV: test
@@ -530,7 +530,7 @@ jobs:
           cd backend
           npm run dev &
           sleep 5
-          timeout 60 bash -c 'until curl -f http://localhost:3001/api/health; do sleep 2; done'
+          timeout 60 bash -c 'until curl -f http://localhost:3001/health; do sleep 2; done'
           echo "✅ Backend is ready"
         env:
           NODE_ENV: test
