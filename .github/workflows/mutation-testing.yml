@@ -30,13 +30,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache: "npm"
 
-      - name: Install backend dependencies
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Stryker dependencies for backend
         run: |
-          cd backend
-          npm ci
-          npm install --save-dev @stryker-mutator/core @stryker-mutator/typescript-checker @stryker-mutator/jest-runner
+          npm install --save-dev @stryker-mutator/core@^7.3.0 @stryker-mutator/typescript-checker@^7.3.0 @stryker-mutator/jest-runner@^7.3.0
 
       - name: Create Stryker configuration
         run: |
@@ -128,13 +128,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache: "npm"
 
-      - name: Install frontend dependencies
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Stryker dependencies for frontend
         run: |
-          cd frontend
-          npm ci
-          npm install --save-dev @stryker-mutator/core @stryker-mutator/typescript-checker @stryker-mutator/vitest-runner
+          npm install --save-dev @stryker-mutator/core@^7.3.0 @stryker-mutator/typescript-checker@^7.3.0 @stryker-mutator/vitest-runner@^7.3.0
 
       - name: Create Stryker configuration
         run: |
@@ -149,13 +149,16 @@ jobs:
             "checkers": ["typescript"],
             "tsconfigFile": "tsconfig.json",
             "mutate": [
-              "src/**/*.{ts,tsx}",
-              "!src/**/*.test.{ts,tsx}",
-              "!src/**/*.spec.{ts,tsx}",
-              "!src/**/*.stories.{ts,tsx}",
-              "!src/tests/**",
-              "!src/types/**",
-              "!src/**/*.d.ts"
+              "src/**/*.ts",
+              "src/**/*.tsx",
+              "!src/**/*.test.ts",
+              "!src/**/*.test.tsx",
+              "!src/**/*.spec.ts",
+              "!src/**/*.spec.tsx",
+              "!src/**/index.ts",
+              "!src/**/index.tsx",
+              "!src/vite-env.d.ts",
+              "!src/types/**"
             ],
             "thresholds": {
               "high": 80,
@@ -170,6 +173,9 @@ jobs:
             },
             "jsonReporter": {
               "fileName": "reports/mutation/frontend/report.json"
+            },
+            "vitest": {
+              "configFile": "vitest.config.ts"
             }
           }
           EOF
@@ -211,60 +217,25 @@ jobs:
           path: frontend/reports/mutation/
           retention-days: 30
 
-  mutation-testing-summary:
+  summary:
     name: Mutation Testing Summary
     runs-on: ubuntu-latest
     needs: [backend-mutation-testing, frontend-mutation-testing]
     if: always()
 
     steps:
-      - name: Download backend results
-        uses: actions/download-artifact@v4
-        with:
-          name: backend-mutation-results-${{ github.run_number }}
-          path: backend-results/
-        continue-on-error: true
-
-      - name: Download frontend results
-        uses: actions/download-artifact@v4
-        with:
-          name: frontend-mutation-results-${{ github.run_number }}
-          path: frontend-results/
-        continue-on-error: true
-
-      - name: Generate combined report
+      - name: Generate summary report
         run: |
           echo "# 🧬 Mutation Testing Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-
-          # Calculate overall score
-          BACKEND_SCORE=0
-          FRONTEND_SCORE=0
-
-          if [ -f "backend-results/backend/report.json" ]; then
-            BACKEND_SCORE=$(jq '.metrics.mutationScore' backend-results/backend/report.json)
-          fi
-
-          if [ -f "frontend-results/frontend/report.json" ]; then
-            FRONTEND_SCORE=$(jq '.metrics.mutationScore' frontend-results/frontend/report.json)
-          fi
-
-          if [ "$BACKEND_SCORE" != "0" ] && [ "$FRONTEND_SCORE" != "0" ]; then
-            OVERALL_SCORE=$(echo "($BACKEND_SCORE + $FRONTEND_SCORE) / 2" | bc)
-            echo "## Overall Mutation Score: ${OVERALL_SCORE}%" >> $GITHUB_STEP_SUMMARY
-          fi
-
+          echo "## Test Suite Quality Assessment" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### What is Mutation Testing?" >> $GITHUB_STEP_SUMMARY
-          echo "Mutation testing measures the quality of your tests by:" >> $GITHUB_STEP_SUMMARY
-          echo "1. Making small changes (mutations) to your code" >> $GITHUB_STEP_SUMMARY
-          echo "2. Running tests to see if they catch the mutations" >> $GITHUB_STEP_SUMMARY
-          echo "3. Calculating the percentage of mutations caught" >> $GITHUB_STEP_SUMMARY
+          echo "Mutation testing measures how effective your test suite is at detecting bugs by introducing small changes (mutations) to your code and checking if tests catch them." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "A higher score means your tests are better at catching bugs!" >> $GITHUB_STEP_SUMMARY
+          echo "### Score Interpretation:" >> $GITHUB_STEP_SUMMARY
+          echo "- **80-100%**: Excellent test quality 🏆" >> $GITHUB_STEP_SUMMARY
+          echo "- **60-79%**: Good test quality ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- **40-59%**: Needs improvement ⚠️" >> $GITHUB_STEP_SUMMARY
+          echo "- **Below 40%**: Poor test quality ❌" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Score Interpretation" >> $GITHUB_STEP_SUMMARY
-          echo "- 🏆 80%+: Excellent test quality" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ 60-80%: Good test quality" >> $GITHUB_STEP_SUMMARY
-          echo "- ⚠️ 40-60%: Needs improvement" >> $GITHUB_STEP_SUMMARY
-          echo "- ❌ <40%: Poor test quality" >> $GITHUB_STEP_SUMMARY
+          echo "View detailed reports in the artifacts section." >> $GITHUB_STEP_SUMMARY
