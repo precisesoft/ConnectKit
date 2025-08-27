@@ -55,7 +55,7 @@ jobs:
           fi
 
           # Database connectivity
-          docker exec $(docker ps -q -f name=postgres) pg_isready
+          docker exec $(docker ps -q -f name=connectkit-db) pg_isready
           if [ $? -eq 0 ]; then
             echo "✅ Database is ready" >> $GITHUB_STEP_SUMMARY
           else
@@ -64,7 +64,7 @@ jobs:
           fi
 
           # Redis connectivity
-          docker exec $(docker ps -q -f name=redis) redis-cli ping
+          docker exec $(docker ps -q -f name=connectkit-redis) redis-cli ping
           if [ $? -eq 0 ]; then
             echo "✅ Redis is ready" >> $GITHUB_STEP_SUMMARY
           else

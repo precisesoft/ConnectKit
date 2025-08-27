@@ -28,7 +28,7 @@ jobs:
 
       - name: Start backend services
         run: |
-          docker compose up -d backend postgres redis
+          docker compose up -d backend db redis
 
           # Wait for backend to be ready
           echo "Waiting for backend service..."

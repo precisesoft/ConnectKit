@@ -288,6 +288,7 @@ jobs:
         with:
           name: pact-contracts-${{ github.run_number }}
           path: backend/pacts/
+        continue-on-error: true
 
       - name: Install Pact verifier dependencies
         run: |
