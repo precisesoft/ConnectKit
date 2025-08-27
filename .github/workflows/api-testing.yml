@@ -78,7 +78,7 @@ jobs:
           REDIS_PORT: 6379
           JWT_SECRET: test-jwt-secret-that-is-long-enough-for-validation
           JWT_REFRESH_SECRET: test-refresh-secret-that-is-long-enough-for-validation
-          ENCRYPTION_KEY: test-encryption-key
+          ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
 
       - name: Install Newman
         run: npm install -g newman newman-reporter-htmlextra newman-reporter-json-summary
@@ -441,7 +441,7 @@ jobs:
           REDIS_PORT: 6379
           JWT_SECRET: test-jwt-secret-that-is-long-enough-for-validation
           JWT_REFRESH_SECRET: test-refresh-secret-that-is-long-enough-for-validation
-          ENCRYPTION_KEY: test-encryption-key
+          ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
 
       - name: Install test dependencies
         run: npm install axios
@@ -618,7 +618,7 @@ jobs:
           REDIS_PORT: 6379
           JWT_SECRET: test-jwt-secret-that-is-long-enough-for-validation
           JWT_REFRESH_SECRET: test-refresh-secret-that-is-long-enough-for-validation
-          ENCRYPTION_KEY: test-encryption-key
+          ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
 
       - name: Run API security tests
         run: |
