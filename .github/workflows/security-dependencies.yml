@@ -18,34 +18,34 @@ jobs:
   dependency-scan:
     name: Dependency Security Scan
     runs-on: ubuntu-latest
-    
+
     # Skip any PR created by dependabot to avoid permission issues
     if: (github.actor != 'dependabot[bot]')
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache: 'npm'
-      
+          cache: "npm"
+
       - name: Install workspace dependencies
         run: |
           echo "Installing workspace dependencies..."
           npm install
         continue-on-error: true
-      
+
       - name: Run npm audit (Frontend)
         run: |
           echo "## Frontend Dependency Security Scan" >> $GITHUB_STEP_SUMMARY
           echo "Running npm audit for frontend dependencies..."
-          
+
           npm audit --workspace=frontend --audit-level=moderate --production || echo "Found vulnerabilities - check report"
           npm audit --workspace=frontend --json --production > frontend-audit.json || true
-          
+
           # Extract vulnerability counts
           if [ -f "frontend-audit.json" ]; then
             CRITICAL=$(jq '.metadata.vulnerabilities.critical // 0' frontend-audit.json)
@@ -67,15 +67,15 @@ jobs:
             fi
           fi
         continue-on-error: true
-      
+
       - name: Run npm audit (Backend)
         run: |
           echo "## Backend Dependency Security Scan" >> $GITHUB_STEP_SUMMARY
           echo "Running npm audit for backend dependencies..."
-          
+
           npm audit --workspace=backend --audit-level=moderate --production || echo "Found vulnerabilities - check report"
           npm audit --workspace=backend --json --production > backend-audit.json || true
-          
+
           # Extract vulnerability counts
           if [ -f "backend-audit.json" ]; then
             CRITICAL=$(jq '.metadata.vulnerabilities.critical // 0' backend-audit.json)
@@ -97,22 +97,57 @@ jobs:
             fi
           fi
         continue-on-error: true
-      
+
+      - name: Generate SBOM for dependencies
+        run: |
+          echo "## SBOM Generation" >> $GITHUB_STEP_SUMMARY
+          echo "Generating Software Bill of Materials..." >> $GITHUB_STEP_SUMMARY
+
+          # Install SBOM generation tools
+          echo "Installing SBOM tools..."
+          npm install -g @cyclonedx/cyclonedx-npm
+
+          # Generate CycloneDX SBOM for frontend
+          cd frontend
+          npx @cyclonedx/cyclonedx-npm --output-format json --output-file sbom-deps-frontend.json || true
+          npx @cyclonedx/cyclonedx-npm --output-format xml --output-file sbom-deps-frontend.xml || true
+
+          # Generate CycloneDX SBOM for backend
+          cd ../backend
+          npx @cyclonedx/cyclonedx-npm --output-format json --output-file sbom-deps-backend.json || true
+          npx @cyclonedx/cyclonedx-npm --output-format xml --output-file sbom-deps-backend.xml || true
+
+          cd ..
+
+          # Count components
+          if [ -f "frontend/sbom-deps-frontend.json" ]; then
+            FRONTEND_DEPS=$(jq '.components | length' frontend/sbom-deps-frontend.json || echo "0")
+            echo "### Frontend SBOM: $FRONTEND_DEPS components" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ -f "backend/sbom-deps-backend.json" ]; then
+            BACKEND_DEPS=$(jq '.components | length' backend/sbom-deps-backend.json || echo "0")
+            echo "### Backend SBOM: $BACKEND_DEPS components" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+        continue-on-error: true
+
       - name: Check for outdated packages
         run: |
           echo "## Outdated Package Check" >> $GITHUB_STEP_SUMMARY
           echo "Checking for outdated packages..."
-          
+
           npm outdated --workspace=frontend > frontend-outdated.txt || true
           npm outdated --workspace=backend > backend-outdated.txt || true
-          
+
           if [ -s "frontend-outdated.txt" ]; then
             echo "### Frontend Outdated Packages:" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             head -20 frontend-outdated.txt >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           if [ -s "backend-outdated.txt" ]; then
             echo "### Backend Outdated Packages:" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
@@ -120,8 +155,8 @@ jobs:
             echo '```' >> $GITHUB_STEP_SUMMARY
           fi
         continue-on-error: true
-      
-      - name: Upload dependency scan results
+
+      - name: Upload dependency scan results and SBOMs
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -131,28 +166,32 @@ jobs:
             backend-audit.json
             frontend-outdated.txt
             backend-outdated.txt
+            frontend/sbom-deps-*.json
+            frontend/sbom-deps-*.xml
+            backend/sbom-deps-*.json
+            backend/sbom-deps-*.xml
           retention-days: 30
-      
+
       - name: Enforce security policy
         run: |
           echo "Checking security policy compliance..."
-          
+
           FRONTEND_CRITICAL=0
           BACKEND_CRITICAL=0
-          
+
           if [ -f "frontend-audit.json" ]; then
             FRONTEND_CRITICAL=$(jq '.metadata.vulnerabilities.critical // 0' frontend-audit.json)
           fi
-          
+
           if [ -f "backend-audit.json" ]; then
             BACKEND_CRITICAL=$(jq '.metadata.vulnerabilities.critical // 0' backend-audit.json)
           fi
-          
+
           if [ "$FRONTEND_CRITICAL" != "0" ] || [ "$BACKEND_CRITICAL" != "0" ]; then
             echo "❌ Build failed due to critical security vulnerabilities!"
             echo "Please run 'npm audit fix' or update vulnerable dependencies."
             exit 1
           fi
-          
+
           echo "✅ Security policy check passed - no critical vulnerabilities"
         continue-on-error: true

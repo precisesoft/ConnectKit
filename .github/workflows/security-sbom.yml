@@ -1,0 +1,482 @@
+name: Security - SBOM Generation
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main]
+  release:
+    types: [published]
+  schedule:
+    - cron: "0 2 * * 1" # Weekly on Monday at 2 AM UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  security-events: write
+  actions: read
+  id-token: write # For SBOM attestation
+
+jobs:
+  sbom-source:
+    name: Generate Source Code SBOM
+    runs-on: ubuntu-latest
+
+    # Skip any PR created by dependabot to avoid permission issues
+    if: (github.actor != 'dependabot[bot]')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: "npm"
+
+      - name: Install Syft
+        run: |
+          echo "Installing Syft for SBOM generation..."
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+          syft --version
+
+      - name: Check Node version for cdxgen
+        run: |
+          echo "Checking Node.js version for cdxgen compatibility..."
+          NODE_VERSION=$(node --version | cut -d. -f1 | sed 's/v//')
+          echo "Node.js major version: $NODE_VERSION"
+          if [ "$NODE_VERSION" -lt 20 ]; then
+            echo "⚠️ cdxgen requires Node.js 20+, skipping cdxgen installation"
+            echo "SKIP_CDXGEN=true" >> $GITHUB_ENV
+          else
+            echo "✅ Node.js version compatible with cdxgen"
+            echo "SKIP_CDXGEN=false" >> $GITHUB_ENV
+          fi
+
+      - name: Generate Frontend SBOM with Syft
+        run: |
+          echo "Generating Frontend SBOM with Syft..."
+          cd frontend
+
+          # Generate SBOM in multiple formats
+          syft . -o spdx-json=sbom-frontend-spdx.json
+          syft . -o cyclonedx-json=sbom-frontend-cyclonedx.json
+          syft . -o json=sbom-frontend-syft.json
+
+          echo "Frontend SBOM generated successfully"
+          ls -la sbom-*.json
+        continue-on-error: true
+
+      - name: Generate Backend SBOM with Syft
+        run: |
+          echo "Generating Backend SBOM with Syft..."
+          cd backend
+
+          # Generate SBOM in multiple formats
+          syft . -o spdx-json=sbom-backend-spdx.json
+          syft . -o cyclonedx-json=sbom-backend-cyclonedx.json
+          syft . -o json=sbom-backend-syft.json
+
+          echo "Backend SBOM generated successfully"
+          ls -la sbom-*.json
+        continue-on-error: true
+
+      - name: Install cdxgen (if compatible)
+        if: env.SKIP_CDXGEN == 'false'
+        run: |
+          echo "Installing cdxgen for CycloneDX generation..."
+          npm install -g @cyclonedx/cdxgen
+          cdxgen --version || echo "cdxgen installation completed"
+        continue-on-error: true
+
+      - name: Generate CycloneDX SBOM with cdxgen
+        if: env.SKIP_CDXGEN == 'false'
+        run: |
+          echo "Generating comprehensive CycloneDX SBOM..."
+
+          # Frontend CycloneDX
+          cd frontend
+          cdxgen -o sbom-frontend-cdxgen.json -t js --spec-version 1.5 || echo "Frontend SBOM generation failed"
+
+          # Backend CycloneDX
+          cd ../backend
+          cdxgen -o sbom-backend-cdxgen.json -t js --spec-version 1.5 || echo "Backend SBOM generation failed"
+
+          # Full project CycloneDX
+          cd ..
+          cdxgen -o sbom-project-cdxgen.json -t js --spec-version 1.5 || echo "Project SBOM generation failed"
+
+          echo "CycloneDX SBOMs generation attempted"
+        continue-on-error: true
+
+      - name: Alternative CycloneDX generation with npm
+        if: env.SKIP_CDXGEN == 'true'
+        run: |
+          echo "Using npm-based CycloneDX generation as fallback..."
+          npm install -g @cyclonedx/cyclonedx-npm
+
+          # Frontend CycloneDX
+          cd frontend
+          npx @cyclonedx/cyclonedx-npm --output-format json --output-file sbom-frontend-cdxgen.json || true
+
+          # Backend CycloneDX  
+          cd ../backend
+          npx @cyclonedx/cyclonedx-npm --output-format json --output-file sbom-backend-cdxgen.json || true
+
+          # Full project
+          cd ..
+          npx @cyclonedx/cyclonedx-npm --output-format json --output-file sbom-project-cdxgen.json || true
+
+          echo "Alternative CycloneDX SBOMs generated"
+        continue-on-error: true
+
+      - name: Generate npm dependency tree
+        run: |
+          echo "Generating npm dependency trees..."
+
+          # Frontend dependencies
+          cd frontend
+          npm list --json > npm-dependencies-frontend.json || true
+          npm list --production --json > npm-dependencies-frontend-prod.json || true
+
+          # Backend dependencies
+          cd ../backend
+          npm list --json > npm-dependencies-backend.json || true
+          npm list --production --json > npm-dependencies-backend-prod.json || true
+
+          echo "Dependency trees generated"
+        continue-on-error: true
+
+      - name: Analyze licenses
+        run: |
+          echo "## License Analysis" >> $GITHUB_STEP_SUMMARY
+
+          # Install license checker
+          npm install -g license-checker
+
+          # Frontend licenses
+          cd frontend
+          license-checker --json > licenses-frontend.json || true
+          license-checker --summary >> $GITHUB_STEP_SUMMARY || true
+
+          # Backend licenses
+          cd ../backend
+          echo "### Backend Licenses:" >> $GITHUB_STEP_SUMMARY
+          license-checker --summary >> $GITHUB_STEP_SUMMARY || true
+          license-checker --json > licenses-backend.json || true
+
+          echo "License analysis completed"
+        continue-on-error: true
+
+      - name: Generate SBOM summary
+        run: |
+          echo "## SBOM Generation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Count components in SBOMs
+          if [ -f "frontend/sbom-frontend-syft.json" ]; then
+            FRONTEND_COMPONENTS=$(jq '.artifacts | length' frontend/sbom-frontend-syft.json || echo "0")
+            echo "### Frontend Components: $FRONTEND_COMPONENTS" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ -f "backend/sbom-backend-syft.json" ]; then
+            BACKEND_COMPONENTS=$(jq '.artifacts | length' backend/sbom-backend-syft.json || echo "0")
+            echo "### Backend Components: $BACKEND_COMPONENTS" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Generated Formats:" >> $GITHUB_STEP_SUMMARY
+          echo "- SPDX 2.3 JSON" >> $GITHUB_STEP_SUMMARY
+          echo "- CycloneDX 1.5 JSON" >> $GITHUB_STEP_SUMMARY
+          echo "- Syft native JSON" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # List generated files
+          echo "### Generated SBOM Files:" >> $GITHUB_STEP_SUMMARY
+          find . -name "sbom-*.json" -o -name "licenses-*.json" -o -name "npm-dependencies-*.json" | while read file; do
+            SIZE=$(du -h "$file" | cut -f1)
+            echo "- $(basename $file) ($SIZE)" >> $GITHUB_STEP_SUMMARY
+          done
+        continue-on-error: true
+
+      - name: Upload source SBOMs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-source-${{ github.run_number }}
+          path: |
+            frontend/sbom-*.json
+            backend/sbom-*.json
+            sbom-project-cdxgen.json
+            frontend/licenses-*.json
+            backend/licenses-*.json
+            frontend/npm-dependencies-*.json
+            backend/npm-dependencies-*.json
+          retention-days: 90
+
+  sbom-containers:
+    name: Generate Container SBOM
+    runs-on: ubuntu-latest
+
+    # Skip any PR created by dependabot to avoid permission issues
+    if: (github.actor != 'dependabot[bot]')
+
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [backend, frontend]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image (${{ matrix.service }})
+        run: |
+          echo "Building ${{ matrix.service }} Docker image for SBOM generation..."
+
+          docker build \
+            -t connectkit-${{ matrix.service }}:sbom \
+            -f docker/${{ matrix.service }}/Dockerfile \
+            . || {
+              echo "Build failed, creating minimal image..."
+              cat > Dockerfile.minimal << EOF
+          FROM node:18-alpine
+          WORKDIR /app
+          COPY ${{ matrix.service }}/package*.json ./
+          RUN npm ci --only=production || npm install --production || echo "Install failed"
+          EOF
+              docker build -t connectkit-${{ matrix.service }}:sbom -f Dockerfile.minimal .
+            }
+        continue-on-error: true
+
+      - name: Install Syft
+        run: |
+          echo "Installing Syft..."
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+          syft --version
+
+      - name: Generate container SBOM with Syft
+        run: |
+          echo "Generating container SBOM for ${{ matrix.service }}..."
+
+          # Generate SBOM in multiple formats
+          syft connectkit-${{ matrix.service }}:sbom -o spdx-json=sbom-container-${{ matrix.service }}-spdx.json
+          syft connectkit-${{ matrix.service }}:sbom -o cyclonedx-json=sbom-container-${{ matrix.service }}-cyclonedx.json
+          syft connectkit-${{ matrix.service }}:sbom -o json=sbom-container-${{ matrix.service }}-syft.json
+
+          echo "Container SBOM generated successfully"
+          ls -la sbom-container-*.json
+        continue-on-error: true
+
+      - name: Generate container layer analysis
+        run: |
+          echo "## Container Analysis - ${{ matrix.service }}" >> $GITHUB_STEP_SUMMARY
+
+          # Analyze image layers
+          docker history connectkit-${{ matrix.service }}:sbom --no-trunc > layer-history-${{ matrix.service }}.txt || true
+
+          # Get image size
+          IMAGE_SIZE=$(docker images connectkit-${{ matrix.service }}:sbom --format "{{.Size}}")
+          echo "### Image Size: $IMAGE_SIZE" >> $GITHUB_STEP_SUMMARY
+
+          # Count packages if SBOM exists
+          if [ -f "sbom-container-${{ matrix.service }}-syft.json" ]; then
+            PACKAGE_COUNT=$(jq '.artifacts | length' sbom-container-${{ matrix.service }}-syft.json || echo "0")
+            echo "### Total Packages: $PACKAGE_COUNT" >> $GITHUB_STEP_SUMMARY
+            
+            # Count by type
+            echo "### Package Types:" >> $GITHUB_STEP_SUMMARY
+            jq -r '.artifacts[].type' sbom-container-${{ matrix.service }}-syft.json | sort | uniq -c | while read count type; do
+              echo "- $type: $count" >> $GITHUB_STEP_SUMMARY
+            done
+          fi
+        continue-on-error: true
+
+      - name: Upload container SBOMs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-container-${{ matrix.service }}-${{ github.run_number }}
+          path: |
+            sbom-container-*.json
+            layer-history-*.txt
+          retention-days: 90
+
+  sbom-vulnerability-scan:
+    name: Scan SBOMs for Vulnerabilities
+    runs-on: ubuntu-latest
+    needs: [sbom-source, sbom-containers]
+
+    # Skip any PR created by dependabot to avoid permission issues
+    if: (github.actor != 'dependabot[bot]')
+
+    steps:
+      - name: Download all SBOMs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: sbom-*
+          path: sboms/
+
+      - name: Install Grype
+        run: |
+          echo "Installing Grype vulnerability scanner..."
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+          grype --version
+
+      - name: Scan source SBOMs with Grype
+        run: |
+          echo "## Vulnerability Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Find and scan all Syft-format SBOMs
+          find sboms -name "*-syft.json" | while read sbom; do
+            SBOM_NAME=$(basename $sbom .json)
+            echo "Scanning $SBOM_NAME..."
+            
+            # Scan and output to JSON
+            grype sbom:$sbom -o json > vuln-$SBOM_NAME.json || true
+            
+            # Scan and output to table for summary
+            echo "### $SBOM_NAME Vulnerabilities:" >> $GITHUB_STEP_SUMMARY
+            grype sbom:$sbom -q || echo "No vulnerabilities found" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          done
+        continue-on-error: true
+
+      - name: Generate vulnerability summary
+        run: |
+          echo "## Vulnerability Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          TOTAL_CRITICAL=0
+          TOTAL_HIGH=0
+          TOTAL_MEDIUM=0
+          TOTAL_LOW=0
+
+          # Count vulnerabilities from all scan results
+          find . -name "vuln-*.json" | while read vuln_file; do
+            if [ -f "$vuln_file" ]; then
+              CRITICAL=$(jq '[.matches[] | select(.vulnerability.severity == "Critical")] | length' $vuln_file 2>/dev/null || echo "0")
+              HIGH=$(jq '[.matches[] | select(.vulnerability.severity == "High")] | length' $vuln_file 2>/dev/null || echo "0")
+              MEDIUM=$(jq '[.matches[] | select(.vulnerability.severity == "Medium")] | length' $vuln_file 2>/dev/null || echo "0")
+              LOW=$(jq '[.matches[] | select(.vulnerability.severity == "Low")] | length' $vuln_file 2>/dev/null || echo "0")
+              
+              TOTAL_CRITICAL=$((TOTAL_CRITICAL + CRITICAL))
+              TOTAL_HIGH=$((TOTAL_HIGH + HIGH))
+              TOTAL_MEDIUM=$((TOTAL_MEDIUM + MEDIUM))
+              TOTAL_LOW=$((TOTAL_LOW + LOW))
+            fi
+          done
+
+          echo "### Total Vulnerabilities Found:" >> $GITHUB_STEP_SUMMARY
+          echo "- Critical: $TOTAL_CRITICAL" >> $GITHUB_STEP_SUMMARY
+          echo "- High: $TOTAL_HIGH" >> $GITHUB_STEP_SUMMARY
+          echo "- Medium: $TOTAL_MEDIUM" >> $GITHUB_STEP_SUMMARY
+          echo "- Low: $TOTAL_LOW" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$TOTAL_CRITICAL" -gt 0 ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "❌ **Critical vulnerabilities detected!**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "✅ **No critical vulnerabilities found**" >> $GITHUB_STEP_SUMMARY
+          fi
+        continue-on-error: true
+
+      - name: Upload vulnerability scan results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-vulnerabilities-${{ github.run_number }}
+          path: |
+            vuln-*.json
+          retention-days: 90
+
+  sbom-attestation:
+    name: Generate SBOM Attestation
+    runs-on: ubuntu-latest
+    needs: [sbom-source]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download source SBOMs
+        uses: actions/download-artifact@v4
+        with:
+          name: sbom-source-${{ github.run_number }}
+          path: sboms/
+
+      - name: Generate SBOM attestation
+        uses: actions/attest-sbom@v1
+        with:
+          subject-path: "./sboms"
+          sbom-path: "sboms/sbom-project-cdxgen.json"
+          push-to-registry: false
+        continue-on-error: true
+
+      - name: Upload attestation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-attestation-${{ github.run_number }}
+          path: |
+            *.sigstore
+          retention-days: 90
+
+  sbom-publish:
+    name: Publish SBOMs
+    runs-on: ubuntu-latest
+    needs: [sbom-source, sbom-containers, sbom-vulnerability-scan]
+    if: github.event_name == 'release'
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all SBOMs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: sbom-*
+          path: sboms/
+
+      - name: Create SBOM archive
+        run: |
+          echo "Creating SBOM archive for release..."
+
+          # Create organized directory structure
+          mkdir -p release-sboms/source
+          mkdir -p release-sboms/containers
+          mkdir -p release-sboms/vulnerabilities
+
+          # Copy SBOMs to organized structure
+          find sboms -name "*frontend*" -name "*.json" -exec cp {} release-sboms/source/ \;
+          find sboms -name "*backend*" -name "*.json" -exec cp {} release-sboms/source/ \;
+          find sboms -name "*container*" -name "*.json" -exec cp {} release-sboms/containers/ \;
+          find sboms -name "vuln-*" -name "*.json" -exec cp {} release-sboms/vulnerabilities/ \;
+
+          # Create archive
+          tar -czf sbom-${{ github.event.release.tag_name }}.tar.gz release-sboms/
+
+          echo "SBOM archive created successfully"
+        continue-on-error: true
+
+      - name: Upload SBOMs to release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            sbom-*.tar.gz
+            release-sboms/source/sbom-project-cdxgen.json
+            release-sboms/source/sbom-frontend-spdx.json
+            release-sboms/source/sbom-backend-spdx.json
+        continue-on-error: true

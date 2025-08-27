@@ -2,7 +2,7 @@ name: Security - Consolidated Report
 
 on:
   workflow_run:
-    workflows: 
+    workflows:
       - "Security - Dependency Scanning"
       - "Security - Container Scanning"
       - "Security - Frontend Analysis"
@@ -24,20 +24,20 @@ jobs:
   security-report:
     name: Security Report Consolidation
     runs-on: ubuntu-latest
-    
+
     # Skip any PR created by dependabot to avoid permission issues
     if: (github.actor != 'dependabot[bot]')
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Setup report environment
         run: |
           echo "Setting up security report environment..."
           mkdir -p security-reports
           echo "Report directory created"
-      
+
       - name: Download recent artifacts
         uses: dawidd6/action-download-artifact@v3
         with:
@@ -48,17 +48,17 @@ jobs:
           if_no_artifact_found: warn
           search_artifacts: true
         continue-on-error: true
-      
+
       - name: Analyze dependency scan results
         run: |
           echo "# 🔒 ConnectKit Security Report" > security-summary.md
           echo "" >> security-summary.md
           echo "**Generated**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> security-summary.md
           echo "" >> security-summary.md
-          
+
           echo "## 📦 Dependency Security" >> security-summary.md
           echo "" >> security-summary.md
-          
+
           # Check for dependency scan results
           if find security-reports -name "*audit*.json" -type f | head -1; then
             TOTAL_VULNS=0
@@ -99,12 +99,12 @@ jobs:
           fi
           echo "" >> security-summary.md
         continue-on-error: true
-      
+
       - name: Analyze container security results
         run: |
           echo "## 🐳 Container Security" >> security-summary.md
           echo "" >> security-summary.md
-          
+
           # Check for Trivy/Grype results
           if find security-reports -name "*trivy*.sarif" -o -name "*grype*.json" -type f | head -1; then
             echo "### Container Vulnerability Summary" >> security-summary.md
@@ -139,12 +139,12 @@ jobs:
           fi
           echo "" >> security-summary.md
         continue-on-error: true
-      
+
       - name: Analyze application security results
         run: |
           echo "## 🛡️ Application Security" >> security-summary.md
           echo "" >> security-summary.md
-          
+
           # Frontend security
           echo "### Frontend Security" >> security-summary.md
           if find security-reports -path "*frontend*" -name "*eslint*.json" -type f | head -1; then
@@ -165,7 +165,7 @@ jobs:
             echo "ℹ️ No frontend security scan results" >> security-summary.md
           fi
           echo "" >> security-summary.md
-          
+
           # Backend security
           echo "### Backend Security" >> security-summary.md
           if find security-reports -path "*backend*" -name "*eslint*.json" -type f | head -1; then
@@ -187,37 +187,85 @@ jobs:
           fi
           echo "" >> security-summary.md
         continue-on-error: true
-      
+
+      - name: Analyze SBOM results
+        run: |
+          echo "## 📦 Software Bill of Materials (SBOM)" >> security-summary.md
+          echo "" >> security-summary.md
+
+          # Check for SBOM files
+          SBOM_COUNT=$(find security-reports -name "sbom-*.json" 2>/dev/null | wc -l || echo "0")
+
+          if [ "$SBOM_COUNT" -gt 0 ]; then
+            echo "### SBOM Generation Status: ✅ Active" >> security-summary.md
+            echo "- Total SBOMs generated: $SBOM_COUNT" >> security-summary.md
+            echo "" >> security-summary.md
+            
+            # Count total components across all SBOMs
+            TOTAL_COMPONENTS=0
+            for sbom in security-reports/**/sbom-*-syft.json security-reports/**/sbom-*-cdxgen.json; do
+              if [ -f "$sbom" ]; then
+                if echo "$sbom" | grep -q "syft"; then
+                  COMPONENTS=$(jq '.artifacts | length' "$sbom" 2>/dev/null || echo "0")
+                elif echo "$sbom" | grep -q "cdxgen\|cyclonedx"; then
+                  COMPONENTS=$(jq '.components | length' "$sbom" 2>/dev/null || echo "0")
+                else
+                  COMPONENTS=0
+                fi
+                TOTAL_COMPONENTS=$((TOTAL_COMPONENTS + COMPONENTS))
+              fi
+            done
+            
+            echo "### Supply Chain Summary:" >> security-summary.md
+            echo "- Total components tracked: $TOTAL_COMPONENTS" >> security-summary.md
+            echo "- Formats available: SPDX, CycloneDX, Syft native" >> security-summary.md
+            echo "" >> security-summary.md
+            
+            # Check for license information
+            LICENSE_FILES=$(find security-reports -name "licenses-*.json" 2>/dev/null | wc -l || echo "0")
+            if [ "$LICENSE_FILES" -gt 0 ]; then
+              echo "### License Compliance: ✅ Tracked" >> security-summary.md
+            else
+              echo "### License Compliance: ⚠️ No license data available" >> security-summary.md
+            fi
+          else
+            echo "### SBOM Generation Status: ⚠️ No SBOMs found" >> security-summary.md
+            echo "Consider running the SBOM generation workflow" >> security-summary.md
+          fi
+          echo "" >> security-summary.md
+        continue-on-error: true
+
       - name: Check existing SAST results
         run: |
           echo "## 🔍 Static Application Security Testing (SAST)" >> security-summary.md
           echo "" >> security-summary.md
-          
+
           # Check for CodeQL
           echo "### SAST Tools Status:" >> security-summary.md
           echo "- **CodeQL**: ✅ Configured (workflow: sast-codeql.yml)" >> security-summary.md
           echo "- **Semgrep**: ✅ Configured (workflow: sast-semgrep.yml)" >> security-summary.md
           echo "- **Node.js Security**: ✅ Configured (workflow: sast-nodejs.yml)" >> security-summary.md
           echo "- **TruffleHog Secrets**: ✅ Configured (workflow: sast-trufflehog.yml)" >> security-summary.md
+          echo "- **SBOM Generation**: ✅ Configured (workflow: security-sbom.yml)" >> security-summary.md
           echo "" >> security-summary.md
         continue-on-error: true
-      
+
       - name: Generate security scorecard
         run: |
           echo "## 📊 Security Scorecard" >> security-summary.md
           echo "" >> security-summary.md
-          
+
           SCORE=100
           CRITICAL_ISSUES=0
           HIGH_ISSUES=0
           MEDIUM_ISSUES=0
-          
+
           # Count all issues from various sources
           # This is a simplified scoring system
-          
+
           echo "### Overall Security Score: $SCORE/100" >> security-summary.md
           echo "" >> security-summary.md
-          
+
           echo "| Category | Status | Score Impact |" >> security-summary.md
           echo "|----------|--------|--------------|" >> security-summary.md
           echo "| Dependency Security | ✅ Scanning Active | 0 |" >> security-summary.md
@@ -226,38 +274,40 @@ jobs:
           echo "| Secret Detection | ✅ TruffleHog Active | 0 |" >> security-summary.md
           echo "| Security Headers | ⚠️ Needs Review | -10 |" >> security-summary.md
           echo "| OWASP Testing | ✅ ZAP Configured | 0 |" >> security-summary.md
+          echo "| SBOM Generation | ✅ Multi-format | 0 |" >> security-summary.md
+          echo "| Supply Chain | ✅ Components Tracked | 0 |" >> security-summary.md
           echo "" >> security-summary.md
         continue-on-error: true
-      
+
       - name: Generate recommendations
         run: |
           echo "## 🎯 Security Recommendations" >> security-summary.md
           echo "" >> security-summary.md
-          
+
           echo "### Immediate Actions (Priority 1)" >> security-summary.md
           echo "1. **Update Critical Dependencies**: Run \`npm audit fix\` for automatic fixes" >> security-summary.md
           echo "2. **Security Headers**: Implement CSP, HSTS, and X-Frame-Options headers" >> security-summary.md
           echo "3. **Secrets Management**: Rotate any detected secrets immediately" >> security-summary.md
           echo "" >> security-summary.md
-          
+
           echo "### Short-term Improvements (Priority 2)" >> security-summary.md
           echo "1. **Container Hardening**: Update base images to latest secure versions" >> security-summary.md
           echo "2. **Rate Limiting**: Implement rate limiting on all API endpoints" >> security-summary.md
           echo "3. **Input Validation**: Strengthen input validation and sanitization" >> security-summary.md
           echo "" >> security-summary.md
-          
+
           echo "### Long-term Enhancements (Priority 3)" >> security-summary.md
           echo "1. **Security Testing**: Add security-focused unit and integration tests" >> security-summary.md
           echo "2. **Threat Modeling**: Conduct threat modeling sessions" >> security-summary.md
           echo "3. **Security Training**: Regular security awareness for development team" >> security-summary.md
           echo "" >> security-summary.md
         continue-on-error: true
-      
+
       - name: Generate compliance checklist
         run: |
           echo "## ✅ Compliance & Best Practices Checklist" >> security-summary.md
           echo "" >> security-summary.md
-          
+
           echo "### OWASP Top 10 Coverage" >> security-summary.md
           echo "- [x] A01:2021 – Broken Access Control (JWT auth implemented)" >> security-summary.md
           echo "- [x] A02:2021 – Cryptographic Failures (Encryption configured)" >> security-summary.md
@@ -270,7 +320,7 @@ jobs:
           echo "- [x] A09:2021 – Logging Failures (Logging configured)" >> security-summary.md
           echo "- [ ] A10:2021 – SSRF (Needs validation)" >> security-summary.md
           echo "" >> security-summary.md
-          
+
           echo "### Security Controls" >> security-summary.md
           echo "- [x] Automated security scanning in CI/CD" >> security-summary.md
           echo "- [x] Dependency vulnerability scanning" >> security-summary.md
@@ -282,12 +332,12 @@ jobs:
           echo "- [ ] Web Application Firewall (WAF)" >> security-summary.md
           echo "" >> security-summary.md
         continue-on-error: true
-      
+
       - name: Create summary for GitHub
         run: |
           # Copy summary to GitHub step summary
           cat security-summary.md >> $GITHUB_STEP_SUMMARY
-          
+
           # Create a brief summary for PR comments
           echo "## 🔒 Security Report Summary" > security-brief.md
           echo "" >> security-brief.md
@@ -302,7 +352,7 @@ jobs:
           echo "" >> security-brief.md
           echo "Full report available in workflow artifacts." >> security-brief.md
         continue-on-error: true
-      
+
       - name: Upload security report
         if: always()
         uses: actions/upload-artifact@v4
@@ -313,13 +363,13 @@ jobs:
             security-brief.md
             security-reports/
           retention-days: 90
-      
+
       - name: Create security issues if critical vulnerabilities found
         run: |
           # This would create GitHub issues for critical findings
           # Placeholder for issue creation logic
           echo "Security report generation completed"
-          
+
           # Check if we should create issues
           if grep -q "❌" security-summary.md; then
             echo "Critical security issues detected - manual review required"

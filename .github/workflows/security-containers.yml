@@ -25,26 +25,26 @@ jobs:
   container-security:
     name: Container Security Scan
     runs-on: ubuntu-latest
-    
+
     # Skip any PR created by dependabot to avoid permission issues
     if: (github.actor != 'dependabot[bot]')
-    
+
     strategy:
       fail-fast: false
       matrix:
         service: [backend, frontend]
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      
+
       - name: Build Docker image (${{ matrix.service }})
         run: |
           echo "Building ${{ matrix.service }} Docker image for security scanning..."
-          
+
           # Build targeting dependencies stage to speed up security scan
           docker build \
             -t connectkit-${{ matrix.service }}:security-test \
@@ -62,7 +62,7 @@ jobs:
               docker build -t connectkit-${{ matrix.service }}:security-test -f Dockerfile.minimal .
             }
         continue-on-error: true
-      
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
@@ -72,7 +72,7 @@ jobs:
           severity: "CRITICAL,HIGH,MEDIUM"
           timeout: "10m"
         continue-on-error: true
-      
+
       - name: Run Trivy scanner (Table format)
         uses: aquasecurity/trivy-action@master
         with:
@@ -84,25 +84,71 @@ jobs:
           severity: "CRITICAL,HIGH"
           timeout: "10m"
         continue-on-error: true
-      
-      - name: Run Grype vulnerability scanner
+
+      - name: Install Syft and Grype
         run: |
+          echo "Installing Syft for SBOM generation..."
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /tmp
+
           echo "Installing Grype scanner..."
           curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /tmp
-          
-          echo "Scanning ${{ matrix.service }} with Grype..."
-          /tmp/grype connectkit-${{ matrix.service }}:security-test \
-            --output json \
-            --file grype-${{ matrix.service }}-results.json \
-            --fail-on critical || echo "Grype scan completed with findings"
+
+          /tmp/syft --version
+          /tmp/grype --version
         continue-on-error: true
-      
+
+      - name: Generate container SBOM
+        run: |
+          echo "Generating SBOM for ${{ matrix.service }} container..."
+
+          # Generate SBOM in multiple formats
+          /tmp/syft connectkit-${{ matrix.service }}:security-test \
+            -o spdx-json=sbom-${{ matrix.service }}-spdx.json \
+            -o cyclonedx-json=sbom-${{ matrix.service }}-cyclonedx.json \
+            -o json=sbom-${{ matrix.service }}-syft.json
+
+          echo "SBOM generated successfully"
+
+          # Display SBOM summary
+          echo "### SBOM Summary for ${{ matrix.service }}:" >> $GITHUB_STEP_SUMMARY
+          if [ -f "sbom-${{ matrix.service }}-syft.json" ]; then
+            COMPONENTS=$(jq '.artifacts | length' sbom-${{ matrix.service }}-syft.json || echo "0")
+            echo "- Total Components: $COMPONENTS" >> $GITHUB_STEP_SUMMARY
+            
+            # Count by type
+            echo "- Component Types:" >> $GITHUB_STEP_SUMMARY
+            jq -r '.artifacts[].type' sbom-${{ matrix.service }}-syft.json | sort | uniq -c | while read count type; do
+              echo "  - $type: $count" >> $GITHUB_STEP_SUMMARY
+            done
+          fi
+        continue-on-error: true
+
+      - name: Run Grype vulnerability scanner
+        run: |
+          echo "Scanning ${{ matrix.service }} with Grype..."
+
+          # Scan using SBOM if it exists, otherwise scan image
+          if [ -f "sbom-${{ matrix.service }}-syft.json" ]; then
+            echo "Scanning via SBOM..."
+            /tmp/grype sbom:sbom-${{ matrix.service }}-syft.json \
+              --output json \
+              --file grype-${{ matrix.service }}-results.json \
+              --fail-on critical || echo "Grype scan completed with findings"
+          else
+            echo "Scanning container directly..."
+            /tmp/grype connectkit-${{ matrix.service }}:security-test \
+              --output json \
+              --file grype-${{ matrix.service }}-results.json \
+              --fail-on critical || echo "Grype scan completed with findings"
+          fi
+        continue-on-error: true
+
       - name: Analyze Docker configuration
         run: |
           echo "## Docker Security Analysis - ${{ matrix.service }}" >> $GITHUB_STEP_SUMMARY
-          
+
           DOCKERFILE="docker/${{ matrix.service }}/Dockerfile"
-          
+
           if [ -f "$DOCKERFILE" ]; then
             echo "### Dockerfile Security Checks:" >> $GITHUB_STEP_SUMMARY
             
@@ -142,11 +188,11 @@ jobs:
             fi
           fi
         continue-on-error: true
-      
+
       - name: Check base image security
         run: |
           echo "### Base Image Security Check:" >> $GITHUB_STEP_SUMMARY
-          
+
           # Extract base image from Dockerfile
           DOCKERFILE="docker/${{ matrix.service }}/Dockerfile"
           if [ -f "$DOCKERFILE" ]; then
@@ -161,11 +207,11 @@ jobs:
             fi
           fi
         continue-on-error: true
-      
+
       - name: Generate vulnerability summary
         run: |
           echo "### Vulnerability Summary:" >> $GITHUB_STEP_SUMMARY
-          
+
           if [ -f "grype-${{ matrix.service }}-results.json" ]; then
             CRITICAL=$(jq '[.matches[] | select(.vulnerability.severity == "Critical")] | length' grype-${{ matrix.service }}-results.json || echo "0")
             HIGH=$(jq '[.matches[] | select(.vulnerability.severity == "High")] | length' grype-${{ matrix.service }}-results.json || echo "0")
@@ -182,8 +228,8 @@ jobs:
             fi
           fi
         continue-on-error: true
-      
-      - name: Upload scan results
+
+      - name: Upload scan results and SBOMs
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -191,4 +237,5 @@ jobs:
           path: |
             trivy-${{ matrix.service }}-results.sarif
             grype-${{ matrix.service }}-results.json
+            sbom-${{ matrix.service }}-*.json
           retention-days: 30
