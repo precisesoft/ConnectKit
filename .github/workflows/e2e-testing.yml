@@ -30,7 +30,6 @@ jobs:
   e2e-chromium:
     name: E2E Tests - Chromium
     runs-on: ubuntu-latest
-    if: github.event.inputs.browser == 'chromium' || github.event.inputs.browser == 'all' || github.event.inputs.browser == ''
 
     services:
       postgres:
@@ -131,7 +130,6 @@ jobs:
   e2e-firefox:
     name: E2E Tests - Firefox
     runs-on: ubuntu-latest
-    if: github.event.inputs.browser == 'firefox' || github.event.inputs.browser == 'all'
 
     services:
       postgres:
@@ -226,7 +224,6 @@ jobs:
   e2e-webkit:
     name: E2E Tests - WebKit
     runs-on: ubuntu-latest
-    if: github.event.inputs.browser == 'webkit' || github.event.inputs.browser == 'all'
 
     services:
       postgres:
@@ -321,7 +318,6 @@ jobs:
   e2e-mobile:
     name: E2E Tests - Mobile
     runs-on: ubuntu-latest
-    if: github.event.inputs.browser == 'mobile' || github.event.inputs.browser == 'all'
 
     services:
       postgres:
