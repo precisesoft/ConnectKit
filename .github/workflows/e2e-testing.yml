@@ -69,7 +69,7 @@ jobs:
       - name: Install backend dependencies
         run: |
           cd backend
-          npm ci
+          npm ci --include=dev
 
       - name: Install frontend dependencies
         run: |
@@ -177,7 +177,7 @@ jobs:
       - name: Install backend dependencies
         run: |
           cd backend
-          npm ci
+          npm ci --include=dev
 
       - name: Install frontend dependencies
         run: |
@@ -279,7 +279,7 @@ jobs:
       - name: Install backend dependencies
         run: |
           cd backend
-          npm ci
+          npm ci --include=dev
 
       - name: Install frontend dependencies
         run: |
@@ -381,7 +381,7 @@ jobs:
       - name: Install backend dependencies
         run: |
           cd backend
-          npm ci
+          npm ci --include=dev
 
       - name: Install frontend dependencies
         run: |
@@ -517,7 +517,7 @@ jobs:
       - name: Install backend dependencies
         run: |
           cd backend
-          npm ci
+          npm ci --include=dev
 
       - name: Install frontend dependencies
         run: |
