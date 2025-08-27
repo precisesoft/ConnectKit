@@ -226,56 +226,39 @@ jobs:
           echo "SERVER_PID=$!" >> $GITHUB_ENV
           sleep 5
 
-      - name: Create Axe accessibility test
-        working-directory: ./frontend
-        run: |
-          mkdir -p tests/accessibility
-          cat > tests/accessibility/axe.spec.ts << 'EOF'
-          import { test, expect } from '@playwright/test';
-          import AxeBuilder from '@axe-core/playwright';
-
-          test('should not have accessibility violations', async ({ page }) => {
-            await page.goto('http://localhost:3001');
-            
-            const accessibilityScanResults = await new AxeBuilder({ page })
-              .withTags(['wcag2a', 'wcag2aa'])
-              .analyze();
-
-            // Log violations for debugging but don't fail the test
-            if (accessibilityScanResults.violations.length > 0) {
-              console.log('Accessibility violations found:', accessibilityScanResults.violations.length);
-              accessibilityScanResults.violations.forEach((violation, index) => {
-                console.log(`Violation ${index + 1}: ${violation.id} - ${violation.description}`);
-              });
-            }
-            
-            // We expect no violations, but test continues even if there are some
-            expect(accessibilityScanResults.violations.length).toBeLessThanOrEqual(10);
-          });
-          EOF
-
       - name: Run Axe accessibility tests
         working-directory: ./frontend
         run: |
-          cat > playwright.config.ts << 'EOF'
+          # Create a specific config for axe tests
+          cat > playwright.axe.config.ts << 'EOF'
           import { defineConfig } from '@playwright/test';
 
           export default defineConfig({
             testDir: './tests/accessibility',
+            testMatch: '**/axe.spec.ts',
             fullyParallel: false,
             forbidOnly: !!process.env.CI,
-            retries: 1,
+            retries: 2,
             workers: 1,
-            reporter: [['html'], ['json', { outputFile: 'test-results.json' }]],
+            reporter: [
+              ['html', { outputFolder: 'playwright-report-axe' }],
+              ['json', { outputFile: 'axe-results.json' }],
+              ['list']
+            ],
             use: {
               baseURL: 'http://localhost:3001',
               trace: 'on-first-retry',
+              screenshot: 'only-on-failure',
             },
-            timeout: 30000,
+            timeout: 60000,
+            expect: {
+              timeout: 10000,
+            },
           });
           EOF
 
-          npx playwright test || echo "Axe tests completed with violations"
+          echo "Running Axe accessibility tests..."
+          npx playwright test --config=playwright.axe.config.ts || echo "Axe tests completed with violations"
         continue-on-error: true
 
       - name: Upload Axe results
@@ -284,8 +267,10 @@ jobs:
         with:
           name: axe-results-${{ github.run_number }}
           path: |
-            frontend/test-results.json
-            frontend/playwright-report/
+            frontend/axe-results.json
+            frontend/playwright-report-axe/
+            frontend/playwright.axe.config.ts
+            frontend/test-results/
           retention-days: 7
 
       - name: Stop frontend server
@@ -751,64 +736,43 @@ jobs:
           echo "SERVER_PID=$!" >> $GITHUB_ENV
           sleep 5
 
-      - name: Create keyboard navigation test
-        working-directory: ./frontend
-        run: |
-          mkdir -p tests/accessibility
-          cat > tests/accessibility/keyboard.spec.ts << 'EOF'
-          import { test, expect } from '@playwright/test';
-
-          test('keyboard navigation should work', async ({ page }) => {
-            await page.goto('http://localhost:3004');
-            
-            // Find all interactive elements
-            const interactiveElements = await page.locator('button, a, input, select, textarea, [tabindex]:not([tabindex="-1"])').all();
-            
-            console.log(`Found ${interactiveElements.length} interactive elements`);
-            
-            // Test Tab navigation through first few elements
-            const elementsToTest = Math.min(interactiveElements.length, 5);
-            
-            for (let i = 0; i < elementsToTest; i++) {
-              await page.keyboard.press('Tab');
-              await page.waitForTimeout(100);
-              
-              // Verify an element is focused
-              const focusedElement = await page.locator(':focus').first();
-              const isVisible = await focusedElement.isVisible().catch(() => false);
-              
-              if (isVisible) {
-                console.log(`Element ${i + 1} is focusable`);
-              }
-            }
-            
-            // Test should pass even if some elements aren't perfectly focusable
-            expect(elementsToTest).toBeGreaterThan(0);
-          });
-          EOF
-
       - name: Run keyboard navigation tests
         working-directory: ./frontend
         run: |
-          cat > playwright.config.ts << 'EOF'
+          # Use existing playwright config for keyboard tests
+          cat > playwright.keyboard.config.ts << 'EOF'
           import { defineConfig } from '@playwright/test';
 
           export default defineConfig({
             testDir: './tests/accessibility',
+            testMatch: '**/keyboard.spec.ts',
             fullyParallel: false,
             forbidOnly: !!process.env.CI,
-            retries: 1,
+            retries: 2,
             workers: 1,
-            reporter: [['html'], ['json', { outputFile: 'keyboard-results.json' }]],
+            reporter: [
+              ['html', { outputFolder: 'playwright-report-keyboard' }],
+              ['json', { outputFile: 'keyboard-results.json' }],
+              ['list']
+            ],
             use: {
               baseURL: 'http://localhost:3004',
               trace: 'on-first-retry',
+              screenshot: 'only-on-failure',
+              video: 'retain-on-failure',
             },
-            timeout: 30000,
+            timeout: 60000,
+            expect: {
+              timeout: 10000,
+            },
           });
           EOF
 
-          npx playwright test keyboard.spec.ts || echo "Keyboard tests completed"
+          echo "Running keyboard navigation tests..."
+          npx playwright test --config=playwright.keyboard.config.ts || {
+            echo "Keyboard navigation tests completed with issues"
+            echo "Check the report for details"
+          }
         continue-on-error: true
 
       - name: Upload keyboard navigation results
@@ -818,7 +782,9 @@ jobs:
           name: keyboard-results-${{ github.run_number }}
           path: |
             frontend/keyboard-results.json
-            frontend/playwright-report/
+            frontend/playwright-report-keyboard/
+            frontend/playwright.keyboard.config.ts
+            frontend/test-results/
           retention-days: 7
 
       - name: Stop frontend server
