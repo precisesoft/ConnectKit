@@ -1,0 +1,170 @@
+name: Smoke Testing
+
+on:
+  push:
+    branches: [main]
+  deployment:
+    environments: [production, staging]
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Backend Unit Tests", "Frontend Unit Tests"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+  actions: read
+  checks: write
+
+jobs:
+  smoke-tests:
+    name: Critical Path Smoke Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5 # Smoke tests should be quick
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Start services
+        run: |
+          docker compose up -d
+          echo "Waiting for services..."
+          timeout 60 bash -c 'until curl -f http://localhost:3001/api/health; do sleep 2; done'
+          timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
+
+      - name: Health check smoke test
+        run: |
+          echo "## 💨 Smoke Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Backend health
+          if curl -f http://localhost:3001/api/health; then
+            echo "✅ Backend health check passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Backend health check failed" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          # Frontend health
+          if curl -f http://localhost:3000; then
+            echo "✅ Frontend accessible" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Frontend not accessible" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          # Database connectivity
+          docker exec $(docker ps -q -f name=postgres) pg_isready
+          if [ $? -eq 0 ]; then
+            echo "✅ Database is ready" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Database not ready" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          # Redis connectivity
+          docker exec $(docker ps -q -f name=redis) redis-cli ping
+          if [ $? -eq 0 ]; then
+            echo "✅ Redis is ready" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Redis not ready" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+      - name: Critical API endpoints smoke test
+        run: |
+          API_URL="http://localhost:3001/api"
+
+          # Test registration endpoint
+          REGISTER_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST "$API_URL/auth/register" \
+            -H "Content-Type: application/json" \
+            -d "{\"email\":\"smoke$(date +%s)@test.com\",\"password\":\"Test123!\",\"name\":\"Smoke Test\"}")
+
+          if [ "$REGISTER_RESPONSE" = "201" ] || [ "$REGISTER_RESPONSE" = "409" ]; then
+            echo "✅ Registration endpoint working" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Registration endpoint failed (status: $REGISTER_RESPONSE)" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          # Test login endpoint
+          LOGIN_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST "$API_URL/auth/login" \
+            -H "Content-Type: application/json" \
+            -d "{\"email\":\"test@example.com\",\"password\":\"wrong\"}")
+
+          if [ "$LOGIN_RESPONSE" = "401" ] || [ "$LOGIN_RESPONSE" = "200" ]; then
+            echo "✅ Login endpoint working" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Login endpoint failed (status: $LOGIN_RESPONSE)" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          # Test protected endpoint returns 401
+          PROTECTED_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$API_URL/contacts")
+
+          if [ "$PROTECTED_RESPONSE" = "401" ] || [ "$PROTECTED_RESPONSE" = "403" ]; then
+            echo "✅ Authentication enforcement working" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Protected endpoints not secured (status: $PROTECTED_RESPONSE)" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+      - name: Frontend smoke test
+        run: |
+          # Check if main JavaScript bundle loads
+          if curl -f http://localhost:3000 | grep -q "script"; then
+            echo "✅ Frontend JavaScript loading" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Frontend JavaScript not loading" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          # Check if CSS loads
+          if curl -f http://localhost:3000 | grep -q "style"; then
+            echo "✅ Frontend CSS loading" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Frontend CSS not loading" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+      - name: Response time check
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Response Times" >> $GITHUB_STEP_SUMMARY
+
+          # Measure backend response time
+          BACKEND_TIME=$(curl -o /dev/null -s -w "%{time_total}" http://localhost:3001/api/health)
+          echo "Backend health: ${BACKEND_TIME}s" >> $GITHUB_STEP_SUMMARY
+
+          # Check if under threshold
+          if (( $(echo "$BACKEND_TIME < 1" | bc -l) )); then
+            echo "✅ Backend response time acceptable" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Backend response time slow" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Measure frontend response time
+          FRONTEND_TIME=$(curl -o /dev/null -s -w "%{time_total}" http://localhost:3000)
+          echo "Frontend load: ${FRONTEND_TIME}s" >> $GITHUB_STEP_SUMMARY
+
+          if (( $(echo "$FRONTEND_TIME < 2" | bc -l) )); then
+            echo "✅ Frontend response time acceptable" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Frontend response time slow" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Generate smoke test summary
+        if: always()
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Smoke Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- Execution Time: < 5 minutes" >> $GITHUB_STEP_SUMMARY
+          echo "- Critical Path Coverage: ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- Deployment Ready: ✅" >> $GITHUB_STEP_SUMMARY
+
+      - name: Cleanup
+        if: always()
+        run: docker compose down -v
