@@ -66,21 +66,14 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install backend dependencies
+      - name: Install dependencies
         run: |
-          cd backend
-          npm ci --include=dev
-
-      - name: Install frontend dependencies
-        run: |
-          cd frontend
           npm ci
-          npx playwright install chromium
+          cd frontend && npx playwright install chromium
 
       - name: Start backend
         run: |
-          cd backend
-          npx tsx watch src/index.ts &
+          npm run dev:backend &
           sleep 5
           timeout 60 bash -c 'until curl -f http://localhost:3001/health; do sleep 2; done'
           echo "✅ Backend is ready"
@@ -101,8 +94,7 @@ jobs:
 
       - name: Start frontend
         run: |
-          cd frontend
-          npm run dev &
+          npm run dev:frontend &
           sleep 5
           timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
           echo "✅ Frontend is ready"
@@ -175,21 +167,14 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install backend dependencies
+      - name: Install dependencies
         run: |
-          cd backend
-          npm ci --include=dev
-
-      - name: Install frontend dependencies
-        run: |
-          cd frontend
           npm ci
-          npx playwright install firefox
+          cd frontend && npx playwright install firefox
 
       - name: Start backend
         run: |
-          cd backend
-          npx tsx watch src/index.ts &
+          npm run dev:backend &
           sleep 5
           timeout 60 bash -c 'until curl -f http://localhost:3001/health; do sleep 2; done'
           echo "✅ Backend is ready"
@@ -210,8 +195,7 @@ jobs:
 
       - name: Start frontend
         run: |
-          cd frontend
-          npm run dev &
+          npm run dev:frontend &
           sleep 5
           timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
           echo "✅ Frontend is ready"
@@ -278,21 +262,14 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install backend dependencies
+      - name: Install dependencies
         run: |
-          cd backend
-          npm ci --include=dev
-
-      - name: Install frontend dependencies
-        run: |
-          cd frontend
           npm ci
-          npx playwright install webkit
+          cd frontend && npx playwright install webkit
 
       - name: Start backend
         run: |
-          cd backend
-          npx tsx watch src/index.ts &
+          npm run dev:backend &
           sleep 5
           timeout 60 bash -c 'until curl -f http://localhost:3001/health; do sleep 2; done'
           echo "✅ Backend is ready"
@@ -313,8 +290,7 @@ jobs:
 
       - name: Start frontend
         run: |
-          cd frontend
-          npm run dev &
+          npm run dev:frontend &
           sleep 5
           timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
           echo "✅ Frontend is ready"
@@ -381,21 +357,14 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install backend dependencies
+      - name: Install dependencies
         run: |
-          cd backend
-          npm ci --include=dev
-
-      - name: Install frontend dependencies
-        run: |
-          cd frontend
           npm ci
-          npx playwright install
+          cd frontend && npx playwright install
 
       - name: Start backend
         run: |
-          cd backend
-          npx tsx watch src/index.ts &
+          npm run dev:backend &
           sleep 5
           timeout 60 bash -c 'until curl -f http://localhost:3001/health; do sleep 2; done'
           echo "✅ Backend is ready"
@@ -416,8 +385,7 @@ jobs:
 
       - name: Start frontend
         run: |
-          cd frontend
-          npm run dev &
+          npm run dev:frontend &
           sleep 5
           timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
           echo "✅ Frontend is ready"
@@ -518,21 +486,14 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install backend dependencies
+      - name: Install dependencies
         run: |
-          cd backend
-          npm ci --include=dev
-
-      - name: Install frontend dependencies
-        run: |
-          cd frontend
           npm ci
-          npx playwright install chromium
+          cd frontend && npx playwright install chromium
 
       - name: Start backend
         run: |
-          cd backend
-          npx tsx watch src/index.ts &
+          npm run dev:backend &
           sleep 5
           timeout 60 bash -c 'until curl -f http://localhost:3001/health; do sleep 2; done'
           echo "✅ Backend is ready"
@@ -553,8 +514,7 @@ jobs:
 
       - name: Start frontend
         run: |
-          cd frontend
-          npm run dev &
+          npm run dev:frontend &
           sleep 5
           timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
           echo "✅ Frontend is ready"
