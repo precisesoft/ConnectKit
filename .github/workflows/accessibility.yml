@@ -308,7 +308,7 @@ jobs:
         run: |
           echo "Installing workspace dependencies..."
           npm install
-          npm install puppeteer
+          npm install puppeteer serve
 
       - name: Build frontend
         working-directory: ./frontend
@@ -354,7 +354,18 @@ jobs:
         run: |
           npx serve -s dist -l 3002 &
           echo "SERVER_PID=$!" >> $GITHUB_ENV
-          sleep 5
+          echo "Waiting for server to start..."
+          sleep 10
+
+          # Check if server is running
+          for i in {1..5}; do
+            if curl -f http://localhost:3002 > /dev/null 2>&1; then
+              echo "Server is ready!"
+              break
+            fi
+            echo "Waiting for server... attempt $i"
+            sleep 2
+          done
 
       - name: Run WAVE-style tests
         run: |
@@ -376,7 +387,24 @@ jobs:
 
             try {
               const page = await browser.newPage();
-              await page.goto('http://localhost:3002', { waitUntil: 'networkidle2', timeout: 30000 });
+              
+              // Retry logic for connection
+              let connected = false;
+              let retries = 3;
+              while (retries > 0 && !connected) {
+                try {
+                  await page.goto('http://localhost:3002', { waitUntil: 'networkidle2', timeout: 30000 });
+                  connected = true;
+                } catch (error) {
+                  console.log(`Connection attempt failed. Retries left: ${retries - 1}`);
+                  retries--;
+                  if (retries > 0) {
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+                  } else {
+                    throw error;
+                  }
+                }
+              }
               
               const pageResults = await page.evaluate(() => {
                 const errors = [];
@@ -504,7 +532,7 @@ jobs:
         run: |
           echo "Installing workspace dependencies..."
           npm install
-          npm install puppeteer
+          npm install puppeteer serve
 
       - name: Build frontend
         working-directory: ./frontend
@@ -550,7 +578,18 @@ jobs:
         run: |
           npx serve -s dist -l 3003 &
           echo "SERVER_PID=$!" >> $GITHUB_ENV
-          sleep 5
+          echo "Waiting for server to start..."
+          sleep 10
+
+          # Check if server is running
+          for i in {1..5}; do
+            if curl -f http://localhost:3003 > /dev/null 2>&1; then
+              echo "Server is ready!"
+              break
+            fi
+            echo "Waiting for server... attempt $i"
+            sleep 2
+          done
 
       - name: Run color contrast tests
         run: |
@@ -572,7 +611,24 @@ jobs:
 
             try {
               const page = await browser.newPage();
-              await page.goto('http://localhost:3003', { waitUntil: 'networkidle2', timeout: 30000 });
+              
+              // Retry logic for connection
+              let connected = false;
+              let retries = 3;
+              while (retries > 0 && !connected) {
+                try {
+                  await page.goto('http://localhost:3003', { waitUntil: 'networkidle2', timeout: 30000 });
+                  connected = true;
+                } catch (error) {
+                  console.log(`Connection attempt failed. Retries left: ${retries - 1}`);
+                  retries--;
+                  if (retries > 0) {
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+                  } else {
+                    throw error;
+                  }
+                }
+              }
               
               const contrastResults = await page.evaluate(() => {
                 const elements = document.querySelectorAll('*');
@@ -739,37 +795,8 @@ jobs:
       - name: Run keyboard navigation tests
         working-directory: ./frontend
         run: |
-          # Use existing playwright config for keyboard tests
-          cat > playwright.keyboard.config.ts << 'EOF'
-          import { defineConfig } from '@playwright/test';
-
-          export default defineConfig({
-            testDir: './tests/accessibility',
-            testMatch: '**/keyboard.spec.ts',
-            fullyParallel: false,
-            forbidOnly: !!process.env.CI,
-            retries: 2,
-            workers: 1,
-            reporter: [
-              ['html', { outputFolder: 'playwright-report-keyboard' }],
-              ['json', { outputFile: 'keyboard-results.json' }],
-              ['list']
-            ],
-            use: {
-              baseURL: 'http://localhost:3004',
-              trace: 'on-first-retry',
-              screenshot: 'only-on-failure',
-              video: 'retain-on-failure',
-            },
-            timeout: 60000,
-            expect: {
-              timeout: 10000,
-            },
-          });
-          EOF
-
-          echo "Running keyboard navigation tests..."
-          npx playwright test --config=playwright.keyboard.config.ts || {
+          echo "Running keyboard navigation tests using existing CI config..."
+          npx playwright test --config=playwright.keyboard.ci.config.ts || {
             echo "Keyboard navigation tests completed with issues"
             echo "Check the report for details"
           }
@@ -783,8 +810,9 @@ jobs:
           path: |
             frontend/keyboard-results.json
             frontend/playwright-report-keyboard/
-            frontend/playwright.keyboard.config.ts
+            frontend/playwright.keyboard.ci.config.ts
             frontend/test-results/
+            frontend/keyboard-ci-results.json
           retention-days: 7
 
       - name: Stop frontend server
