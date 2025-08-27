@@ -80,7 +80,7 @@ jobs:
       - name: Start backend
         run: |
           cd backend
-          npm run dev &
+          npx tsx watch src/index.ts &
           sleep 5
           timeout 60 bash -c 'until curl -f http://localhost:3001/health; do sleep 2; done'
           echo "✅ Backend is ready"
@@ -189,7 +189,7 @@ jobs:
       - name: Start backend
         run: |
           cd backend
-          npm run dev &
+          npx tsx watch src/index.ts &
           sleep 5
           timeout 60 bash -c 'until curl -f http://localhost:3001/health; do sleep 2; done'
           echo "✅ Backend is ready"
@@ -292,7 +292,7 @@ jobs:
       - name: Start backend
         run: |
           cd backend
-          npm run dev &
+          npx tsx watch src/index.ts &
           sleep 5
           timeout 60 bash -c 'until curl -f http://localhost:3001/health; do sleep 2; done'
           echo "✅ Backend is ready"
@@ -395,7 +395,7 @@ jobs:
       - name: Start backend
         run: |
           cd backend
-          npm run dev &
+          npx tsx watch src/index.ts &
           sleep 5
           timeout 60 bash -c 'until curl -f http://localhost:3001/health; do sleep 2; done'
           echo "✅ Backend is ready"
@@ -532,7 +532,7 @@ jobs:
       - name: Start backend
         run: |
           cd backend
-          npm run dev &
+          npx tsx watch src/index.ts &
           sleep 5
           timeout 60 bash -c 'until curl -f http://localhost:3001/health; do sleep 2; done'
           echo "✅ Backend is ready"
