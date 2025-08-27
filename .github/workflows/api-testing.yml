@@ -16,33 +16,34 @@ permissions:
   checks: write
 
 jobs:
-  setup-api-testing:
-    name: Setup API Testing Environment
-    runs-on: ubuntu-latest
-    outputs:
-      api_url: ${{ steps.setup.outputs.api_url }}
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Start backend services
-        run: |
-          docker compose up -d backend db redis
-
-          # Wait for backend to be ready
-          echo "Waiting for backend service..."
-          timeout 300 bash -c 'until curl -f http://localhost:3001/api/health; do sleep 5; done'
-          echo "✅ Backend is ready"
-
-      - name: Set API URL
-        id: setup
-        run: echo "api_url=http://localhost:3001/api" >> $GITHUB_OUTPUT
-
   postman-newman-tests:
     name: Postman/Newman API Tests
     runs-on: ubuntu-latest
-    needs: setup-api-testing
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: admin123
+          POSTGRES_DB: connectkit
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
 
     steps:
       - name: Checkout repository
@@ -52,6 +53,34 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Start backend
+        run: |
+          cd backend
+          npm run dev &
+          sleep 5
+          timeout 60 bash -c 'until curl -f http://localhost:3001/api/health; do sleep 2; done'
+          echo "✅ Backend is ready"
+        env:
+          NODE_ENV: test
+          PORT: 3001
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: admin
+          DB_PASSWORD: admin123
+          DB_NAME: connectkit
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          JWT_SECRET: test-jwt-secret
+          JWT_REFRESH_SECRET: test-refresh-secret
+          ENCRYPTION_KEY: test-encryption-key
 
       - name: Install Newman
         run: npm install -g newman newman-reporter-htmlextra newman-reporter-json-summary
@@ -338,7 +367,7 @@ jobs:
       - name: Run Newman tests
         run: |
           newman run tests/api/connectkit-api.postman_collection.json \
-            --environment-var API_URL=${{ needs.setup-api-testing.outputs.api_url }} \
+            --environment-var API_URL=http://localhost:3001/api \
             --reporters cli,json,htmlextra \
             --reporter-json-export results/newman-results.json \
             --reporter-htmlextra-export results/newman-report.html
@@ -355,11 +384,71 @@ jobs:
   rest-assured-tests:
     name: REST Assured API Tests
     runs-on: ubuntu-latest
-    needs: setup-api-testing
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: admin123
+          POSTGRES_DB: connectkit
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Start backend
+        run: |
+          cd backend
+          npm run dev &
+          sleep 5
+          timeout 60 bash -c 'until curl -f http://localhost:3001/api/health; do sleep 2; done'
+          echo "✅ Backend is ready"
+        env:
+          NODE_ENV: test
+          PORT: 3001
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: admin
+          DB_PASSWORD: admin123
+          DB_NAME: connectkit
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          JWT_SECRET: test-jwt-secret
+          JWT_REFRESH_SECRET: test-refresh-secret
+          ENCRYPTION_KEY: test-encryption-key
+
+      - name: Install test dependencies
+        run: npm install axios
 
       - name: Create REST Assured test script
         run: |
@@ -373,111 +462,174 @@ jobs:
           async function runTests() {
             console.log('🧪 Running REST Assured style API tests...\n');
             
-            // Test 1: Health Check
-            console.log('Test 1: Health Check');
-            const healthRes = await axios.get(`${API_URL}/health`);
-            assert.strictEqual(healthRes.status, 200, 'Health check should return 200');
-            assert.strictEqual(healthRes.data.status, 'healthy', 'Status should be healthy');
-            console.log('✅ Health check passed\n');
-            
-            // Test 2: Authentication Flow
-            console.log('Test 2: Authentication Flow');
-            const email = `test${Date.now()}@example.com`;
-            
-            // Register
-            const registerRes = await axios.post(`${API_URL}/auth/register`, {
-              email,
-              password: 'TestPassword123!',
-              name: 'Test User'
-            });
-            assert.strictEqual(registerRes.status, 201, 'Registration should return 201');
-            console.log('✅ Registration passed');
-            
-            // Login
-            const loginRes = await axios.post(`${API_URL}/auth/login`, {
-              email,
-              password: 'TestPassword123!'
-            });
-            assert.strictEqual(loginRes.status, 200, 'Login should return 200');
-            assert(loginRes.data.token, 'Login should return token');
-            const token = loginRes.data.token;
-            console.log('✅ Login passed\n');
-            
-            // Test 3: Contact CRUD
-            console.log('Test 3: Contact CRUD Operations');
-            
-            // Create
-            const createRes = await axios.post(`${API_URL}/contacts`, {
-              firstName: 'John',
-              lastName: 'Doe',
-              email: 'john@example.com',
-              phone: '+1234567890'
-            }, {
-              headers: { 'Authorization': `Bearer ${token}` }
-            });
-            assert.strictEqual(createRes.status, 201, 'Create contact should return 201');
-            const contactId = createRes.data.id;
-            console.log('✅ Create contact passed');
-            
-            // Read
-            const getRes = await axios.get(`${API_URL}/contacts/${contactId}`, {
-              headers: { 'Authorization': `Bearer ${token}` }
-            });
-            assert.strictEqual(getRes.status, 200, 'Get contact should return 200');
-            console.log('✅ Get contact passed');
-            
-            // Update
-            const updateRes = await axios.put(`${API_URL}/contacts/${contactId}`, {
-              firstName: 'Jane'
-            }, {
-              headers: { 'Authorization': `Bearer ${token}` }
-            });
-            assert.strictEqual(updateRes.status, 200, 'Update contact should return 200');
-            console.log('✅ Update contact passed');
-            
-            // Delete
-            const deleteRes = await axios.delete(`${API_URL}/contacts/${contactId}`, {
-              headers: { 'Authorization': `Bearer ${token}` }
-            });
-            assert.strictEqual(deleteRes.status, 204, 'Delete contact should return 204');
-            console.log('✅ Delete contact passed\n');
-            
-            console.log('🎉 All REST Assured tests passed!');
+            try {
+              // Test 1: Health Check
+              console.log('Test 1: Health Check');
+              const healthRes = await axios.get(`${API_URL}/health`);
+              assert.strictEqual(healthRes.status, 200, 'Health check should return 200');
+              assert.strictEqual(healthRes.data.status, 'healthy', 'Status should be healthy');
+              console.log('✅ Health check passed\n');
+              
+              // Test 2: Authentication Flow
+              console.log('Test 2: Authentication Flow');
+              const email = `test${Date.now()}@example.com`;
+              
+              // Register
+              const registerRes = await axios.post(`${API_URL}/auth/register`, {
+                email,
+                password: 'TestPassword123!',
+                name: 'Test User'
+              });
+              assert.strictEqual(registerRes.status, 201, 'Registration should return 201');
+              console.log('✅ Registration passed');
+              
+              // Login
+              const loginRes = await axios.post(`${API_URL}/auth/login`, {
+                email,
+                password: 'TestPassword123!'
+              });
+              assert.strictEqual(loginRes.status, 200, 'Login should return 200');
+              assert(loginRes.data.token, 'Login should return token');
+              const token = loginRes.data.token;
+              console.log('✅ Login passed\n');
+              
+              // Test 3: Contact CRUD
+              console.log('Test 3: Contact CRUD Operations');
+              
+              // Create
+              const createRes = await axios.post(`${API_URL}/contacts`, {
+                firstName: 'John',
+                lastName: 'Doe',
+                email: 'john@example.com',
+                phone: '+1234567890'
+              }, {
+                headers: { 'Authorization': `Bearer ${token}` }
+              });
+              assert.strictEqual(createRes.status, 201, 'Create contact should return 201');
+              const contactId = createRes.data.id;
+              console.log('✅ Create contact passed');
+              
+              // Read
+              const getRes = await axios.get(`${API_URL}/contacts/${contactId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+              });
+              assert.strictEqual(getRes.status, 200, 'Get contact should return 200');
+              console.log('✅ Get contact passed');
+              
+              // Update
+              const updateRes = await axios.put(`${API_URL}/contacts/${contactId}`, {
+                firstName: 'Jane'
+              }, {
+                headers: { 'Authorization': `Bearer ${token}` }
+              });
+              assert.strictEqual(updateRes.status, 200, 'Update contact should return 200');
+              console.log('✅ Update contact passed');
+              
+              // Delete
+              const deleteRes = await axios.delete(`${API_URL}/contacts/${contactId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+              });
+              assert.strictEqual(deleteRes.status, 204, 'Delete contact should return 204');
+              console.log('✅ Delete contact passed\n');
+              
+              console.log('🎉 All REST Assured tests passed!');
+            } catch (error) {
+              console.error('❌ Test failed:', error.message);
+              if (error.response) {
+                console.error('Response status:', error.response.status);
+                console.error('Response data:', error.response.data);
+              }
+              process.exit(1);
+            }
           }
 
-          runTests().catch(error => {
-            console.error('❌ Test failed:', error.message);
-            process.exit(1);
-          });
+          runTests();
           EOF
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-
-      - name: Install dependencies
-        run: npm install axios
 
       - name: Run REST Assured style tests
         run: node tests/api/rest-assured-test.js
         env:
-          API_URL: ${{ needs.setup-api-testing.outputs.api_url }}
+          API_URL: http://localhost:3001/api
         continue-on-error: true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rest-assured-results-${{ github.run_number }}
+          path: tests/api/
+          retention-days: 30
 
   api-security-tests:
     name: API Security Testing
     runs-on: ubuntu-latest
-    needs: setup-api-testing
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: admin123
+          POSTGRES_DB: connectkit
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Start backend
+        run: |
+          cd backend
+          npm run dev &
+          sleep 5
+          timeout 60 bash -c 'until curl -f http://localhost:3001/api/health; do sleep 2; done'
+          echo "✅ Backend is ready"
+        env:
+          NODE_ENV: test
+          PORT: 3001
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: admin
+          DB_PASSWORD: admin123
+          DB_NAME: connectkit
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          JWT_SECRET: test-jwt-secret
+          JWT_REFRESH_SECRET: test-refresh-secret
+          ENCRYPTION_KEY: test-encryption-key
+
       - name: Run API security tests
         run: |
           echo "## 🔒 API Security Tests" >> $GITHUB_STEP_SUMMARY
-          API_URL="${{ needs.setup-api-testing.outputs.api_url }}"
+          API_URL="http://localhost:3001/api"
 
           # Test 1: SQL Injection
           echo "### SQL Injection Test" >> $GITHUB_STEP_SUMMARY
@@ -527,21 +679,13 @@ jobs:
           fi
         continue-on-error: true
 
-  cleanup:
-    name: Cleanup API Testing
+  summary:
+    name: API Testing Summary
     runs-on: ubuntu-latest
     needs: [postman-newman-tests, rest-assured-tests, api-security-tests]
     if: always()
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Stop services
-        run: |
-          docker compose down -v
-          echo "✅ API testing environment cleaned up"
-
       - name: Generate report
         run: |
           echo "# 🔌 API Testing Report" >> $GITHUB_STEP_SUMMARY
@@ -556,3 +700,5 @@ jobs:
           echo "- Contact CRUD operations" >> $GITHUB_STEP_SUMMARY
           echo "- Health checks" >> $GITHUB_STEP_SUMMARY
           echo "- Security validations" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "All test suites have been executed. Check individual job results for details." >> $GITHUB_STEP_SUMMARY

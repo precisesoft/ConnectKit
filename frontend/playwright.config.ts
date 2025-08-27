@@ -5,11 +5,11 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   // Test directories - include both e2e and accessibility tests
-  testDir: './tests',
+  testDir: './',
   testMatch: [
-    '**/*.spec.ts',
-    '**/e2e/**/*.spec.ts',
-    '**/accessibility/**/*.spec.ts',
+    'tests/**/*.spec.ts',
+    'e2e/**/*.spec.ts',
+    'tests/accessibility/**/*.spec.ts',
   ],
 
   // Run tests in files in parallel
