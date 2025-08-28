@@ -1,0 +1,241 @@
+name: Mutation Testing
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "backend/**/*.ts"
+      - "frontend/**/*.ts"
+      - "frontend/**/*.tsx"
+  schedule:
+    - cron: "0 5 * * 0" # Weekly on Sunday at 5 AM UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  checks: write
+
+jobs:
+  backend-mutation-testing:
+    name: Backend Mutation Testing (Stryker)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Stryker dependencies for backend
+        run: |
+          npm install --save-dev @stryker-mutator/core@^7.3.0 @stryker-mutator/typescript-checker@^7.3.0 @stryker-mutator/jest-runner@^7.3.0
+
+      - name: Create Stryker configuration
+        run: |
+          cd backend
+          cat > stryker.conf.json << 'EOF'
+          {
+            "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+            "packageManager": "npm",
+            "reporters": ["html", "json", "clear-text", "progress"],
+            "testRunner": "jest",
+            "coverageAnalysis": "perTest",
+            "jest": {
+              "projectType": "custom",
+              "configFile": "jest.config.js"
+            },
+            "checkers": ["typescript"],
+            "tsconfigFile": "tsconfig.json",
+            "mutate": [
+              "src/**/*.ts",
+              "!src/**/*.test.ts",
+              "!src/**/*.spec.ts",
+              "!src/**/index.ts",
+              "!src/types/**"
+            ],
+            "thresholds": {
+              "high": 80,
+              "low": 60,
+              "break": 50
+            },
+            "timeoutMS": 10000,
+            "timeoutFactor": 1.5,
+            "maxConcurrentTestRunners": 4,
+            "htmlReporter": {
+              "fileName": "reports/mutation/backend/index.html"
+            },
+            "jsonReporter": {
+              "fileName": "reports/mutation/backend/report.json"
+            }
+          }
+          EOF
+
+      - name: Run Stryker mutation testing
+        run: |
+          cd backend
+          npx stryker run
+        continue-on-error: true
+
+      - name: Generate mutation score badge
+        if: always()
+        run: |
+          cd backend
+          if [ -f "reports/mutation/backend/report.json" ]; then
+            SCORE=$(jq '.metrics.mutationScore' reports/mutation/backend/report.json)
+            echo "## 🧬 Backend Mutation Score: ${SCORE}%" >> $GITHUB_STEP_SUMMARY
+            
+            if (( $(echo "$SCORE > 80" | bc -l) )); then
+              echo "✅ Excellent mutation score" >> $GITHUB_STEP_SUMMARY
+            elif (( $(echo "$SCORE > 60" | bc -l) )); then
+              echo "⚠️ Good mutation score, room for improvement" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ Low mutation score, tests need improvement" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Mutation Testing Details" >> $GITHUB_STEP_SUMMARY
+            echo "- Mutants killed: $(jq '.metrics.killed' reports/mutation/backend/report.json)" >> $GITHUB_STEP_SUMMARY
+            echo "- Mutants survived: $(jq '.metrics.survived' reports/mutation/backend/report.json)" >> $GITHUB_STEP_SUMMARY
+            echo "- Mutants timeout: $(jq '.metrics.timeout' reports/mutation/backend/report.json)" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload backend mutation results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-mutation-results-${{ github.run_number }}
+          path: backend/reports/mutation/
+          retention-days: 30
+
+  frontend-mutation-testing:
+    name: Frontend Mutation Testing (Stryker)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Stryker dependencies for frontend
+        run: |
+          npm install --save-dev @stryker-mutator/core@^7.3.0 @stryker-mutator/typescript-checker@^7.3.0 @stryker-mutator/vitest-runner@^7.3.0
+
+      - name: Create Stryker configuration
+        run: |
+          cd frontend
+          cat > stryker.conf.json << 'EOF'
+          {
+            "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+            "packageManager": "npm",
+            "reporters": ["html", "json", "clear-text", "progress"],
+            "testRunner": "vitest",
+            "coverageAnalysis": "perTest",
+            "checkers": ["typescript"],
+            "tsconfigFile": "tsconfig.json",
+            "mutate": [
+              "src/**/*.ts",
+              "src/**/*.tsx",
+              "!src/**/*.test.ts",
+              "!src/**/*.test.tsx",
+              "!src/**/*.spec.ts",
+              "!src/**/*.spec.tsx",
+              "!src/**/index.ts",
+              "!src/**/index.tsx",
+              "!src/vite-env.d.ts",
+              "!src/types/**"
+            ],
+            "thresholds": {
+              "high": 80,
+              "low": 60,
+              "break": 50
+            },
+            "timeoutMS": 10000,
+            "timeoutFactor": 1.5,
+            "maxConcurrentTestRunners": 4,
+            "htmlReporter": {
+              "fileName": "reports/mutation/frontend/index.html"
+            },
+            "jsonReporter": {
+              "fileName": "reports/mutation/frontend/report.json"
+            },
+            "vitest": {
+              "configFile": "vitest.config.ts"
+            }
+          }
+          EOF
+
+      - name: Run Stryker mutation testing
+        run: |
+          cd frontend
+          npx stryker run
+        continue-on-error: true
+
+      - name: Generate mutation score badge
+        if: always()
+        run: |
+          cd frontend
+          if [ -f "reports/mutation/frontend/report.json" ]; then
+            SCORE=$(jq '.metrics.mutationScore' reports/mutation/frontend/report.json)
+            echo "## 🧬 Frontend Mutation Score: ${SCORE}%" >> $GITHUB_STEP_SUMMARY
+            
+            if (( $(echo "$SCORE > 80" | bc -l) )); then
+              echo "✅ Excellent mutation score" >> $GITHUB_STEP_SUMMARY
+            elif (( $(echo "$SCORE > 60" | bc -l) )); then
+              echo "⚠️ Good mutation score, room for improvement" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ Low mutation score, tests need improvement" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Mutation Testing Details" >> $GITHUB_STEP_SUMMARY
+            echo "- Mutants killed: $(jq '.metrics.killed' reports/mutation/frontend/report.json)" >> $GITHUB_STEP_SUMMARY
+            echo "- Mutants survived: $(jq '.metrics.survived' reports/mutation/frontend/report.json)" >> $GITHUB_STEP_SUMMARY
+            echo "- Mutants timeout: $(jq '.metrics.timeout' reports/mutation/frontend/report.json)" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload frontend mutation results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-mutation-results-${{ github.run_number }}
+          path: frontend/reports/mutation/
+          retention-days: 30
+
+  summary:
+    name: Mutation Testing Summary
+    runs-on: ubuntu-latest
+    needs: [backend-mutation-testing, frontend-mutation-testing]
+    if: always()
+
+    steps:
+      - name: Generate summary report
+        run: |
+          echo "# 🧬 Mutation Testing Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Test Suite Quality Assessment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Mutation testing measures how effective your test suite is at detecting bugs by introducing small changes (mutations) to your code and checking if tests catch them." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Score Interpretation:" >> $GITHUB_STEP_SUMMARY
+          echo "- **80-100%**: Excellent test quality 🏆" >> $GITHUB_STEP_SUMMARY
+          echo "- **60-79%**: Good test quality ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- **40-59%**: Needs improvement ⚠️" >> $GITHUB_STEP_SUMMARY
+          echo "- **Below 40%**: Poor test quality ❌" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "View detailed reports in the artifacts section." >> $GITHUB_STEP_SUMMARY

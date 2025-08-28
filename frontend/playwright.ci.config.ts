@@ -1,7 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * @see https://playwright.dev/docs/test-configuration
+ * CI-specific Playwright configuration that doesn't start its own dev server
+ * The GitHub Actions workflow handles starting the frontend and backend
  */
 export default defineConfig({
   // Test directories - include both e2e and accessibility tests
@@ -25,33 +26,29 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
 
   // Reporter to use
-  reporter: [
-    ['html'],
-    ['json', { outputFile: 'playwright-report/results.json' }],
-    ['junit', { outputFile: 'playwright-report/results.xml' }],
-    ['list'],
-  ],
+  reporter: process.env.CI
+    ? [['html'], ['junit', { outputFile: 'test-results/junit.xml' }]]
+    : 'html',
 
   // Shared settings for all the projects below
   use: {
-    // Base URL to use in actions like `await page.goto('/')`.
-    baseURL: 'http://localhost:3000',
+    // Use the base URL from environment variable (set by GitHub Actions)
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
 
     // Collect trace when retrying the failed test
     trace: 'on-first-retry',
 
-    // Capture screenshot after each test failure
+    // Screenshot on failure
     screenshot: 'only-on-failure',
 
-    // Record video on failure
+    // Video on failure
     video: 'retain-on-failure',
 
-    // Global test timeout - increased for accessibility tests
-    actionTimeout: process.env.TEST_TYPE === 'accessibility' ? 15000 : 10000,
+    // Viewport size
+    viewport: { width: 1280, height: 720 },
 
-    // Navigation timeout - increased for accessibility tests
-    navigationTimeout:
-      process.env.TEST_TYPE === 'accessibility' ? 45000 : 30000,
+    // Ignore HTTPS errors during navigation
+    ignoreHTTPSErrors: true,
   },
 
   // Configure projects for major browsers
@@ -104,28 +101,28 @@ export default defineConfig({
       ? undefined
       : require.resolve('./e2e/global-teardown.ts'),
 
-  // Run your local dev server before starting the tests
-  webServer: {
-    command: 'npm run dev',
-    port: 3000,
-    reuseExistingServer: !process.env.CI,
-    stdout: 'ignore',
-    stderr: 'pipe',
-    timeout: 120000, // Increase timeout for CI
-  },
+  // NO webServer configuration - the CI workflow handles starting the servers
+  // This prevents port conflicts when running tests in parallel
 
   // Test timeout
   timeout: 30000,
 
-  // Maximum time one test can run for
+  // Global timeout for the whole test run
+  globalTimeout: process.env.CI ? 60 * 60 * 1000 : undefined, // 1 hour on CI
+
+  // Output folder for test artifacts
+  outputDir: 'test-results/',
+
+  // Accessibility testing specific config
   expect: {
     // Maximum time expect() should wait for the condition to be met
     timeout: 5000,
+
+    toHaveScreenshot: {
+      // Maximum difference in pixels
+      maxDiffPixels: 100,
+      // Threshold between 0-1
+      threshold: 0.2,
+    },
   },
-
-  // Output directory for test results
-  outputDir: './playwright-results/',
-
-  // Whether to update snapshots
-  updateSnapshots: 'missing',
 });

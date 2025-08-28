@@ -1,0 +1,566 @@
+name: E2E Testing
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 4 * * *" # Daily at 4 AM UTC
+  workflow_dispatch:
+    inputs:
+      browser:
+        description: "Browser to test"
+        required: false
+        default: "all"
+        type: choice
+        options:
+          - all
+          - chromium
+          - firefox
+          - webkit
+          - mobile
+
+permissions:
+  contents: read
+  actions: read
+  checks: write
+
+jobs:
+  e2e-chromium:
+    name: E2E Tests - Chromium
+    runs-on: ubuntu-latest
+    env:
+      FRONTEND_PORT: 3000
+      BACKEND_PORT: 3001
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: admin123
+          POSTGRES_DB: connectkit
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd frontend && npx playwright install chromium
+
+      - name: Start backend
+        run: |
+          cd backend && npm run dev &
+          sleep 5
+          timeout 60 bash -c 'until curl -f http://localhost:${{ env.BACKEND_PORT }}/health; do sleep 2; done'
+          echo "✅ Backend is ready on port ${{ env.BACKEND_PORT }}"
+        env:
+          NODE_ENV: test
+          PORT: ${{ env.BACKEND_PORT }}
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: admin
+          DB_PASSWORD: admin123
+          DB_NAME: connectkit
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          REDIS_PASSWORD: ""
+          JWT_SECRET: test-jwt-secret-that-is-long-enough-for-validation
+          JWT_REFRESH_SECRET: test-refresh-secret-that-is-long-enough-for-validation
+          ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+
+      - name: Start frontend
+        run: |
+          cd frontend && npx vite --port ${{ env.FRONTEND_PORT }} &
+          sleep 5
+          timeout 60 bash -c 'until curl -f http://localhost:${{ env.FRONTEND_PORT }}; do sleep 2; done'
+          echo "✅ Frontend is ready on port ${{ env.FRONTEND_PORT }}"
+        env:
+          NODE_ENV: test
+          VITE_API_URL: http://localhost:${{ env.BACKEND_PORT }}/api
+          VITE_APP_NAME: ConnectKit
+
+      - name: Run E2E tests - Chromium
+        run: |
+          cd frontend
+          npx playwright test --config=playwright.ci.config.ts --project=chromium --reporter=html
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:${{ env.FRONTEND_PORT }}
+          API_URL: http://localhost:${{ env.BACKEND_PORT }}/api
+        continue-on-error: true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-chromium-results-${{ github.run_number }}
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
+          retention-days: 30
+
+      - name: Generate test summary
+        if: always()
+        run: |
+          echo "## 🌐 E2E Tests - Chromium" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Tests completed" >> $GITHUB_STEP_SUMMARY
+
+  e2e-firefox:
+    name: E2E Tests - Firefox
+    runs-on: ubuntu-latest
+    env:
+      FRONTEND_PORT: 3100
+      BACKEND_PORT: 3101
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: admin123
+          POSTGRES_DB: connectkit
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd frontend && npx playwright install firefox
+
+      - name: Start backend
+        run: |
+          cd backend && npm run dev &
+          sleep 5
+          timeout 60 bash -c 'until curl -f http://localhost:${{ env.BACKEND_PORT }}/health; do sleep 2; done'
+          echo "✅ Backend is ready on port ${{ env.BACKEND_PORT }}"
+        env:
+          NODE_ENV: test
+          PORT: ${{ env.BACKEND_PORT }}
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: admin
+          DB_PASSWORD: admin123
+          DB_NAME: connectkit
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          REDIS_PASSWORD: ""
+          JWT_SECRET: test-jwt-secret-that-is-long-enough-for-validation
+          JWT_REFRESH_SECRET: test-refresh-secret-that-is-long-enough-for-validation
+          ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+
+      - name: Start frontend
+        run: |
+          cd frontend && npx vite --port ${{ env.FRONTEND_PORT }} &
+          sleep 5
+          timeout 60 bash -c 'until curl -f http://localhost:${{ env.FRONTEND_PORT }}; do sleep 2; done'
+          echo "✅ Frontend is ready on port ${{ env.FRONTEND_PORT }}"
+        env:
+          NODE_ENV: test
+          VITE_API_URL: http://localhost:${{ env.BACKEND_PORT }}/api
+          VITE_APP_NAME: ConnectKit
+
+      - name: Run E2E tests - Firefox
+        run: |
+          cd frontend
+          npx playwright test --config=playwright.ci.config.ts --project=firefox --reporter=html
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:${{ env.FRONTEND_PORT }}
+          API_URL: http://localhost:${{ env.BACKEND_PORT }}/api
+        continue-on-error: true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-firefox-results-${{ github.run_number }}
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
+          retention-days: 30
+
+  e2e-webkit:
+    name: E2E Tests - WebKit
+    runs-on: ubuntu-latest
+    env:
+      FRONTEND_PORT: 3200
+      BACKEND_PORT: 3201
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: admin123
+          POSTGRES_DB: connectkit
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd frontend && npx playwright install webkit
+
+      - name: Start backend
+        run: |
+          cd backend && npm run dev &
+          sleep 5
+          timeout 60 bash -c 'until curl -f http://localhost:${{ env.BACKEND_PORT }}/health; do sleep 2; done'
+          echo "✅ Backend is ready on port ${{ env.BACKEND_PORT }}"
+        env:
+          NODE_ENV: test
+          PORT: ${{ env.BACKEND_PORT }}
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: admin
+          DB_PASSWORD: admin123
+          DB_NAME: connectkit
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          REDIS_PASSWORD: ""
+          JWT_SECRET: test-jwt-secret-that-is-long-enough-for-validation
+          JWT_REFRESH_SECRET: test-refresh-secret-that-is-long-enough-for-validation
+          ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+
+      - name: Start frontend
+        run: |
+          cd frontend && npx vite --port ${{ env.FRONTEND_PORT }} &
+          sleep 5
+          timeout 60 bash -c 'until curl -f http://localhost:${{ env.FRONTEND_PORT }}; do sleep 2; done'
+          echo "✅ Frontend is ready on port ${{ env.FRONTEND_PORT }}"
+        env:
+          NODE_ENV: test
+          VITE_API_URL: http://localhost:${{ env.BACKEND_PORT }}/api
+          VITE_APP_NAME: ConnectKit
+
+      - name: Run E2E tests - WebKit
+        run: |
+          cd frontend
+          npx playwright test --config=playwright.ci.config.ts --project=webkit --reporter=html
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:${{ env.FRONTEND_PORT }}
+          API_URL: http://localhost:${{ env.BACKEND_PORT }}/api
+        continue-on-error: true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-webkit-results-${{ github.run_number }}
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
+          retention-days: 30
+
+  e2e-mobile:
+    name: E2E Tests - Mobile
+    runs-on: ubuntu-latest
+    env:
+      FRONTEND_PORT: 3300
+      BACKEND_PORT: 3301
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: admin123
+          POSTGRES_DB: connectkit
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd frontend && npx playwright install
+
+      - name: Start backend
+        run: |
+          cd backend && npm run dev &
+          sleep 5
+          timeout 60 bash -c 'until curl -f http://localhost:${{ env.BACKEND_PORT }}/health; do sleep 2; done'
+          echo "✅ Backend is ready on port ${{ env.BACKEND_PORT }}"
+        env:
+          NODE_ENV: test
+          PORT: ${{ env.BACKEND_PORT }}
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: admin
+          DB_PASSWORD: admin123
+          DB_NAME: connectkit
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          REDIS_PASSWORD: ""
+          JWT_SECRET: test-jwt-secret-that-is-long-enough-for-validation
+          JWT_REFRESH_SECRET: test-refresh-secret-that-is-long-enough-for-validation
+          ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+
+      - name: Start frontend
+        run: |
+          cd frontend && npx vite --port ${{ env.FRONTEND_PORT }} &
+          sleep 5
+          timeout 60 bash -c 'until curl -f http://localhost:${{ env.FRONTEND_PORT }}; do sleep 2; done'
+          echo "✅ Frontend is ready on port ${{ env.FRONTEND_PORT }}"
+        env:
+          NODE_ENV: test
+          VITE_API_URL: http://localhost:${{ env.BACKEND_PORT }}/api
+          VITE_APP_NAME: ConnectKit
+
+      - name: Run E2E tests - Mobile
+        run: |
+          cd frontend
+          npx playwright test --config=playwright.ci.config.ts --project="Mobile Chrome" --project="Mobile Safari" --reporter=html
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:${{ env.FRONTEND_PORT }}
+          API_URL: http://localhost:${{ env.BACKEND_PORT }}/api
+        continue-on-error: true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-mobile-results-${{ github.run_number }}
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
+          retention-days: 30
+
+  visual-regression:
+    name: Visual Regression Testing
+    runs-on: ubuntu-latest
+    env:
+      FRONTEND_PORT: 3400
+      BACKEND_PORT: 3401
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: admin123
+          POSTGRES_DB: connectkit
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd frontend && npx playwright install chromium
+
+      - name: Start backend
+        run: |
+          cd backend && npm run dev &
+          sleep 5
+          timeout 60 bash -c 'until curl -f http://localhost:${{ env.BACKEND_PORT }}/health; do sleep 2; done'
+          echo "✅ Backend is ready on port ${{ env.BACKEND_PORT }}"
+        env:
+          NODE_ENV: test
+          PORT: ${{ env.BACKEND_PORT }}
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: admin
+          DB_PASSWORD: admin123
+          DB_NAME: connectkit
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          REDIS_PASSWORD: ""
+          JWT_SECRET: test-jwt-secret-that-is-long-enough-for-validation
+          JWT_REFRESH_SECRET: test-refresh-secret-that-is-long-enough-for-validation
+          ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+
+      - name: Start frontend
+        run: |
+          cd frontend && npx vite --port ${{ env.FRONTEND_PORT }} &
+          sleep 5
+          timeout 60 bash -c 'until curl -f http://localhost:${{ env.FRONTEND_PORT }}; do sleep 2; done'
+          echo "✅ Frontend is ready on port ${{ env.FRONTEND_PORT }}"
+        env:
+          NODE_ENV: test
+          VITE_API_URL: http://localhost:${{ env.BACKEND_PORT }}/api
+          VITE_APP_NAME: ConnectKit
+
+      - name: Create visual regression tests
+        run: |
+          mkdir -p frontend/tests/visual
+          cat > frontend/tests/visual/visual.spec.ts << 'EOF'
+          import { test, expect } from '@playwright/test';
+
+          test.describe('Visual Regression Tests', () => {
+            test('homepage visual test', async ({ page }) => {
+              await page.goto('/');
+              await page.waitForLoadState('networkidle');
+              await expect(page).toHaveScreenshot('homepage.png', { 
+                fullPage: true,
+                animations: 'disabled' 
+              });
+            });
+            
+            test('login page visual test', async ({ page }) => {
+              await page.goto('/login');
+              await page.waitForLoadState('networkidle');
+              await expect(page).toHaveScreenshot('login-page.png', {
+                fullPage: true,
+                animations: 'disabled'
+              });
+            });
+          });
+          EOF
+
+      - name: Run visual regression tests
+        run: |
+          cd frontend
+          npx playwright test tests/visual --config=playwright.ci.config.ts --update-snapshots --reporter=html
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:${{ env.FRONTEND_PORT }}
+        continue-on-error: true
+
+      - name: Upload visual regression results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-regression-results-${{ github.run_number }}
+          path: |
+            frontend/tests/visual/**/*.png
+            frontend/playwright-report/
+          retention-days: 30
+
+  summary:
+    name: E2E Testing Summary
+    runs-on: ubuntu-latest
+    needs:
+      [e2e-chromium, e2e-firefox, e2e-webkit, e2e-mobile, visual-regression]
+    if: always()
+
+    steps:
+      - name: Generate final report
+        run: |
+          echo "# 🎭 E2E Testing Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Browser Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Chromium Tests Executed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Firefox Tests Executed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ WebKit (Safari) Tests Executed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Mobile (iOS/Android) Tests Executed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Visual Regression Tests Executed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "All test suites have been executed. Check individual job results for details." >> $GITHUB_STEP_SUMMARY

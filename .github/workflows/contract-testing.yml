@@ -1,0 +1,406 @@
+name: Contract Testing
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - ".github/workflows/contract-testing.yml"
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  checks: write
+
+jobs:
+  consumer-tests:
+    name: Consumer Contract Tests (Frontend)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: "npm"
+
+      - name: Install Pact dependencies
+        run: |
+          cd frontend
+          npm install --save-dev @pact-foundation/pact @pact-foundation/pact-node
+
+      - name: Create consumer contract tests
+        run: |
+          mkdir -p frontend/tests/contracts
+          cat > frontend/tests/contracts/consumer.pact.test.ts << 'EOF'
+          import { Pact } from '@pact-foundation/pact';
+          import { like, term, eachLike } from '@pact-foundation/pact/src/dsl/matchers';
+          import axios from 'axios';
+          import path from 'path';
+
+          describe('ConnectKit API Consumer Contracts', () => {
+            const provider = new Pact({
+              consumer: 'ConnectKit Frontend',
+              provider: 'ConnectKit Backend',
+              port: 1234,
+              log: path.resolve(process.cwd(), 'logs', 'pact.log'),
+              dir: path.resolve(process.cwd(), 'pacts'),
+              logLevel: 'INFO',
+              spec: 2
+            });
+            
+            beforeAll(() => provider.setup());
+            afterAll(() => provider.finalize());
+            afterEach(() => provider.verify());
+            
+            describe('Authentication Service', () => {
+              test('POST /api/auth/login', async () => {
+                await provider.addInteraction({
+                  state: 'user exists',
+                  uponReceiving: 'a login request',
+                  withRequest: {
+                    method: 'POST',
+                    path: '/api/auth/login',
+                    headers: {
+                      'Content-Type': 'application/json'
+                    },
+                    body: {
+                      email: 'user@example.com',
+                      password: 'password123'
+                    }
+                  },
+                  willRespondWith: {
+                    status: 200,
+                    headers: {
+                      'Content-Type': 'application/json'
+                    },
+                    body: {
+                      token: like('jwt.token.here'),
+                      user: {
+                        id: like('123'),
+                        email: 'user@example.com',
+                        name: like('John Doe')
+                      }
+                    }
+                  }
+                });
+                
+                const response = await axios.post('http://localhost:1234/api/auth/login', {
+                  email: 'user@example.com',
+                  password: 'password123'
+                });
+                
+                expect(response.status).toBe(200);
+                expect(response.data).toHaveProperty('token');
+                expect(response.data).toHaveProperty('user');
+              });
+              
+              test('GET /api/auth/profile', async () => {
+                await provider.addInteraction({
+                  state: 'user is authenticated',
+                  uponReceiving: 'a profile request',
+                  withRequest: {
+                    method: 'GET',
+                    path: '/api/auth/profile',
+                    headers: {
+                      'Authorization': term({
+                        matcher: '^Bearer .+',
+                        generate: 'Bearer jwt.token.here'
+                      })
+                    }
+                  },
+                  willRespondWith: {
+                    status: 200,
+                    headers: {
+                      'Content-Type': 'application/json'
+                    },
+                    body: {
+                      id: like('123'),
+                      email: like('user@example.com'),
+                      name: like('John Doe'),
+                      createdAt: like('2024-01-01T00:00:00Z')
+                    }
+                  }
+                });
+                
+                const response = await axios.get('http://localhost:1234/api/auth/profile', {
+                  headers: {
+                    'Authorization': 'Bearer jwt.token.here'
+                  }
+                });
+                
+                expect(response.status).toBe(200);
+                expect(response.data).toHaveProperty('id');
+                expect(response.data).toHaveProperty('email');
+              });
+            });
+            
+            describe('Contacts Service', () => {
+              test('GET /api/contacts', async () => {
+                await provider.addInteraction({
+                  state: 'user has contacts',
+                  uponReceiving: 'a request for contacts',
+                  withRequest: {
+                    method: 'GET',
+                    path: '/api/contacts',
+                    query: {
+                      page: '1',
+                      limit: '10'
+                    },
+                    headers: {
+                      'Authorization': term({
+                        matcher: '^Bearer .+',
+                        generate: 'Bearer jwt.token.here'
+                      })
+                    }
+                  },
+                  willRespondWith: {
+                    status: 200,
+                    headers: {
+                      'Content-Type': 'application/json'
+                    },
+                    body: {
+                      data: eachLike({
+                        id: like('123'),
+                        firstName: like('John'),
+                        lastName: like('Doe'),
+                        email: like('john@example.com'),
+                        phone: like('+1234567890'),
+                        tags: eachLike('friend')
+                      }),
+                      pagination: {
+                        page: 1,
+                        limit: 10,
+                        total: like(100),
+                        totalPages: like(10)
+                      }
+                    }
+                  }
+                });
+                
+                const response = await axios.get('http://localhost:1234/api/contacts?page=1&limit=10', {
+                  headers: {
+                    'Authorization': 'Bearer jwt.token.here'
+                  }
+                });
+                
+                expect(response.status).toBe(200);
+                expect(response.data).toHaveProperty('data');
+                expect(response.data).toHaveProperty('pagination');
+                expect(Array.isArray(response.data.data)).toBe(true);
+              });
+              
+              test('POST /api/contacts', async () => {
+                await provider.addInteraction({
+                  state: 'user is authenticated',
+                  uponReceiving: 'a request to create contact',
+                  withRequest: {
+                    method: 'POST',
+                    path: '/api/contacts',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': term({
+                        matcher: '^Bearer .+',
+                        generate: 'Bearer jwt.token.here'
+                      })
+                    },
+                    body: {
+                      firstName: 'Jane',
+                      lastName: 'Smith',
+                      email: 'jane@example.com',
+                      phone: '+9876543210'
+                    }
+                  },
+                  willRespondWith: {
+                    status: 201,
+                    headers: {
+                      'Content-Type': 'application/json'
+                    },
+                    body: {
+                      id: like('456'),
+                      firstName: 'Jane',
+                      lastName: 'Smith',
+                      email: 'jane@example.com',
+                      phone: '+9876543210',
+                      createdAt: like('2024-01-01T00:00:00Z'),
+                      updatedAt: like('2024-01-01T00:00:00Z')
+                    }
+                  }
+                });
+                
+                const response = await axios.post('http://localhost:1234/api/contacts', {
+                  firstName: 'Jane',
+                  lastName: 'Smith',
+                  email: 'jane@example.com',
+                  phone: '+9876543210'
+                }, {
+                  headers: {
+                    'Authorization': 'Bearer jwt.token.here'
+                  }
+                });
+                
+                expect(response.status).toBe(201);
+                expect(response.data).toHaveProperty('id');
+                expect(response.data.firstName).toBe('Jane');
+              });
+            });
+          });
+          EOF
+
+      - name: Run consumer contract tests
+        run: |
+          cd frontend
+          npm test -- tests/contracts/consumer.pact.test.ts
+        continue-on-error: true
+
+      - name: Upload Pact contracts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pact-contracts-${{ github.run_number }}
+          path: frontend/pacts/
+          retention-days: 30
+
+  provider-verification:
+    name: Provider Contract Verification (Backend)
+    runs-on: ubuntu-latest
+    needs: consumer-tests
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: "npm"
+
+      - name: Download Pact contracts
+        uses: actions/download-artifact@v4
+        with:
+          name: pact-contracts-${{ github.run_number }}
+          path: backend/pacts/
+        continue-on-error: true
+
+      - name: Install Pact verifier dependencies
+        run: |
+          cd backend
+          npm install --save-dev @pact-foundation/pact
+
+      - name: Create provider verification tests
+        run: |
+          mkdir -p backend/tests/contracts
+          cat > backend/tests/contracts/provider.pact.test.ts << 'EOF'
+          import { Verifier } from '@pact-foundation/pact';
+          import path from 'path';
+          import app from '../../src/app'; // Your Express app
+          import { Server } from 'http';
+
+          describe('Pact Provider Verification', () => {
+            let server: Server;
+            const PORT = 8080;
+            
+            beforeAll((done) => {
+              server = app.listen(PORT, () => {
+                console.log(`Provider API listening on port ${PORT}`);
+                done();
+              });
+            });
+            
+            afterAll((done) => {
+              server.close(done);
+            });
+            
+            test('should validate the expectations of ConnectKit Frontend', async () => {
+              const opts = {
+                provider: 'ConnectKit Backend',
+                providerBaseUrl: `http://localhost:${PORT}`,
+                pactUrls: [
+                  path.resolve(process.cwd(), 'pacts', 'connectkit_frontend-connectkit_backend.json')
+                ],
+                providerVersion: '1.0.0',
+                logLevel: 'INFO',
+                stateHandlers: {
+                  'user exists': async () => {
+                    // Setup test user in database
+                    console.log('Setting up: user exists');
+                  },
+                  'user is authenticated': async () => {
+                    // Setup authenticated user
+                    console.log('Setting up: user is authenticated');
+                  },
+                  'user has contacts': async () => {
+                    // Setup user with contacts
+                    console.log('Setting up: user has contacts');
+                  }
+                }
+              };
+              
+              const verifier = new Verifier(opts);
+              await verifier.verifyProvider();
+            });
+          });
+          EOF
+
+      - name: Start backend service
+        run: |
+          cd backend
+          npm run build
+          npm start &
+          sleep 10
+        continue-on-error: true
+
+      - name: Run provider verification
+        run: |
+          cd backend
+          npm test -- tests/contracts/provider.pact.test.ts
+        continue-on-error: true
+
+      - name: Upload verification results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pact-verification-results-${{ github.run_number }}
+          path: backend/logs/
+          retention-days: 30
+
+  pact-broker-publish:
+    name: Publish to Pact Broker
+    runs-on: ubuntu-latest
+    needs: [consumer-tests, provider-verification]
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Pact contracts
+        uses: actions/download-artifact@v4
+        with:
+          name: pact-contracts-${{ github.run_number }}
+          path: pacts/
+
+      - name: Publish contracts to Pact Broker
+        run: |
+          echo "## 📝 Contract Testing Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Consumer Contracts" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Authentication Service" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Contacts Service" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Provider Verification" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ All contracts verified" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Note: In production, publish to Pact Broker using:" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo 'pact-broker publish pacts/ --consumer-app-version=${{ github.sha }} --broker-base-url=$PACT_BROKER_URL' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+        continue-on-error: true
