@@ -2,6 +2,38 @@
 
 This catalog explains the different kinds of tests in ConnectKit and where to find them. It’s written for non-technical readers to understand what is covered and why it matters.
 
+**Visual Map**
+
+```mermaid
+flowchart LR
+  A[Tests in ConnectKit]
+  subgraph Backend
+    B1[Unit: models]
+    B2[Unit: services]
+    B3[Unit: controllers]
+    B4[Unit: repositories]
+    B5[Integration: API endpoints]
+  end
+  subgraph Frontend
+    F1[Unit: components]
+    F2[Unit: hooks]
+    F3[E2E: user flows]
+  end
+  subgraph CI Suites
+    C1[Performance: k6]
+    C2[Accessibility: Lighthouse/Axe]
+    C3[Security: SAST/ZAP/SBOM]
+  end
+  A --> Backend
+  A --> Frontend
+  A --> CI_Suites
+  Backend --> B5
+  Frontend --> F3
+  CI_Suites --> C1
+  CI_Suites --> C2
+  CI_Suites --> C3
+```
+
 **Why Tests Matter**
 
 - Catch problems early before they reach users

@@ -11,6 +11,15 @@
 - On schedule (cron: 0 2 \* \* \*)
 - Manually from GitHub (Run workflow)
 
+**Visual Overview**
+
+```mermaid
+flowchart LR
+  T[Triggers\npull request\npush\nschedule\nworkflow dispatch]
+  J_dependency_scan[Dependency Security Scan]
+  T --> J_dependency_scan
+```
+
 **Jobs & Steps**
 
 - Job: Dependency Security Scan
@@ -27,6 +36,30 @@
     - Check for outdated packages
     - Upload dependency scan results and SBOMs
     - Enforce security policy
+
+**Step Diagrams**
+**Dependency Security Scan — Steps**
+
+```mermaid
+flowchart TB
+  S_dependency_scan_0[Checkout repository]
+  S_dependency_scan_1[Setup Node.js]
+  S_dependency_scan_0 --> S_dependency_scan_1
+  S_dependency_scan_2[Install workspace dependencies]
+  S_dependency_scan_1 --> S_dependency_scan_2
+  S_dependency_scan_3[Run npm audit (Frontend)]
+  S_dependency_scan_2 --> S_dependency_scan_3
+  S_dependency_scan_4[Run npm audit (Backend)]
+  S_dependency_scan_3 --> S_dependency_scan_4
+  S_dependency_scan_5[Generate SBOM for dependencies]
+  S_dependency_scan_4 --> S_dependency_scan_5
+  S_dependency_scan_6[Check for outdated packages]
+  S_dependency_scan_5 --> S_dependency_scan_6
+  S_dependency_scan_7[Upload dependency scan results and SBOMs]
+  S_dependency_scan_6 --> S_dependency_scan_7
+  S_dependency_scan_8[Enforce security policy]
+  S_dependency_scan_7 --> S_dependency_scan_8
+```
 
 **Required Secrets**
 

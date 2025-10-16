@@ -10,6 +10,15 @@
 - On push (branches: main)
 - Manually from GitHub (Run workflow)
 
+**Visual Overview**
+
+```mermaid
+flowchart LR
+  T[Triggers\npull request\npush\nworkflow dispatch]
+  J_security_headers[Security Headers Test]
+  T --> J_security_headers
+```
+
 **Jobs & Steps**
 
 - Job: Security Headers Test
@@ -28,6 +37,36 @@
     - Test cookie security
     - Generate security recommendations
     - Stop services
+
+**Step Diagrams**
+**Security Headers Test — Steps**
+
+```mermaid
+flowchart TB
+  S_security_headers_0[Checkout repository]
+  S_security_headers_1[Setup test environment]
+  S_security_headers_0 --> S_security_headers_1
+  S_security_headers_2[Start application services]
+  S_security_headers_1 --> S_security_headers_2
+  S_security_headers_3[Wait for services to be ready]
+  S_security_headers_2 --> S_security_headers_3
+  S_security_headers_4[Test backend security headers]
+  S_security_headers_3 --> S_security_headers_4
+  S_security_headers_5[Test frontend security headers]
+  S_security_headers_4 --> S_security_headers_5
+  S_security_headers_6[Test CORS configuration]
+  S_security_headers_5 --> S_security_headers_6
+  S_security_headers_7[Test rate limiting]
+  S_security_headers_6 --> S_security_headers_7
+  S_security_headers_8[Test authentication security]
+  S_security_headers_7 --> S_security_headers_8
+  S_security_headers_9[Test cookie security]
+  S_security_headers_8 --> S_security_headers_9
+  S_security_headers_10[Generate security recommendations]
+  S_security_headers_9 --> S_security_headers_10
+  S_security_headers_11[Stop services]
+  S_security_headers_10 --> S_security_headers_11
+```
 
 **Required Secrets**
 

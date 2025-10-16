@@ -11,6 +11,15 @@
 - On schedule (cron: 0 2 \* \* \*)
 - Manually from GitHub (Run workflow)
 
+**Visual Overview**
+
+```mermaid
+flowchart LR
+  T[Triggers\npull request\npush\nschedule\nworkflow dispatch]
+  J_semgrep[Semgrep Security Analysis]
+  T --> J_semgrep
+```
+
 **Jobs & Steps**
 
 - Job: Semgrep Security Analysis
@@ -22,6 +31,20 @@
     - Run Semgrep with comprehensive rulesets
     - Upload SARIF results to GitHub Security Dashboard
     - Upload Semgrep results as artifact
+
+**Step Diagrams**
+**Semgrep Security Analysis — Steps**
+
+```mermaid
+flowchart TB
+  S_semgrep_0[Checkout code]
+  S_semgrep_1[Run Semgrep with comprehensive rulesets]
+  S_semgrep_0 --> S_semgrep_1
+  S_semgrep_2[Upload SARIF results to GitHub Security Dashboa…]
+  S_semgrep_1 --> S_semgrep_2
+  S_semgrep_3[Upload Semgrep results as artifact]
+  S_semgrep_2 --> S_semgrep_3
+```
 
 **Required Secrets**
 

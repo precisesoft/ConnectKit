@@ -10,6 +10,15 @@
 - On schedule (cron: 0 4 \* \* 1)
 - Manually from GitHub (Run workflow)
 
+**Visual Overview**
+
+```mermaid
+flowchart LR
+  T[Triggers\npush\nschedule\nworkflow dispatch]
+  J_owasp_zap[OWASP ZAP Security Test]
+  T --> J_owasp_zap
+```
+
 **Jobs & Steps**
 
 - Job: OWASP ZAP Security Test
@@ -27,6 +36,32 @@
     - Parse ZAP results
     - Upload ZAP results
     - Stop services
+
+**Step Diagrams**
+**OWASP ZAP Security Test — Steps**
+
+```mermaid
+flowchart TB
+  S_owasp_zap_0[Checkout repository]
+  S_owasp_zap_1[Create ZAP rules configuration]
+  S_owasp_zap_0 --> S_owasp_zap_1
+  S_owasp_zap_2[Setup application environment]
+  S_owasp_zap_1 --> S_owasp_zap_2
+  S_owasp_zap_3[Start application services]
+  S_owasp_zap_2 --> S_owasp_zap_3
+  S_owasp_zap_4[Wait for application to be ready]
+  S_owasp_zap_3 --> S_owasp_zap_4
+  S_owasp_zap_5[Run OWASP ZAP Baseline Scan (Frontend)]
+  S_owasp_zap_4 --> S_owasp_zap_5
+  S_owasp_zap_6[Run OWASP ZAP API Scan (Backend)]
+  S_owasp_zap_5 --> S_owasp_zap_6
+  S_owasp_zap_7[Parse ZAP results]
+  S_owasp_zap_6 --> S_owasp_zap_7
+  S_owasp_zap_8[Upload ZAP results]
+  S_owasp_zap_7 --> S_owasp_zap_8
+  S_owasp_zap_9[Stop services]
+  S_owasp_zap_8 --> S_owasp_zap_9
+```
 
 **Required Secrets**
 

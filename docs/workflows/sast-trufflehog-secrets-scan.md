@@ -11,6 +11,15 @@
 - On schedule (cron: 0 3 \* \* \*)
 - Manually from GitHub (Run workflow)
 
+**Visual Overview**
+
+```mermaid
+flowchart LR
+  T[Triggers\npull request\npush\nschedule\nworkflow dispatch]
+  J_trufflehog[TruffleHog Secrets Analysis]
+  T --> J_trufflehog
+```
+
 **Jobs & Steps**
 
 - Job: TruffleHog Secrets Analysis
@@ -27,6 +36,30 @@
     - Upload SARIF results to GitHub Security Dashboard
     - Upload TruffleHog results as artifact
     - Fail workflow on verified secrets
+
+**Step Diagrams**
+**TruffleHog Secrets Analysis — Steps**
+
+```mermaid
+flowchart TB
+  S_trufflehog_0[Checkout repository]
+  S_trufflehog_1[Download and install TruffleHog]
+  S_trufflehog_0 --> S_trufflehog_1
+  S_trufflehog_2[Run TruffleHog filesystem scan]
+  S_trufflehog_1 --> S_trufflehog_2
+  S_trufflehog_3[Run TruffleHog git history scan]
+  S_trufflehog_2 --> S_trufflehog_3
+  S_trufflehog_4[Create basic SARIF file]
+  S_trufflehog_3 --> S_trufflehog_4
+  S_trufflehog_5[Display scan summary]
+  S_trufflehog_4 --> S_trufflehog_5
+  S_trufflehog_6[Upload SARIF results to GitHub Security Dashboa…]
+  S_trufflehog_5 --> S_trufflehog_6
+  S_trufflehog_7[Upload TruffleHog results as artifact]
+  S_trufflehog_6 --> S_trufflehog_7
+  S_trufflehog_8[Fail workflow on verified secrets]
+  S_trufflehog_7 --> S_trufflehog_8
+```
 
 **Required Secrets**
 

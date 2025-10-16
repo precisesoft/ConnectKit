@@ -10,6 +10,15 @@
 - On push (branches: main)
 - Manually from GitHub (Run workflow)
 
+**Visual Overview**
+
+```mermaid
+flowchart LR
+  T[Triggers\npull request\npush\nworkflow dispatch]
+  J_frontend_security[Frontend Security Tests]
+  T --> J_frontend_security
+```
+
 **Jobs & Steps**
 
 - Job: Frontend Security Tests
@@ -29,6 +38,36 @@
     - Check CSP and security headers
     - Check for XSS vulnerabilities
     - Upload security results
+
+**Step Diagrams**
+**Frontend Security Tests — Steps**
+
+```mermaid
+flowchart TB
+  S_frontend_security_0[Checkout repository]
+  S_frontend_security_1[Setup Node.js]
+  S_frontend_security_0 --> S_frontend_security_1
+  S_frontend_security_2[Cache node_modules]
+  S_frontend_security_1 --> S_frontend_security_2
+  S_frontend_security_3[Install dependencies]
+  S_frontend_security_2 --> S_frontend_security_3
+  S_frontend_security_4[Build frontend]
+  S_frontend_security_3 --> S_frontend_security_4
+  S_frontend_security_5[Run ESLint security checks]
+  S_frontend_security_4 --> S_frontend_security_5
+  S_frontend_security_6[Check for sensitive data in code]
+  S_frontend_security_5 --> S_frontend_security_6
+  S_frontend_security_7[Analyze bundle for security issues]
+  S_frontend_security_6 --> S_frontend_security_7
+  S_frontend_security_8[Check third-party dependencies]
+  S_frontend_security_7 --> S_frontend_security_8
+  S_frontend_security_9[Check CSP and security headers]
+  S_frontend_security_8 --> S_frontend_security_9
+  S_frontend_security_10[Check for XSS vulnerabilities]
+  S_frontend_security_9 --> S_frontend_security_10
+  S_frontend_security_11[Upload security results]
+  S_frontend_security_10 --> S_frontend_security_11
+```
 
 **Required Secrets**
 

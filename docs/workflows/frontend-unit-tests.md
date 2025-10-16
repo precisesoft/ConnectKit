@@ -10,6 +10,15 @@
 - On push (branches: main)
 - Manually from GitHub (Run workflow)
 
+**Visual Overview**
+
+```mermaid
+flowchart LR
+  T[Triggers\npull request\npush\nworkflow dispatch]
+  J_test[Frontend Tests (Node ${{ matrix.node-version }})]
+  T --> J_test
+```
+
 **Jobs & Steps**
 
 - Job: Frontend Tests (Node ${{ matrix.node-version }})
@@ -29,6 +38,36 @@
     - Upload test results as artifacts
     - Comment PR with coverage
     - Verify build artifacts
+
+**Step Diagrams**
+**Frontend Tests (Node ${{ matrix.node-version }}) — Steps**
+
+```mermaid
+flowchart TB
+  S_test_0[Checkout repository]
+  S_test_1[Setup Node.js ${{ matrix.node-version }}]
+  S_test_0 --> S_test_1
+  S_test_2[Cache node_modules]
+  S_test_1 --> S_test_2
+  S_test_3[Install workspace dependencies]
+  S_test_2 --> S_test_3
+  S_test_4[Run TypeScript type checking]
+  S_test_3 --> S_test_4
+  S_test_5[Run ESLint]
+  S_test_4 --> S_test_5
+  S_test_6[Build application]
+  S_test_5 --> S_test_6
+  S_test_7[Run unit tests with coverage]
+  S_test_6 --> S_test_7
+  S_test_8[Generate coverage summary]
+  S_test_7 --> S_test_8
+  S_test_9[Upload test results as artifacts]
+  S_test_8 --> S_test_9
+  S_test_10[Comment PR with coverage]
+  S_test_9 --> S_test_10
+  S_test_11[Verify build artifacts]
+  S_test_10 --> S_test_11
+```
 
 **Required Secrets**
 

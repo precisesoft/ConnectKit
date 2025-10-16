@@ -95,6 +95,73 @@ function humanizeJobId(id) {
   return id.replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+function listTriggerKinds(on) {
+  if (!on) return [];
+  if (typeof on === 'string') return [on];
+  return Object.keys(on);
+}
+
+function sanitizeId(str) {
+  return String(str).replace(/[^a-zA-Z0-9_]/g, '_');
+}
+
+function buildJobsDagMermaid(wf) {
+  const kinds = listTriggerKinds(wf.on);
+  const triggerLabel = kinds.length
+    ? `Triggers\\n` + kinds.map((k) => k.replace(/_/g, ' ')).join('\\n')
+    : 'Manual Only';
+  const jobs = wf.jobs || {};
+  const lines = ['flowchart LR', `  T[${triggerLabel}]`];
+  const idMap = new Map();
+  for (const jobId of Object.keys(jobs)) {
+    const id = 'J_' + sanitizeId(jobId);
+    idMap.set(jobId, id);
+    const jobName = jobs[jobId].name || humanizeJobId(jobId);
+    lines.push(`  ${id}[${jobName}]`);
+  }
+  for (const [jobId, job] of Object.entries(jobs)) {
+    const toId = idMap.get(jobId);
+    const needs = job.needs
+      ? Array.isArray(job.needs)
+        ? job.needs
+        : [job.needs]
+      : [];
+    if (needs.length === 0) {
+      lines.push(`  T --> ${toId}`);
+    } else {
+      for (const need of needs) {
+        const fromId = idMap.get(need);
+        if (fromId) lines.push(`  ${fromId} --> ${toId}`);
+      }
+    }
+  }
+  return '```mermaid\n' + lines.join('\n') + '\n```\n';
+}
+
+function trimLabel(label, max = 48) {
+  const s = String(label || '').trim();
+  if (s.length <= max) return s;
+  return s.slice(0, max - 1) + '…';
+}
+
+function buildStepsDiagram(job, jobId) {
+  const steps = (job.steps || []).filter(Boolean);
+  if (!steps.length) return '';
+  const baseId = 'S_' + sanitizeId(jobId) + '_';
+  const lines = ['flowchart TB'];
+  let prev = null;
+  steps.forEach((s, i) => {
+    const id = baseId + i;
+    const label = trimLabel(
+      s.name || (s.uses ? `Use ${s.uses}` : s.run ? 'Run script' : 'Step'),
+    );
+    lines.push(`  ${id}[${label}]`);
+    if (prev) lines.push(`  ${prev} --> ${id}`);
+    prev = id;
+  });
+  return '```mermaid\n' + lines.join('\n') + '\n```\n';
+}
+
 function renderWorkflowDoc(filename, wf) {
   const title = wf.name || path.basename(filename);
   const triggers = formatTrigger(wf.on);
@@ -102,6 +169,7 @@ function renderWorkflowDoc(filename, wf) {
 
   const jobSections = [];
   const jobs = wf.jobs || {};
+  const perJobStepDiagrams = [];
   for (const [jobId, job] of Object.entries(jobs)) {
     const jobName = job.name || humanizeJobId(jobId);
     const needs = job.needs
@@ -131,6 +199,13 @@ function renderWorkflowDoc(filename, wf) {
         .filter(Boolean)
         .join('\n'),
     );
+
+    const stepsDiagram = buildStepsDiagram(job, jobId);
+    if (stepsDiagram) {
+      perJobStepDiagrams.push(
+        ['**' + jobName + ' — Steps**', '', stepsDiagram].join('\n'),
+      );
+    }
   }
 
   const friendlySummary = `This workflow helps automate checks for ${title.toLowerCase()}. It runs on specific events and performs a series of steps to validate or analyze your application. You can run it manually from GitHub when needed.`;
@@ -144,8 +219,14 @@ function renderWorkflowDoc(filename, wf) {
     '**When It Runs**',
     triggers || '- Manual only',
     '',
+    '**Visual Overview**',
+    buildJobsDagMermaid(wf),
+    '',
     '**Jobs & Steps**',
     jobSections.length ? jobSections.join('\n') : '- No jobs defined',
+    '',
+    perJobStepDiagrams.length ? '**Step Diagrams**' : null,
+    perJobStepDiagrams.length ? perJobStepDiagrams.join('\n') : null,
     '',
     '**Required Secrets**',
     secrets.length ? `- ${secrets.join(', ')}` : '- None',

@@ -11,6 +11,15 @@
 - Manually from GitHub (Run workflow)
 - On workflow_run
 
+**Visual Overview**
+
+```mermaid
+flowchart LR
+  T[Triggers\npush\ndeployment\nworkflow dispatch\nworkflow run]
+  J_smoke_tests[Critical Path Smoke Tests]
+  T --> J_smoke_tests
+```
+
 **Jobs & Steps**
 
 - Job: Critical Path Smoke Tests
@@ -25,6 +34,28 @@
     - Response time check
     - Generate smoke test summary
     - Cleanup
+
+**Step Diagrams**
+**Critical Path Smoke Tests — Steps**
+
+```mermaid
+flowchart TB
+  S_smoke_tests_0[Checkout repository]
+  S_smoke_tests_1[Start services]
+  S_smoke_tests_0 --> S_smoke_tests_1
+  S_smoke_tests_2[Health check smoke test]
+  S_smoke_tests_1 --> S_smoke_tests_2
+  S_smoke_tests_3[Critical API endpoints smoke test]
+  S_smoke_tests_2 --> S_smoke_tests_3
+  S_smoke_tests_4[Frontend smoke test]
+  S_smoke_tests_3 --> S_smoke_tests_4
+  S_smoke_tests_5[Response time check]
+  S_smoke_tests_4 --> S_smoke_tests_5
+  S_smoke_tests_6[Generate smoke test summary]
+  S_smoke_tests_5 --> S_smoke_tests_6
+  S_smoke_tests_7[Cleanup]
+  S_smoke_tests_6 --> S_smoke_tests_7
+```
 
 **Required Secrets**
 

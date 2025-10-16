@@ -11,6 +11,15 @@
 - On schedule (cron: 0 3 \* \* \*)
 - Manually from GitHub (Run workflow)
 
+**Visual Overview**
+
+```mermaid
+flowchart LR
+  T[Triggers\npull request\npush\nschedule\nworkflow dispatch]
+  J_container_security[Container Security Scan]
+  T --> J_container_security
+```
+
 **Jobs & Steps**
 
 - Job: Container Security Scan
@@ -30,6 +39,36 @@
     - Check base image security
     - Generate vulnerability summary
     - Upload scan results and SBOMs
+
+**Step Diagrams**
+**Container Security Scan — Steps**
+
+```mermaid
+flowchart TB
+  S_container_security_0[Checkout repository]
+  S_container_security_1[Set up Docker Buildx]
+  S_container_security_0 --> S_container_security_1
+  S_container_security_2[Build Docker image (${{ matrix.service }})]
+  S_container_security_1 --> S_container_security_2
+  S_container_security_3[Run Trivy vulnerability scanner]
+  S_container_security_2 --> S_container_security_3
+  S_container_security_4[Run Trivy scanner (Table format)]
+  S_container_security_3 --> S_container_security_4
+  S_container_security_5[Install Syft and Grype]
+  S_container_security_4 --> S_container_security_5
+  S_container_security_6[Generate container SBOM]
+  S_container_security_5 --> S_container_security_6
+  S_container_security_7[Run Grype vulnerability scanner]
+  S_container_security_6 --> S_container_security_7
+  S_container_security_8[Analyze Docker configuration]
+  S_container_security_7 --> S_container_security_8
+  S_container_security_9[Check base image security]
+  S_container_security_8 --> S_container_security_9
+  S_container_security_10[Generate vulnerability summary]
+  S_container_security_9 --> S_container_security_10
+  S_container_security_11[Upload scan results and SBOMs]
+  S_container_security_10 --> S_container_security_11
+```
 
 **Required Secrets**
 

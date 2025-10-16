@@ -11,6 +11,15 @@
 - On schedule (cron: 30 1 \* \* 0)
 - Manually from GitHub (Run workflow)
 
+**Visual Overview**
+
+```mermaid
+flowchart LR
+  T[Triggers\npush\npull request\nschedule\nworkflow dispatch]
+  J_analyze[CodeQL Analysis]
+  T --> J_analyze
+```
+
 **Jobs & Steps**
 
 - Job: CodeQL Analysis
@@ -25,6 +34,26 @@
     - Autobuild
     - Perform CodeQL Analysis
     - Upload CodeQL results as artifact
+
+**Step Diagrams**
+**CodeQL Analysis — Steps**
+
+```mermaid
+flowchart TB
+  S_analyze_0[Checkout repository]
+  S_analyze_1[Initialize CodeQL]
+  S_analyze_0 --> S_analyze_1
+  S_analyze_2[Setup Node.js for better JavaScript/TypeScript …]
+  S_analyze_1 --> S_analyze_2
+  S_analyze_3[Install dependencies for better analysis]
+  S_analyze_2 --> S_analyze_3
+  S_analyze_4[Autobuild]
+  S_analyze_3 --> S_analyze_4
+  S_analyze_5[Perform CodeQL Analysis]
+  S_analyze_4 --> S_analyze_5
+  S_analyze_6[Upload CodeQL results as artifact]
+  S_analyze_5 --> S_analyze_6
+```
 
 **Required Secrets**
 

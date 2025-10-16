@@ -10,6 +10,15 @@
 - On schedule (cron: 0 6 \* \* 1)
 - Manually from GitHub (Run workflow)
 
+**Visual Overview**
+
+```mermaid
+flowchart LR
+  T[Triggers\nworkflow run\nschedule\nworkflow dispatch]
+  J_security_report[Security Report Consolidation]
+  T --> J_security_report
+```
+
 **Jobs & Steps**
 
 - Job: Security Report Consolidation
@@ -31,6 +40,40 @@
     - Create summary for GitHub
     - Upload security report
     - Create security issues if critical vulnerabilities found
+
+**Step Diagrams**
+**Security Report Consolidation — Steps**
+
+```mermaid
+flowchart TB
+  S_security_report_0[Checkout repository]
+  S_security_report_1[Setup report environment]
+  S_security_report_0 --> S_security_report_1
+  S_security_report_2[Download recent artifacts]
+  S_security_report_1 --> S_security_report_2
+  S_security_report_3[Analyze dependency scan results]
+  S_security_report_2 --> S_security_report_3
+  S_security_report_4[Analyze container security results]
+  S_security_report_3 --> S_security_report_4
+  S_security_report_5[Analyze application security results]
+  S_security_report_4 --> S_security_report_5
+  S_security_report_6[Analyze SBOM results]
+  S_security_report_5 --> S_security_report_6
+  S_security_report_7[Check existing SAST results]
+  S_security_report_6 --> S_security_report_7
+  S_security_report_8[Generate security scorecard]
+  S_security_report_7 --> S_security_report_8
+  S_security_report_9[Generate recommendations]
+  S_security_report_8 --> S_security_report_9
+  S_security_report_10[Generate compliance checklist]
+  S_security_report_9 --> S_security_report_10
+  S_security_report_11[Create summary for GitHub]
+  S_security_report_10 --> S_security_report_11
+  S_security_report_12[Upload security report]
+  S_security_report_11 --> S_security_report_12
+  S_security_report_13[Create security issues if critical vulnerabilit…]
+  S_security_report_12 --> S_security_report_13
+```
 
 **Required Secrets**
 

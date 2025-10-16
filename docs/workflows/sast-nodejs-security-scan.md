@@ -10,6 +10,15 @@
 - On push (branches: main)
 - Manually from GitHub (Run workflow)
 
+**Visual Overview**
+
+```mermaid
+flowchart LR
+  T[Triggers\npull request\npush\nworkflow dispatch]
+  J_njsscan[NodeJS Security Analysis]
+  T --> J_njsscan
+```
+
 **Jobs & Steps**
 
 - Job: NodeJS Security Analysis
@@ -26,6 +35,30 @@
     - Upload Backend SARIF results to GitHub Security Dashboard
     - Upload Full Project SARIF results to GitHub Security Dashboard
     - Upload NodeJsScan results as artifact
+
+**Step Diagrams**
+**NodeJS Security Analysis — Steps**
+
+```mermaid
+flowchart TB
+  S_njsscan_0[Checkout code]
+  S_njsscan_1[Setup Python]
+  S_njsscan_0 --> S_njsscan_1
+  S_njsscan_2[Install NodeJsScan]
+  S_njsscan_1 --> S_njsscan_2
+  S_njsscan_3[Run NodeJsScan on backend]
+  S_njsscan_2 --> S_njsscan_3
+  S_njsscan_4[Run NodeJsScan on entire project]
+  S_njsscan_3 --> S_njsscan_4
+  S_njsscan_5[Display scan summary]
+  S_njsscan_4 --> S_njsscan_5
+  S_njsscan_6[Upload Backend SARIF results to GitHub Security…]
+  S_njsscan_5 --> S_njsscan_6
+  S_njsscan_7[Upload Full Project SARIF results to GitHub Sec…]
+  S_njsscan_6 --> S_njsscan_7
+  S_njsscan_8[Upload NodeJsScan results as artifact]
+  S_njsscan_7 --> S_njsscan_8
+```
 
 **Required Secrets**
 
