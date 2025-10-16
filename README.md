@@ -157,6 +157,8 @@ Comprehensive documentation is available in the [docs/](./docs/) directory. Key 
 - [Product Requirements Document](./docs/planning/PRD-CONNECTKIT.md)
 - [Best Practices Guide](./docs/guides/BEST-PRACTICES-GUIDE.md)
 - [TDD Implementation Guide](./docs/testing/TDD-IMPLEMENTATION-GUIDE.md)
+- [Test Catalog](./docs/testing/TEST-CATALOG.md)
+- [Workflow Catalog](./docs/workflows/README.md)
 - [Security Recommendations](./docs/security/SECURITY-RECOMMENDATIONS.md)
 - [DevOps Automation Guide](./docs/devops/DEVOPS-AUTOMATION-RECOMMENDATIONS.md)
 - [Phase 1 Foundation](./docs/planning/PHASE-1-FOUNDATION.md)

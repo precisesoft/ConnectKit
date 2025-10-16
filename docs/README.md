@@ -23,6 +23,8 @@ ConnectKit is a modern contact management platform that helps organizations mana
 
 - [Integration Guide](architecture/API-SPECIFICATION.md) - Connect ConnectKit with other systems
 - [Development Planning](planning/) - Implementation phases and project roadmap
+- [Workflow Catalog](../docs/workflows/README.md) - Plain-language guide to CI/CD workflows
+- [Test Catalog](../docs/testing/TEST-CATALOG.md) - What we test and where to find it
 
 ### 📋 Project Planning
 

@@ -36,7 +36,8 @@
     "sbom:generate": "node scripts/sbom-generator.js",
     "sbom:check": "node scripts/vulnerability-check.js",
     "sbom:full": "npm run sbom:generate && npm run sbom:check",
-    "compliance:federal": "npm run sbom:full"
+    "compliance:federal": "npm run sbom:full",
+    "docs:workflows": "node scripts/generate-workflow-docs.js"
   },
   "devDependencies": {
     "@commitlint/cli": "^18.4.3",
@@ -44,7 +45,8 @@
     "commitizen": "^4.3.0",
     "cz-conventional-changelog": "^3.3.0",
     "husky": "^8.0.3",
-    "lint-staged": "^15.5.2"
+    "lint-staged": "^15.5.2",
+    "js-yaml": "^4.1.0"
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "^4.9.6"
